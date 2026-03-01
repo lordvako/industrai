@@ -54,6 +54,12 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
         /* ===== НАВИГАЦИЯ ===== */
         .navbar {
             position: fixed;
@@ -160,6 +166,11 @@
             width: 100%;
         }
         
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+        }
+        
         .nav-button {
             background: linear-gradient(135deg, #2B6FF0, #00B4A0);
             color: white;
@@ -220,10 +231,16 @@
             color: white;
         }
         
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(43,111,240,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 10s ease-in-out infinite;
         }
         
         /* Герой */
@@ -240,7 +257,7 @@
         .hero-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 40px;
+            gap: 30px;
         }
         
         @media (min-width: 1024px) {
@@ -261,13 +278,6 @@
             color: #2B6FF0;
             margin-bottom: 20px;
             border: 1px solid rgba(43,111,240,0.3);
-        }
-        
-        @media (min-width: 768px) {
-            .hero-label {
-                font-size: 14px;
-                padding: 8px 16px;
-            }
         }
         
         .hero h1 {
@@ -306,59 +316,6 @@
             .hero-description {
                 font-size: 18px;
             }
-        }
-        
-        /* НОВЫЙ БЛОК — Акцент на базу знаний */
-        .knowledge-highlight {
-            background: rgba(43,111,240,0.15);
-            backdrop-filter: blur(8px);
-            border-radius: 20px;
-            padding: 24px;
-            margin: 30px 0;
-            border: 1px solid rgba(43,111,240,0.3);
-        }
-        
-        .knowledge-highlight h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #2B6FF0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .knowledge-highlight p {
-            margin-bottom: 16px;
-            font-size: 15px;
-            line-height: 1.6;
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .knowledge-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .knowledge-stat-item {
-            flex: 1 1 150px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 16px;
-            padding: 15px;
-            text-align: center;
-        }
-        
-        .knowledge-stat-number {
-            font-size: 28px;
-            font-weight: 800;
-            color: #00B4A0;
-        }
-        
-        .knowledge-stat-label {
-            font-size: 12px;
-            opacity: 0.7;
         }
         
         /* Блок истории */
@@ -408,16 +365,63 @@
             color: #2B6FF0;
         }
         
-        @media (min-width: 768px) {
-            .stat-number {
-                font-size: 32px;
-            }
-        }
-        
         .stat-label {
             font-size: 12px;
             color: rgba(255,255,255,0.5);
             text-transform: uppercase;
+        }
+        
+        /* НОВЫЙ БЛОК — База знаний (теперь в левой колонке под ошибками) */
+        .knowledge-block {
+            background: rgba(43,111,240,0.15);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 30px;
+            border: 1px solid rgba(43,111,240,0.3);
+        }
+        
+        .knowledge-block h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #2B6FF0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .knowledge-block p {
+            margin-bottom: 16px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .knowledge-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .knowledge-stat-item {
+            flex: 1 1 120px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .knowledge-stat-number {
+            font-size: 26px;
+            font-weight: 800;
+            color: #00B4A0;
+        }
+        
+        .knowledge-stat-label {
+            font-size: 12px;
+            opacity: 0.7;
         }
         
         /* Карточки ошибок */
@@ -559,6 +563,11 @@
             border: 1px solid rgba(0,0,0,0.05);
         }
         
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(43,111,240,0.1);
+        }
+        
         .feature-icon {
             width: 50px;
             height: 50px;
@@ -626,6 +635,12 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             border: 1px solid rgba(0,0,0,0.05);
             position: relative;
+            transition: 0.3s;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(43,111,240,0.1);
         }
         
         .pricing-card.popular {
@@ -643,6 +658,7 @@
             border-radius: 40px;
             font-size: 11px;
             font-weight: 600;
+            animation: float 3s ease-in-out infinite;
         }
         
         .pricing-card h3 {
@@ -727,22 +743,10 @@
             margin-bottom: 12px;
         }
         
-        @media (min-width: 768px) {
-            .support-content h2 {
-                font-size: 28px;
-            }
-        }
-        
         .support-content p {
             color: rgba(255,255,255,0.7);
             margin-bottom: 20px;
             font-size: 15px;
-        }
-        
-        @media (min-width: 768px) {
-            .support-content p {
-                margin-bottom: 0;
-            }
         }
         
         .support-button {
@@ -980,6 +984,19 @@
             border: 2px solid #E0E8F0;
         }
         
+        .tab-button:not(.active):hover {
+            border-color: #2B6FF0;
+            transform: translateY(-2px);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
         .items-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -1004,6 +1021,12 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(43,111,240,0.1);
         }
         
         .item-image {
@@ -1056,6 +1079,12 @@
             font-weight: 600;
             font-size: 11px;
             cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .item-buy:hover {
+            background: #00B4A0;
+            transform: scale(1.05);
         }
         
         .add-form {
@@ -1087,6 +1116,19 @@
             border-radius: 12px;
             font-family: 'Inter', sans-serif;
             font-size: 14px;
+            transition: 0.3s;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #2B6FF0;
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
         }
         
         .price-row {
@@ -1109,6 +1151,11 @@
             font-size: 13px;
         }
         
+        .price-hint i {
+            color: #2B6FF0;
+            margin-right: 5px;
+        }
+        
         .form-submit {
             background: linear-gradient(135deg, #2B6FF0, #00B4A0);
             color: white;
@@ -1119,6 +1166,12 @@
             font-size: 15px;
             cursor: pointer;
             width: 100%;
+            transition: 0.3s;
+        }
+        
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
         }
         
         .seller-cabinet {
@@ -1145,6 +1198,10 @@
             }
         }
         
+        .seller-item:last-child {
+            border-bottom: none;
+        }
+        
         .seller-item-image {
             width: 50px;
             height: 50px;
@@ -1155,6 +1212,15 @@
             justify-content: center;
             color: #2B6FF0;
             font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .seller-item-info {
+            flex: 2;
+        }
+        
+        .seller-item-price {
+            text-align: right;
         }
         
         /* Модальное окно */
@@ -1192,6 +1258,12 @@
             font-size: 24px;
             cursor: pointer;
             color: #5A6B7A;
+            transition: 0.3s;
+        }
+        
+        .modal-close:hover {
+            color: #2B6FF0;
+            transform: scale(1.1);
         }
         
         .modal h3 {
@@ -1216,6 +1288,11 @@
             margin-bottom: 20px;
         }
         
+        .modal-input:focus {
+            outline: none;
+            border-color: #2B6FF0;
+        }
+        
         .modal-button {
             background: linear-gradient(135deg, #2B6FF0, #00B4A0);
             color: white;
@@ -1226,6 +1303,12 @@
             font-size: 15px;
             cursor: pointer;
             width: 100%;
+            transition: 0.3s;
+        }
+        
+        .modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
         }
         
         /* Уведомление */
@@ -1309,31 +1392,12 @@
         <section class="gradient-bg">
             <div class="container hero">
                 <div class="hero-grid">
+                    <!-- Левая колонка -->
                     <div>
                         <span class="hero-label">⚡ ИНЖЕНЕР + DEEPSEEK</span>
                         <h1>Экосистема <span>инженеров</span> с искусственным интеллектом</h1>
                         <p class="hero-description">12 лет в АСУТП и огромная база знаний из открытых источников — теперь в одной платформе.</p>
                         
-                        <!-- НОВЫЙ БЛОК: Акцент на базу знаний -->
-                        <div class="knowledge-highlight">
-                            <h3><i class="fas fa-database"></i> Уникальная база знаний</h3>
-                            <p>Мы собрали данные со всех открытых источников: форумы АСУТП, техническая документация Siemens, SEW, Delta, реальные кейсы инженеров. Это не просто нейросеть — это опыт тысяч специалистов, структурированный и доступный в одном месте.</p>
-                            <div class="knowledge-stats">
-                                <div class="knowledge-stat-item">
-                                    <div class="knowledge-stat-number">15 000+</div>
-                                    <div class="knowledge-stat-label">решений</div>
-                                </div>
-                                <div class="knowledge-stat-item">
-                                    <div class="knowledge-stat-number">47</div>
-                                    <div class="knowledge-stat-label">форумов</div>
-                                </div>
-                                <div class="knowledge-stat-item">
-                                    <div class="knowledge-stat-number">12 лет</div>
-                                    <div class="knowledge-stat-label">личного опыта</div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Блок истории -->
                         <div class="story-block">
                             <p>«Я сам инженер. Знаю, как бывает: ночь, цех стоит, а ответа нет. Мы собрали всё с форумов, добавили свой опыт и подключили DeepSeek. Теперь на основе этой базы ИИ даёт готовые решения.»</p>
@@ -1361,36 +1425,58 @@
                                 <span class="stat-label">доступ</span>
                             </div>
                         </div>
+
+                        <!-- НОВЫЙ БЛОК — База знаний (теперь здесь, под статистикой) -->
+                        <div class="knowledge-block">
+                            <h3><i class="fas fa-database"></i> Уникальная база знаний</h3>
+                            <p>Мы собрали данные со всех открытых источников: форумы АСУТП, техническая документация Siemens, SEW, Delta, реальные кейсы инженеров. Это не просто нейросеть — это опыт тысяч специалистов, структурированный и доступный в одном месте.</p>
+                            <div class="knowledge-stats">
+                                <div class="knowledge-stat-item">
+                                    <div class="knowledge-stat-number">15 000+</div>
+                                    <div class="knowledge-stat-label">решений</div>
+                                </div>
+                                <div class="knowledge-stat-item">
+                                    <div class="knowledge-stat-number">47</div>
+                                    <div class="knowledge-stat-label">форумов</div>
+                                </div>
+                                <div class="knowledge-stat-item">
+                                    <div class="knowledge-stat-number">12 лет</div>
+                                    <div class="knowledge-stat-label">личного опыта</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Карточки ошибок -->
-                    <div class="error-cards">
-                        <div class="error-card">
-                            <div class="error-header">
-                                <span class="error-code">SEW F04</span>
-                                <span class="error-tag">приводы</span>
+                    <!-- Правая колонка: карточки ошибок -->
+                    <div>
+                        <div class="error-cards">
+                            <div class="error-card">
+                                <div class="error-header">
+                                    <span class="error-code">SEW F04</span>
+                                    <span class="error-tag">приводы</span>
+                                </div>
+                                <div style="margin-bottom:5px;">Перегрузка по току / тормозной резистор</div>
+                                <div class="error-progress"><div class="progress-bar" style="width:94%"></div></div>
+                                <div class="error-solution"><i class="fas fa-lightbulb"></i> Проверьте тормозной резистор (15-100 Ом)</div>
                             </div>
-                            <div style="margin-bottom:5px;">Перегрузка по току</div>
-                            <div class="error-progress"><div class="progress-bar" style="width:94%"></div></div>
-                            <div class="error-solution"><i class="fas fa-lightbulb"></i> Проверьте тормозной резистор</div>
-                        </div>
-                        <div class="error-card">
-                            <div class="error-header">
-                                <span class="error-code">Sinumerik 3000</span>
-                                <span class="error-tag">ЧПУ</span>
+                            <div class="error-card">
+                                <div class="error-header">
+                                    <span class="error-code">Sinumerik 3000</span>
+                                    <span class="error-tag">ЧПУ</span>
+                                </div>
+                                <div style="margin-bottom:5px;">Концевой выключатель оси X</div>
+                                <div class="error-progress"><div class="progress-bar" style="width:96%"></div></div>
+                                <div class="error-solution"><i class="fas fa-lightbulb"></i> Проверьте концевик и кабель энкодера</div>
                             </div>
-                            <div style="margin-bottom:5px;">Концевой выключатель</div>
-                            <div class="error-progress"><div class="progress-bar" style="width:96%"></div></div>
-                            <div class="error-solution"><i class="fas fa-lightbulb"></i> Проверьте концевик оси X</div>
-                        </div>
-                        <div class="error-card">
-                            <div class="error-header">
-                                <span class="error-code">S7-300 SF</span>
-                                <span class="error-tag">контроллеры</span>
+                            <div class="error-card">
+                                <div class="error-header">
+                                    <span class="error-code">S7-300 SF</span>
+                                    <span class="error-tag">контроллеры</span>
+                                </div>
+                                <div style="margin-bottom:5px;">Системная ошибка / потеря конфигурации</div>
+                                <div class="error-progress"><div class="progress-bar" style="width:91%"></div></div>
+                                <div class="error-solution"><i class="fas fa-lightbulb"></i> Перезагрузите, проверьте настройки PROFIBUS</div>
                             </div>
-                            <div style="margin-bottom:5px;">Системная ошибка</div>
-                            <div class="error-progress"><div class="progress-bar" style="width:91%"></div></div>
-                            <div class="error-solution"><i class="fas fa-lightbulb"></i> Перезагрузите, проверьте PROFIBUS</div>
                         </div>
                     </div>
                 </div>
