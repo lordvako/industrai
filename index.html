@@ -31,9 +31,15 @@
         }
         
         .container {
-            max-width: 1280px;
+            max-width: 1400px;  /* Увеличил с 1280px до 1400px */
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 30px;    /* Увеличил отступы */
+        }
+        
+        @media (min-width: 1600px) {
+            .container {
+                max-width: 1500px;  /* Ещё шире на больших экранах */
+            }
         }
         
         /* Анимации */
@@ -260,10 +266,10 @@
             gap: 30px;
         }
         
-        @media (min-width: 1024px) {
+        @media (min-width: 1200px) {
             .hero-grid {
                 grid-template-columns: 1fr 1fr;
-                gap: 50px;
+                gap: 60px;  /* Увеличил gap для большего пространства */
             }
         }
         
@@ -286,17 +292,21 @@
             line-height: 1.2;
             margin-bottom: 20px;
             letter-spacing: -0.5px;
+            max-width: 600px;  /* Ограничиваем ширину, чтобы текст не растягивался */
         }
         
         @media (min-width: 768px) {
             .hero h1 {
                 font-size: 44px;
+                max-width: 650px;
             }
         }
         
-        @media (min-width: 1024px) {
+        @media (min-width: 1200px) {
             .hero h1 {
                 font-size: 52px;
+                max-width: 700px;  /* Чтобы фраза была в одну строку */
+                white-space: nowrap; /* Запрещаем перенос */
             }
         }
         
@@ -310,6 +320,7 @@
             font-size: 16px;
             color: rgba(255,255,255,0.75);
             margin-bottom: 28px;
+            max-width: 600px;
         }
         
         @media (min-width: 768px) {
@@ -326,6 +337,7 @@
             padding: 24px;
             margin: 30px 0;
             border-left: 4px solid #2B6FF0;
+            max-width: 600px;
         }
         
         .story-author {
@@ -353,6 +365,7 @@
             flex-wrap: wrap;
             gap: 20px;
             margin-top: 30px;
+            max-width: 600px;
         }
         
         .stat-item {
@@ -371,7 +384,7 @@
             text-transform: uppercase;
         }
         
-        /* НОВЫЙ БЛОК — База знаний (теперь в левой колонке под ошибками) */
+        /* НОВЫЙ БЛОК — База знаний */
         .knowledge-block {
             background: rgba(43,111,240,0.15);
             backdrop-filter: blur(8px);
@@ -379,6 +392,7 @@
             padding: 24px;
             margin-top: 30px;
             border: 1px solid rgba(43,111,240,0.3);
+            max-width: 600px;
         }
         
         .knowledge-block h3 {
@@ -438,6 +452,12 @@
             padding: 20px;
             border: 1px solid rgba(43,111,240,0.2);
             transition: all 0.3s;
+        }
+        
+        .error-card:hover {
+            transform: translateX(-5px);
+            border-color: #2B6FF0;
+            box-shadow: 0 10px 20px rgba(43,111,240,0.2);
         }
         
         .error-header {
@@ -561,11 +581,13 @@
             padding: 30px 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             border: 1px solid rgba(0,0,0,0.05);
+            transition: 0.3s;
         }
         
         .feature-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 40px rgba(43,111,240,0.1);
+            border-color: #2B6FF0;
         }
         
         .feature-icon {
@@ -577,11 +599,21 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        
+        .feature-card:hover .feature-icon {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+        }
+        
+        .feature-card:hover .feature-icon i {
+            color: white;
         }
         
         .feature-icon i {
             font-size: 24px;
             color: #2B6FF0;
+            transition: 0.3s;
         }
         
         .feature-card h3 {
@@ -706,6 +738,7 @@
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
+            transition: 0.3s;
         }
         
         .pricing-button.basic {
@@ -716,6 +749,11 @@
         .pricing-button.premium {
             background: linear-gradient(135deg, #2B6FF0, #00B4A0);
             color: white;
+        }
+        
+        .pricing-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(43,111,240,0.2);
         }
         
         /* Блок поддержки */
@@ -758,6 +796,12 @@
             font-weight: 600;
             font-size: 15px;
             display: inline-block;
+            transition: 0.3s;
+        }
+        
+        .support-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255,255,255,0.2);
         }
         
         /* Тест-драйв */
@@ -919,6 +963,7 @@
             border-radius: 40px;
             font-family: 'Inter', sans-serif;
             font-size: 14px;
+            transition: 0.3s;
         }
         
         .chat-input:focus {
@@ -939,6 +984,11 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            transition: 0.3s;
+        }
+        
+        .chat-send:hover {
+            transform: scale(1.1);
         }
         
         /* Биржа */
@@ -1323,7 +1373,7 @@
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             z-index: 2000;
-            animation: slideIn 0.3s ease;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 4.5s forwards;
             max-width: 400px;
             margin: 0 auto;
         }
@@ -1331,6 +1381,10 @@
         @keyframes slideIn {
             from { transform: translateY(-100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-100%); }
         }
         
         /* Футер */
@@ -1394,13 +1448,13 @@
                 <div class="hero-grid">
                     <!-- Левая колонка -->
                     <div>
-                        <span class="hero-label">⚡ ИНЖЕНЕР + DEEPSEEK</span>
-                        <h1>Экосистема <span>инженеров</span> с искусственным интеллектом</h1>
+                        <span class="hero-label">⚡ ИНЖЕНЕР + НЕЙРОСЕТЬ</span>
+                        <h1>Экосистема инженеров с мощной технической нейросетью</h1>
                         <p class="hero-description">12 лет в АСУТП и огромная база знаний из открытых источников — теперь в одной платформе.</p>
                         
                         <!-- Блок истории -->
                         <div class="story-block">
-                            <p>«Я сам инженер. Знаю, как бывает: ночь, цех стоит, а ответа нет. Мы собрали всё с форумов, добавили свой опыт и подключили DeepSeek. Теперь на основе этой базы ИИ даёт готовые решения.»</p>
+                            <p>«Я сам инженер. Знаю, как бывает: ночь, цех стоит, а ответа нет. Мы собрали всё с форумов, добавили свой опыт и обучили мощную нейросеть. Теперь на основе этой базы ИИ даёт готовые решения.»</p>
                             <div class="story-author">
                                 <div class="author-photo">ВС</div>
                                 <div>
@@ -1417,8 +1471,8 @@
                                 <span class="stat-label">решений в базе</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-number">DeepSeek</span><br>
-                                <span class="stat-label">нейросеть</span>
+                                <span class="stat-number">Нейросеть</span><br>
+                                <span class="stat-label">техническая</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-number">24/7</span><br>
@@ -1426,7 +1480,7 @@
                             </div>
                         </div>
 
-                        <!-- НОВЫЙ БЛОК — База знаний (теперь здесь, под статистикой) -->
+                        <!-- Блок — База знаний -->
                         <div class="knowledge-block">
                             <h3><i class="fas fa-database"></i> Уникальная база знаний</h3>
                             <p>Мы собрали данные со всех открытых источников: форумы АСУТП, техническая документация Siemens, SEW, Delta, реальные кейсы инженеров. Это не просто нейросеть — это опыт тысяч специалистов, структурированный и доступный в одном месте.</p>
@@ -1489,16 +1543,16 @@
                 <div class="section-header">
                     <span class="section-label">ПЛАТФОРМА</span>
                     <h2>Всё для <span>промышленного инженера</span></h2>
-                    <p class="section-subtitle">DeepSeek, база знаний из открытых источников и биржа оборудования</p>
+                    <p class="section-subtitle">Нейросеть, база знаний из открытых источников и биржа оборудования</p>
                 </div>
 
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fas fa-brain"></i></div>
-                        <h3>DeepSeek Инженерный</h3>
-                        <p>Нейросеть, обученная на 15 000+ реальных решений с форумов и документации</p>
+                        <h3>Техническая нейросеть</h3>
+                        <p>Мощная нейросеть, обученная на 15 000+ реальных решений с форумов и документации</p>
                         <span class="feature-tag">24/7</span>
-                        <span class="feature-tag">обучаемый</span>
+                        <span class="feature-tag">обучаемая</span>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon"><i class="fas fa-database"></i></div>
@@ -1519,7 +1573,7 @@
                 <!-- Кнопка призыва -->
                 <div style="text-align: center; margin: 30px 0;">
                     <a href="#" class="nav-button" onclick="showPage('test'); return false;" style="font-size: 16px; padding: 14px 40px;">
-                        Попробовать DeepSeek бесплатно →
+                        Попробовать нейросеть бесплатно →
                     </a>
                     <p style="margin-top: 12px; color: #5A6B7A; font-size: 14px;">Один запрос — в подарок</p>
                 </div>
@@ -1531,7 +1585,7 @@
             <div class="container">
                 <div class="section-header">
                     <span class="section-label">ТАРИФЫ</span>
-                    <h2>Выберите <span>доступ</span> к DeepSeek</h2>
+                    <h2>Выберите <span>доступ</span> к нейросети</h2>
                     <p class="section-subtitle">Для частных инженеров и предприятий</p>
                 </div>
 
@@ -1541,7 +1595,7 @@
                         <h3>Базовый</h3>
                         <div class="price">4 900 <small>₽/мес</small></div>
                         <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> DeepSeek: 100 запросов</li>
+                            <li><i class="fas fa-check"></i> Нейросеть: 100 запросов</li>
                             <li><i class="fas fa-check"></i> База знаний (15 000+ решений)</li>
                             <li><i class="fas fa-check"></i> Доступ к форумам</li>
                             <li style="color: #ccc;"><i class="fas fa-times"></i> Биржа</li>
@@ -1555,7 +1609,7 @@
                         <h3>Профессиональный</h3>
                         <div class="price">14 900 <small>₽/мес</small></div>
                         <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> DeepSeek: безлимитно</li>
+                            <li><i class="fas fa-check"></i> Нейросеть: безлимитно</li>
                             <li><i class="fas fa-check"></i> База знаний + обновления</li>
                             <li><i class="fas fa-check"></i> Биржа (0% комиссии)</li>
                             <li><i class="fas fa-check"></i> Поддержка 24/7</li>
@@ -1569,7 +1623,7 @@
                         <div class="price">49 900 <small>₽/мес</small></div>
                         <ul class="pricing-features">
                             <li><i class="fas fa-check"></i> Всё из Профессионального</li>
-                            <li><i class="fas fa-check"></i> Выделенный DeepSeek</li>
+                            <li><i class="fas fa-check"></i> Выделенная нейросеть</li>
                             <li><i class="fas fa-check"></i> Интеграция с 1С/SAP</li>
                         </ul>
                         <a href="#" class="pricing-button basic">Связаться</a>
@@ -1583,7 +1637,7 @@
             <div class="container">
                 <div class="support-section">
                     <div class="support-content">
-                        <h2>Нужно больше, чем DeepSeek?</h2>
+                        <h2>Нужно больше, чем нейросеть?</h2>
                         <p>Подключим опытных инженеров. Решаем 98% проблем.</p>
                     </div>
                     <a href="#" class="support-button">Запросить инженера →</a>
@@ -1596,7 +1650,7 @@
     <div id="test-page" class="page" style="display: none;">
         <section class="test-hero">
             <div class="container">
-                <h1>Тест-драйв DeepSeek</h1>
+                <h1>Тест-драйв нейросети</h1>
                 <p>Один бесплатный запрос к нейросети, обученной на базе из 15 000+ решений</p>
             </div>
         </section>
@@ -1604,9 +1658,9 @@
         <div class="container">
             <div class="chat-container">
                 <div class="chat-header">
-                    <div class="chat-avatar">DS</div>
+                    <div class="chat-avatar">AI</div>
                     <div class="chat-title">
-                        <h3>DeepSeek Инженерный</h3>
+                        <h3>Техническая нейросеть</h3>
                         <p>на базе IndustrAI</p>
                     </div>
                     <div class="query-counter" id="queryCounter">1 запрос</div>
@@ -1618,7 +1672,7 @@
 
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot">
-                        <div class="message-avatar">DS</div>
+                        <div class="message-avatar">AI</div>
                         <div class="message-content">
                             Здравствуйте! Задайте вопрос. Например:<br>
                             • "Ошибка SEW F04"<br>
@@ -1692,7 +1746,7 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                © 2026 IndustrAI — База знаний из открытых источников + DeepSeek<br>
+                © 2026 IndustrAI — База знаний из открытых источников + мощная нейросеть<br>
                 ИП Сальников Василий
             </div>
         </div>
@@ -1887,14 +1941,14 @@
 
         function addMessage(text, sender) {
             const m = document.getElementById('chatMessages');
-            m.innerHTML += `<div class="message ${sender}"><div class="message-avatar">${sender==='user'?'Я':'DS'}</div><div class="message-content">${text}</div></div>`;
+            m.innerHTML += `<div class="message ${sender}"><div class="message-avatar">${sender==='user'?'Я':'AI'}</div><div class="message-content">${text}</div></div>`;
             m.scrollTop = m.scrollHeight;
         }
 
         function resetChat() {
             freeQueriesLeft = 1;
             document.getElementById('queryCounter').innerText = '1 запрос';
-            document.getElementById('chatMessages').innerHTML = '<div class="message bot"><div class="message-avatar">DS</div><div class="message-content">Здравствуйте! Задайте вопрос.</div></div>';
+            document.getElementById('chatMessages').innerHTML = '<div class="message bot"><div class="message-avatar">AI</div><div class="message-content">Здравствуйте! Задайте вопрос.</div></div>';
             document.getElementById('chatInput').disabled = false;
         }
 
