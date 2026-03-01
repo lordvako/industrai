@@ -31,14 +31,14 @@
         }
         
         .container {
-            max-width: 1400px;  /* Увеличил с 1280px до 1400px */
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 30px;    /* Увеличил отступы */
+            padding: 0 30px;
         }
         
         @media (min-width: 1600px) {
             .container {
-                max-width: 1500px;  /* Ещё шире на больших экранах */
+                max-width: 1500px;
             }
         }
         
@@ -263,14 +263,26 @@
         .hero-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 30px;
+            gap: 40px;
         }
         
         @media (min-width: 1200px) {
             .hero-grid {
                 grid-template-columns: 1fr 1fr;
-                gap: 60px;  /* Увеличил gap для большего пространства */
+                gap: 60px;
             }
+        }
+        
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
         
         .hero-label {
@@ -282,8 +294,9 @@
             font-size: 13px;
             font-weight: 600;
             color: #2B6FF0;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border: 1px solid rgba(43,111,240,0.3);
+            align-self: flex-start;
         }
         
         .hero h1 {
@@ -292,7 +305,7 @@
             line-height: 1.2;
             margin-bottom: 20px;
             letter-spacing: -0.5px;
-            max-width: 600px;  /* Ограничиваем ширину, чтобы текст не растягивался */
+            max-width: 600px;
         }
         
         @media (min-width: 768px) {
@@ -305,8 +318,8 @@
         @media (min-width: 1200px) {
             .hero h1 {
                 font-size: 52px;
-                max-width: 700px;  /* Чтобы фраза была в одну строку */
-                white-space: nowrap; /* Запрещаем перенос */
+                max-width: 700px;
+                white-space: nowrap;
             }
         }
         
@@ -319,7 +332,7 @@
         .hero-description {
             font-size: 16px;
             color: rgba(255,255,255,0.75);
-            margin-bottom: 28px;
+            margin-bottom: 20px;
             max-width: 600px;
         }
         
@@ -335,7 +348,7 @@
             backdrop-filter: blur(8px);
             border-radius: 20px;
             padding: 24px;
-            margin: 30px 0;
+            margin: 10px 0;
             border-left: 4px solid #2B6FF0;
             max-width: 600px;
         }
@@ -364,7 +377,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            margin-top: 30px;
+            margin-top: 10px;
             max-width: 600px;
         }
         
@@ -384,13 +397,13 @@
             text-transform: uppercase;
         }
         
-        /* НОВЫЙ БЛОК — База знаний */
+        /* Блок базы знаний */
         .knowledge-block {
             background: rgba(43,111,240,0.15);
             backdrop-filter: blur(8px);
             border-radius: 20px;
             padding: 24px;
-            margin-top: 30px;
+            margin-top: 10px;
             border: 1px solid rgba(43,111,240,0.3);
             max-width: 600px;
         }
@@ -443,6 +456,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            margin-top: 20px;
         }
         
         .error-card {
@@ -452,12 +466,14 @@
             padding: 20px;
             border: 1px solid rgba(43,111,240,0.2);
             transition: all 0.3s;
+            cursor: pointer;
         }
         
         .error-card:hover {
             transform: translateX(-5px);
             border-color: #2B6FF0;
             box-shadow: 0 10px 20px rgba(43,111,240,0.2);
+            background: rgba(43,111,240,0.1);
         }
         
         .error-header {
@@ -1072,6 +1088,7 @@
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             transition: 0.3s;
+            cursor: pointer;
         }
         
         .item-card:hover {
@@ -1130,6 +1147,7 @@
             font-size: 11px;
             cursor: pointer;
             transition: 0.3s;
+            pointer-events: none;
         }
         
         .item-buy:hover {
@@ -1447,7 +1465,7 @@
             <div class="container hero">
                 <div class="hero-grid">
                     <!-- Левая колонка -->
-                    <div>
+                    <div class="hero-left">
                         <span class="hero-label">⚡ ИНЖЕНЕР + НЕЙРОСЕТЬ</span>
                         <h1>Экосистема инженеров с мощной технической нейросетью</h1>
                         <p class="hero-description">12 лет в АСУТП и огромная база знаний из открытых источников — теперь в одной платформе.</p>
@@ -1480,7 +1498,7 @@
                             </div>
                         </div>
 
-                        <!-- Блок — База знаний -->
+                        <!-- Блок базы знаний -->
                         <div class="knowledge-block">
                             <h3><i class="fas fa-database"></i> Уникальная база знаний</h3>
                             <p>Мы собрали данные со всех открытых источников: форумы АСУТП, техническая документация Siemens, SEW, Delta, реальные кейсы инженеров. Это не просто нейросеть — это опыт тысяч специалистов, структурированный и доступный в одном месте.</p>
@@ -1502,9 +1520,9 @@
                     </div>
 
                     <!-- Правая колонка: карточки ошибок -->
-                    <div>
+                    <div class="hero-right">
                         <div class="error-cards">
-                            <div class="error-card">
+                            <div class="error-card" onclick="openBuyModal(1)">
                                 <div class="error-header">
                                     <span class="error-code">SEW F04</span>
                                     <span class="error-tag">приводы</span>
@@ -1513,7 +1531,7 @@
                                 <div class="error-progress"><div class="progress-bar" style="width:94%"></div></div>
                                 <div class="error-solution"><i class="fas fa-lightbulb"></i> Проверьте тормозной резистор (15-100 Ом)</div>
                             </div>
-                            <div class="error-card">
+                            <div class="error-card" onclick="openBuyModal(2)">
                                 <div class="error-header">
                                     <span class="error-code">Sinumerik 3000</span>
                                     <span class="error-tag">ЧПУ</span>
@@ -1522,7 +1540,7 @@
                                 <div class="error-progress"><div class="progress-bar" style="width:96%"></div></div>
                                 <div class="error-solution"><i class="fas fa-lightbulb"></i> Проверьте концевик и кабель энкодера</div>
                             </div>
-                            <div class="error-card">
+                            <div class="error-card" onclick="openBuyModal(3)">
                                 <div class="error-header">
                                     <span class="error-code">S7-300 SF</span>
                                     <span class="error-tag">контроллеры</span>
@@ -1825,14 +1843,14 @@
             let html = '';
             equipmentData.forEach(item => {
                 html += `
-                    <div class="item-card">
+                    <div class="item-card" onclick="openBuyModal(${item.id})">
                         <div class="item-image">${item.image}</div>
                         <div class="item-details">
                             <div class="item-category">${item.category}</div>
                             <div class="item-title">${item.name}</div>
                             <div class="item-price-block">
                                 <span class="item-price">${item.finalPrice.toLocaleString()} ₽</span>
-                                <button class="item-buy" onclick="openBuyModal(${item.id})">Купить</button>
+                                <button class="item-buy">Купить</button>
                             </div>
                         </div>
                     </div>
@@ -1888,13 +1906,20 @@
         }
 
         // Покупка
-        function openBuyModal(id) { currentItemId = id; document.getElementById('phoneModal').classList.add('active'); }
-        function closeModal() { document.getElementById('phoneModal').classList.remove('active'); document.getElementById('buyerPhone').value = ''; }
+        function openBuyModal(id) { 
+            currentItemId = id; 
+            document.getElementById('phoneModal').classList.add('active'); 
+        }
+        
+        function closeModal() { 
+            document.getElementById('phoneModal').classList.remove('active'); 
+            document.getElementById('buyerPhone').value = ''; 
+        }
         
         function submitPhone() {
             const phone = document.getElementById('buyerPhone').value;
             if (!phone) { alert('Введите телефон'); return; }
-            const item = equipmentData.find(i => i.id === currentItemId);
+            const item = equipmentData.find(i => i.id === currentItemId) || { name: "Запрос по ошибке" };
             sendEmailToAdmin('Новый покупатель', `${item.name}\nТелефон: ${phone}`);
             showNotification('Спасибо! Мы свяжемся с вами');
             closeModal();
