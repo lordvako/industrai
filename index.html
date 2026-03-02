@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    
+    <!-- Защита кода -->
+    <meta name="copyright" content="IndustrAI - Василий Сальников, 2026. Все права защищены">
+    <meta name="author" content="Василий Сальников">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232B6FF0'/><text x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>IA</text></svg>">
+    
     <title>IndustrAI — экосистема инженеров</title>
     
     <!-- Fonts -->
@@ -14,7 +22,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
-        /* ===== ОБЩИЕ СТИЛИ ===== */
+        /* 
+        ========================================
+        INDUSTRAI - ЭКОСИСТЕМА ИНЖЕНЕРОВ
+        Автор: Василий Сальников
+        Все права защищены. Копирование запрещено.
+        ========================================
+        */
+        
         * {
             margin: 0;
             padding: 0;
@@ -66,7 +81,7 @@
             100% { background-position: 0% 50%; }
         }
         
-        /* ===== НАВИГАЦИЯ ===== */
+        /* Навигация */
         .navbar {
             position: fixed;
             top: 0;
@@ -227,6 +242,121 @@
             min-height: 100vh;
         }
         
+        /* Модальное окно авторизации */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .auth-modal.active {
+            display: flex;
+        }
+        
+        .auth-content {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            animation: fadeInUp 0.3s ease;
+        }
+        
+        .auth-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #5A6B7A;
+            transition: 0.3s;
+        }
+        
+        .auth-close:hover {
+            color: #2B6FF0;
+            transform: scale(1.1);
+        }
+        
+        .auth-content h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #0A1929;
+        }
+        
+        .auth-content p {
+            color: #5A6B7A;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .auth-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #E0E8F0;
+            border-radius: 40px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+        
+        .auth-input:focus {
+            outline: none;
+            border-color: #2B6FF0;
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .auth-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
+        }
+        
+        .auth-link {
+            text-align: center;
+            color: #2B6FF0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+        
+        .admin-badge {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            margin-left: 8px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
         /* Главная — градиент */
         .gradient-bg {
             background: linear-gradient(-45deg, #0A1929, #123456, #1A3A5A, #0A1929);
@@ -284,7 +414,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            margin-top: 180px; /* Ещё больше опустил карточки */
+            margin-top: 180px;
         }
         
         @media (max-width: 1199px) {
@@ -759,6 +889,7 @@
             font-weight: 600;
             font-size: 14px;
             transition: 0.3s;
+            cursor: pointer;
         }
         
         .pricing-button.basic {
@@ -817,6 +948,7 @@
             font-size: 15px;
             display: inline-block;
             transition: 0.3s;
+            cursor: pointer;
         }
         
         .support-button:hover {
@@ -824,7 +956,7 @@
             box-shadow: 0 10px 20px rgba(255,255,255,0.2);
         }
         
-        /* ===== СТРАНИЦА "О НАС" ===== */
+        /* Страница "О нас" */
         .about-hero {
             background: linear-gradient(135deg, #0A1929, #1A2A3A);
             color: white;
@@ -1383,6 +1515,31 @@
             }
         }
         
+        .seller-item:last-child {
+            border-bottom: none;
+        }
+        
+        .seller-item-image {
+            width: 50px;
+            height: 50px;
+            background: #F0F4F8;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2B6FF0;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .seller-item-info {
+            flex: 2;
+        }
+        
+        .seller-item-price {
+            text-align: right;
+        }
+        
         /* Модальное окно */
         .modal {
             display: none;
@@ -1512,16 +1669,25 @@
             color: rgba(255,255,255,0.4);
             font-size: 13px;
         }
+        
+        /* Защита от копирования */
+        .protected {
+            user-select: none;
+            -webkit-user-select: none;
+        }
     </style>
 </head>
 <body>
+    <!-- Защита от просмотра кода -->
+    <div style="display:none">IndustrAI - Василий Сальников, 2026. Все права защищены.</div>
+    
     <!-- Мобильное меню -->
     <div class="mobile-menu" id="mobileMenu">
         <a href="#" class="nav-link" onclick="showPage('home'); closeMobileMenu(); return false;">Главная</a>
         <a href="#" class="nav-link" onclick="showPage('test'); closeMobileMenu(); return false;">Тест-драйв</a>
         <a href="#" class="nav-link" onclick="showPage('marketplace'); closeMobileMenu(); return false;">Биржа</a>
         <a href="#" class="nav-link" onclick="showPage('about'); closeMobileMenu(); return false;">О нас</a>
-        <a href="#" class="nav-button" style="margin-top: 20px; text-align: center;" onclick="closeMobileMenu()">Войти</a>
+        <a href="#" class="nav-link" onclick="openAuthModal(); closeMobileMenu(); return false;">Войти</a>
     </div>
 
     <!-- Навигация -->
@@ -1533,13 +1699,26 @@
                 <a href="#" class="nav-link" onclick="showPage('test'); return false;">Тест-драйв</a>
                 <a href="#" class="nav-link" onclick="showPage('marketplace'); return false;">Биржа</a>
                 <a href="#" class="nav-link" onclick="showPage('about'); return false;">О нас</a>
-                <a href="#" class="nav-button">Войти</a>
+                <a href="#" class="nav-button" onclick="openAuthModal()">Войти</a>
             </div>
             <div class="mobile-menu-button" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
             </div>
         </div>
     </nav>
+
+    <!-- Модальное окно авторизации -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-content">
+            <div class="auth-close" onclick="closeAuthModal()">×</div>
+            <h2>Вход в систему</h2>
+            <p>Введите логин и пароль для доступа</p>
+            <input type="text" class="auth-input" id="authLogin" placeholder="Логин" value="admin">
+            <input type="password" class="auth-input" id="authPassword" placeholder="Пароль" value="industrai2026">
+            <button class="auth-button" onclick="login()">Войти</button>
+            <div class="auth-link" onclick="closeAuthModal()">Отмена</div>
+        </div>
+    </div>
 
     <!-- Модальное окно для телефона -->
     <div class="modal" id="phoneModal">
@@ -1566,7 +1745,7 @@
                         
                         <!-- Блок истории -->
                         <div class="story-block">
-                            <p>«Я сам инженер. Знаю, как бывает: ночь, цех стоит, а ответа нет. Мы собрали всё с форумов, добавили свой опыт и обучили мощную нейросеть. Теперь на основе этой базы ИИ даёт готовые решения.»</p>
+                            <p>«Наша миссия — помогать инженерам быстро находить решения, делиться опытом и объединять знания. Мы создали платформу, где каждый специалист может получить ответ на сложный вопрос и обменяться информацией с коллегами.»</p>
                             <div class="story-author">
                                 <div class="author-photo">ВС</div>
                                 <div>
@@ -1711,8 +1890,9 @@
                             <li><i class="fas fa-check"></i> База знаний (15 000+ решений)</li>
                             <li><i class="fas fa-check"></i> Доступ к форумам</li>
                             <li style="color: #ccc;"><i class="fas fa-times"></i> Биржа</li>
+                            <li style="color: #ccc;"><i class="fas fa-times"></i> Поддержка</li>
                         </ul>
-                        <a href="#" class="pricing-button basic">Выбрать</a>
+                        <div class="pricing-button basic" onclick="buySubscription('basic')">Выбрать</div>
                     </div>
 
                     <!-- Профессиональный -->
@@ -1724,9 +1904,9 @@
                             <li><i class="fas fa-check"></i> Нейросеть: безлимитно</li>
                             <li><i class="fas fa-check"></i> База знаний + обновления</li>
                             <li><i class="fas fa-check"></i> Биржа (0% комиссии)</li>
-                            <li><i class="fas fa-check"></i> Поддержка 24/7</li>
+                            <li><i class="fas fa-check"></i> Поддержка: оплачивается отдельно</li>
                         </ul>
-                        <a href="#" class="pricing-button premium">Выбрать</a>
+                        <div class="pricing-button premium" onclick="buySubscription('pro')">Выбрать</div>
                     </div>
 
                     <!-- Корпоративный -->
@@ -1737,8 +1917,9 @@
                             <li><i class="fas fa-check"></i> Всё из Профессионального</li>
                             <li><i class="fas fa-check"></i> Выделенная нейросеть</li>
                             <li><i class="fas fa-check"></i> Интеграция с 1С/SAP</li>
+                            <li><i class="fas fa-check"></i> Онлайн-поддержка инженеров 24/7</li>
                         </ul>
-                        <a href="#" class="pricing-button basic">Связаться</a>
+                        <div class="pricing-button basic" onclick="buySubscription('corp')">Связаться</div>
                     </div>
                 </div>
             </div>
@@ -1749,10 +1930,10 @@
             <div class="container">
                 <div class="support-section">
                     <div class="support-content">
-                        <h2>Нужно больше, чем нейросеть?</h2>
-                        <p>Подключим опытных инженеров. Решаем 98% проблем.</p>
+                        <h2>Нужна помощь инженера?</h2>
+                        <p>Подключим опытных специалистов для сложных случаев</p>
                     </div>
-                    <a href="#" class="support-button">Запросить инженера →</a>
+                    <div class="support-button" onclick="requestSupport()">Запросить инженера →</div>
                 </div>
             </div>
         </section>
@@ -1816,7 +1997,8 @@
             <div class="marketplace-tabs">
                 <div class="tab-button active" onclick="switchMarketplaceTab('catalog')">Каталог</div>
                 <div class="tab-button" onclick="switchMarketplaceTab('add')">Добавить</div>
-                <div class="tab-button" onclick="switchMarketplaceTab('cabinet')">Кабинет</div>
+                <!-- Вкладка "Кабинет" видна только админу -->
+                <div class="tab-button" id="cabinetTabButton" style="display:none;" onclick="switchMarketplaceTab('cabinet')">Кабинет</div>
             </div>
 
             <div id="catalog-tab" class="tab-content active">
@@ -1854,7 +2036,7 @@
 
             <div id="cabinet-tab" class="tab-content">
                 <div class="seller-cabinet">
-                    <h3>Ваши объявления</h3>
+                    <h3>Ваши объявления <span class="admin-badge">только для администратора</span></h3>
                     <div class="seller-items" id="sellerItems"></div>
                 </div>
             </div>
@@ -1866,7 +2048,7 @@
         <section class="about-hero">
             <div class="container">
                 <h1>О проекте IndustrAI</h1>
-                <p>12 лет инженерного опыта, тысячи решений и мощная нейросеть — для вас</p>
+                <p>Мы помогаем инженерам находить решения, делиться опытом и объединять знания</p>
             </div>
         </section>
 
@@ -1874,10 +2056,9 @@
             <div class="container">
                 <div class="about-grid">
                     <div class="about-text">
-                        <h2>Как появилась <span>IndustrAI</span></h2>
-                        <p>Всё началось с простой инженерной проблемы. Ночь, цех стоит, станок с ЧПУ выдаёт ошибку, а ответа нет. Форумы переполнены противоречивой информацией, документация разбросана, времени в обрез.</p>
-                        <p>Я, Василий Сальников, инженер АСУТП с 12-летним стажем, решил это изменить. Мы начали собирать данные со всех открытых источников: форумы, техническая документация, реальные кейсы. Собрали более 15 000 решений по Siemens, SEW, Delta и другим производителям.</p>
-                        <p>А затем мы подключили мощную техническую нейросеть, которая анализирует эту базу и выдаёт готовые решения за секунды. Теперь каждый инженер может получить ответ, не тратя часы на поиски.</p>
+                        <h2>Наша <span>миссия</span></h2>
+                        <p>Мы создали IndustrAI, чтобы каждый инженер мог быстро получить ответ на сложный вопрос, не тратя часы на поиски по форумам и документации. Наша платформа объединяет опыт тысяч специалистов и мощь современных технологий.</p>
+                        <p>Мы верим, что обмен знаниями — основа прогресса. Поэтому мы сделали базу данных из открытых источников и добавили нейросеть, которая анализирует эту информацию и выдаёт готовые решения. А биржа оборудования помогает находить нужные комплектующие без посредников.</p>
                         
                         <div class="about-stats">
                             <div class="about-stat-item">
@@ -1936,13 +2117,28 @@
         <div class="container">
             <div class="footer-bottom">
                 © 2026 IndustrAI — База знаний из открытых источников + мощная нейросеть<br>
-                ИП Сальников Василий
+                ИП Сальников Василий | Все права защищены
             </div>
         </div>
     </footer>
 
     <script>
-        // Обновленные данные оборудования с новыми позициями
+        // Защита от копирования кода
+        (function() {
+            // Отключение правой кнопки мыши
+            document.addEventListener('contextmenu', function(e) {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Предупреждение при попытке открыть консоль
+            console.log('%c⚠️ Этот код защищен авторским правом ⚠️', 'color: red; font-size: 16px; font-weight: bold;');
+            console.log('%cIndustrAI - Василий Сальников, 2026', 'color: #2B6FF0; font-size: 14px;');
+        })();
+
+        // Данные оборудования
         const equipmentData = [
             { 
                 id:1, 
@@ -1951,7 +2147,7 @@
                 description:"НОВОЕ, В НАЛИЧИИ", 
                 image:"⚙️", 
                 sellerPrice:320000, 
-                finalPrice:432000, // +35%
+                finalPrice:432000,
                 status:"НОВОЕ, В НАЛИЧИИ",
                 sellerName:"Василий" 
             },
@@ -2009,34 +2205,77 @@
                 finalPrice:75600,
                 status:"НОВОЕ, В НАЛИЧИИ",
                 sellerName:"Василий" 
-            },
-            // Старые позиции (можно удалить если не нужны)
-            { 
-                id:7, 
-                name:"Siemens S7-200 CPU 226 (б/у)", 
-                category:"Контроллеры", 
-                description:"Б/У, в хорошем состоянии", 
-                image:"⚙️", 
-                sellerPrice:8500, 
-                finalPrice:11475,
-                status:"Б/У",
-                sellerName:"Василий" 
-            },
-            { 
-                id:8, 
-                name:"SEW MDX61B 22kW (б/у)", 
-                category:"Приводы", 
-                description:"Б/У 1 год", 
-                image:"⚡", 
-                sellerPrice:120000, 
-                finalPrice:162000,
-                status:"Б/У",
-                sellerName:"Василий" 
             }
         ];
 
         let currentItemId = null;
         let freeQueriesLeft = 1;
+        let isAdmin = false;
+
+        // Авторизация
+        function openAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function login() {
+            const login = document.getElementById('authLogin').value;
+            const password = document.getElementById('authPassword').value;
+            
+            // Проверка админских данных
+            if (login === 'admin' && password === 'industrai2026') {
+                isAdmin = true;
+                document.getElementById('cabinetTabButton').style.display = 'inline-block';
+                showNotification('Добро пожаловать, администратор!');
+                closeAuthModal();
+                
+                // Обновляем меню
+                const loginButton = document.querySelector('.nav-button');
+                loginButton.textContent = 'Админ';
+                loginButton.onclick = null;
+                loginButton.style.background = 'linear-gradient(135deg, #00B4A0, #2B6FF0)';
+            } else {
+                alert('Неверный логин или пароль');
+            }
+        }
+
+        // Покупка подписки
+        function buySubscription(type) {
+            let planName = '';
+            let price = 0;
+            
+            if (type === 'basic') {
+                planName = 'Базовый';
+                price = 4900;
+            } else if (type === 'pro') {
+                planName = 'Профессиональный';
+                price = 14900;
+            } else if (type === 'corp') {
+                planName = 'Корпоративный';
+                price = 49900;
+            }
+            
+            // Генерация логина и пароля
+            const email = prompt('Введите ваш email для получения доступа:');
+            if (!email) return;
+            
+            const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
+            const password = Math.random().toString(36).substring(2, 10) + Math.floor(Math.random() * 100);
+            
+            // Отправка на почту
+            sendEmailToAdmin('Новая подписка', 
+                `План: ${planName}\nЦена: ${price} ₽\nEmail: ${email}\nЛогин: ${login}\nПароль: ${password}`
+            );
+            
+            showNotification(`Спасибо за покупку! Данные для входа отправлены на ${email}`);
+        }
+
+        function requestSupport() {
+            showNotification('Запрос отправлен. Инженер свяжется с вами');
+        }
 
         // Мобильное меню
         function toggleMobileMenu() {
@@ -2074,7 +2313,7 @@
                 btn.classList.toggle('active', 
                     (i === 0 && tab === 'catalog') ||
                     (i === 1 && tab === 'add') ||
-                    (i === 2 && tab === 'cabinet')
+                    (i === 2 && tab === 'cabinet' && isAdmin)
                 );
             });
             
@@ -2086,7 +2325,7 @@
                 );
             });
             
-            if (tab === 'cabinet') loadSellerItems();
+            if (tab === 'cabinet' && isAdmin) loadSellerItems();
         }
 
         // Загрузка каталога
@@ -2115,8 +2354,13 @@
             grid.innerHTML = html;
         }
 
-        // Добавление товара
+        // Добавление товара (только для админа)
         function addNewItem() {
+            if (!isAdmin) {
+                alert('Только администратор может добавлять товары');
+                return;
+            }
+            
             const name = document.getElementById('itemName').value;
             const price = parseFloat(document.getElementById('sellerPrice').value);
             if (!name || !price) { alert('Заполните название и цену'); return; }
@@ -2134,8 +2378,10 @@
             };
             equipmentData.push(newItem);
             
-            sendEmailToAdmin('Новое объявление', `${name}\nЦена продавца: ${price} ₽\nСтатус: ${newItem.status}`);
-            showNotification('Товар отправлен на модерацию');
+            sendEmailToAdmin('Новое объявление', 
+                `${name}\nЦена продавца: ${price} ₽\nЦена продажи: ${newItem.finalPrice} ₽\nСтатус: ${newItem.status}`
+            );
+            showNotification('Товар добавлен');
             
             document.getElementById('itemName').value = '';
             document.getElementById('itemDescription').value = '';
@@ -2145,9 +2391,14 @@
             loadMarketplaceData();
         }
 
-        // Загрузка товаров продавца
+        // Загрузка товаров продавца (только для админа)
         function loadSellerItems() {
             const container = document.getElementById('sellerItems');
+            if (!isAdmin) {
+                container.innerHTML = '<p>Доступ запрещён</p>';
+                return;
+            }
+            
             const myItems = equipmentData.filter(i => i.sellerName === "Василий");
             if (!myItems.length) { container.innerHTML = '<p>У вас пока нет товаров</p>'; return; }
             
@@ -2194,9 +2445,10 @@
         function sendEmailToAdmin(subject, body) {
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
-            iframe.src = `mailto:iris.salnikov@yandex.ru?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            iframe.src = `mailto:iris.salnikov@yandex.ru?subject=${encodeURIComponent('[IndustrAI] ' + subject)}&body=${encodeURIComponent(body)}`;
             document.body.appendChild(iframe);
             setTimeout(() => document.body.removeChild(iframe), 1000);
+            console.log('Email отправлен:', subject, body);
         }
 
         // Уведомление
@@ -2250,7 +2502,7 @@
             const contact = document.getElementById('feedbackContact').value;
             const message = document.getElementById('feedbackMessage').value;
             
-            sendEmailToAdmin('Обратная связь от пользователя', 
+            sendEmailToAdmin('Обратная связь', 
                 `Имя: ${name}\nКонтакт: ${contact}\nСообщение: ${message}`
             );
             
