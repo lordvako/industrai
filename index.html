@@ -198,6 +198,12 @@
             background: rgba(255,255,255,0.1);
             padding: 6px 12px;
             border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .user-name:hover {
+            background: rgba(255,255,255,0.2);
         }
         
         .logout-btn {
@@ -1060,13 +1066,134 @@
             }
         }
         
+        /* Чат */
         .chat-container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: -30px auto 40px;
             background: white;
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             overflow: hidden;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+        }
+        
+        @media (max-width: 768px) {
+            .chat-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Боковая панель с историей */
+        .chat-sidebar {
+            background: #0A1929;
+            color: white;
+            padding: 20px;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            height: 600px;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .new-chat-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .new-chat-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: rotate(90deg);
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .history-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+        
+        .history-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .history-item.active {
+            background: rgba(43,111,240,0.3);
+            border-left: 3px solid #2B6FF0;
+        }
+        
+        .history-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 25px;
+        }
+        
+        .history-item-date {
+            font-size: 11px;
+            opacity: 0.5;
+        }
+        
+        .delete-history {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .history-item:hover .delete-history {
+            display: flex;
+        }
+        
+        .delete-history:hover {
+            background: rgba(255,255,255,0.2);
+            color: #ff5f56;
+        }
+        
+        /* Основная область чата */
+        .chat-main {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
         }
         
         .chat-header {
@@ -1076,7 +1203,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
         .chat-avatar {
@@ -1111,38 +1238,29 @@
             border: 1px solid rgba(255,255,255,0.2);
         }
         
-        .free-query-badge {
-            text-align: center;
-            padding: 12px;
-            background: #F0F4F8;
-            color: #5A6B7A;
-            font-size: 13px;
-            border-bottom: 1px solid #E0E8F0;
-        }
-        
         .chat-messages {
+            flex: 1;
             padding: 20px;
-            max-height: 400px;
             overflow-y: auto;
             background: #F8FAFE;
         }
         
         .message {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 20px;
         }
         
         .message-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: #E0E8F0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 13px;
             flex-shrink: 0;
         }
         
@@ -1158,11 +1276,11 @@
         
         .message-content {
             background: white;
-            padding: 12px 16px;
-            border-radius: 16px;
-            max-width: calc(100% - 50px);
-            font-size: 13px;
-            line-height: 1.5;
+            padding: 14px 18px;
+            border-radius: 18px;
+            max-width: 70%;
+            font-size: 14px;
+            line-height: 1.6;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
@@ -1178,6 +1296,21 @@
         
         .message.user {
             flex-direction: row-reverse;
+        }
+        
+        .message-attachment {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+        
+        .message-attachment i {
+            font-size: 16px;
         }
         
         .chat-input-area {
@@ -1204,6 +1337,27 @@
         
         .chat-input:focus {
             outline: none;
+            border-color: #2B6FF0;
+        }
+        
+        .attach-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #F0F4F8;
+            border: 2px solid #E0E8F0;
+            color: #5A6B7A;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        
+        .attach-btn:hover {
+            background: #2B6FF0;
+            color: white;
             border-color: #2B6FF0;
         }
         
@@ -1641,12 +1795,6 @@
             color: rgba(255,255,255,0.4);
             font-size: 13px;
         }
-        
-        /* Защита от копирования */
-        .protected {
-            user-select: none;
-            -webkit-user-select: none;
-        }
     </style>
 </head>
 <body>
@@ -1668,8 +1816,8 @@
                 <a href="#" class="nav-link" onclick="showPage('test'); return false;">Тест-драйв</a>
                 <a href="#" class="nav-link" onclick="showPage('marketplace'); return false;">Биржа</a>
                 <a href="#" class="nav-link" onclick="showPage('about'); return false;">О нас</a>
-                <div id="userMenu" style="display: none;">
-                    <span class="user-name" id="userNameDisplay"></span>
+                <div id="userMenu" style="display: none; align-items: center; gap: 15px;">
+                    <span class="user-name" id="userNameDisplay" onclick="showPage('profile')"></span>
                     <span class="logout-btn" onclick="logout()">Выйти</span>
                 </div>
                 <a href="#" class="nav-button" id="loginBtn" onclick="window.location.href='login.html'">Войти</a>
@@ -1861,6 +2009,8 @@
                             <li><i class="fas fa-check"></i> Нейросеть: 100 запросов</li>
                             <li><i class="fas fa-check"></i> База знаний (15 000+ решений)</li>
                             <li><i class="fas fa-check"></i> Доступ к форумам</li>
+                            <li><i class="fas fa-check"></i> История чатов</li>
+                            <li><i class="fas fa-check"></i> Загрузка файлов</li>
                             <li style="color: #ccc;"><i class="fas fa-times"></i> Биржа</li>
                             <li style="color: #ccc;"><i class="fas fa-times"></i> Поддержка</li>
                         </ul>
@@ -1876,6 +2026,8 @@
                             <li><i class="fas fa-check"></i> Нейросеть: безлимитно</li>
                             <li><i class="fas fa-check"></i> База знаний + обновления</li>
                             <li><i class="fas fa-check"></i> Биржа (0% комиссии)</li>
+                            <li><i class="fas fa-check"></i> История чатов</li>
+                            <li><i class="fas fa-check"></i> Загрузка файлов</li>
                             <li><i class="fas fa-check"></i> Поддержка: оплачивается отдельно</li>
                         </ul>
                         <button class="pricing-button premium" onclick="showConfirm('pro', 'Профессиональный', 14900)">Выбрать</button>
@@ -1922,34 +2074,93 @@
 
         <div class="container">
             <div class="chat-container">
-                <div class="chat-header">
-                    <div class="chat-avatar">AI</div>
-                    <div class="chat-title">
-                        <h3>Техническая нейросеть</h3>
-                        <p>на базе IndustrAI</p>
+                <div class="chat-sidebar">
+                    <div class="sidebar-header">
+                        <h3>История запросов</h3>
+                        <button class="new-chat-btn" onclick="createNewChat()"><i class="fas fa-plus"></i></button>
                     </div>
-                    <div class="query-counter" id="queryCounter">1 запрос</div>
+                    <div class="history-list" id="testHistoryList">
+                        <!-- Сюда будут добавляться элементы истории для тест-драйва -->
+                    </div>
                 </div>
+                <div class="chat-main">
+                    <div class="chat-header">
+                        <div class="chat-avatar">AI</div>
+                        <div class="chat-title">
+                            <h3>Техническая нейросеть</h3>
+                            <p>тест-драйв (1 запрос)</p>
+                        </div>
+                        <div class="query-counter" id="testQueryCounter">1 запрос</div>
+                    </div>
 
-                <div class="free-query-badge">
-                    <i class="fas fa-gift"></i> У вас 1 бесплатный запрос
-                </div>
+                    <div class="chat-messages" id="testChatMessages">
+                        <div class="message bot">
+                            <div class="message-avatar">AI</div>
+                            <div class="message-content">
+                                Здравствуйте! Задайте вопрос. Например:<br>
+                                • "Ошибка SEW F04"<br>
+                                • "Sinumerik 840D ALARM 3000"
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message bot">
-                        <div class="message-avatar">AI</div>
-                        <div class="message-content">
-                            Здравствуйте! Задайте вопрос. Например:<br>
-                            • "Ошибка SEW F04"<br>
-                            • "Sinumerik 840D ALARM 3000"
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrapper">
+                            <button class="attach-btn" onclick="attachFile('test')"><i class="fas fa-paperclip"></i></button>
+                            <input type="text" class="chat-input" id="testChatInput" placeholder="Опишите проблему...">
+                            <button class="chat-send" onclick="sendTestMessage()"><i class="fas fa-paper-plane"></i></button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="chat-input-area">
-                    <div class="chat-input-wrapper">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="Опишите проблему...">
-                        <button class="chat-send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    <!-- Личный кабинет пользователя (профиль) -->
+    <div id="profile-page" class="page" style="display: none;">
+        <section class="test-hero">
+            <div class="container">
+                <h1>Личный кабинет</h1>
+                <p>Неограниченное общение с нейросетью, история запросов, загрузка файлов</p>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="chat-container">
+                <div class="chat-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Мои диалоги</h3>
+                        <button class="new-chat-btn" onclick="createNewProfileChat()"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="history-list" id="profileHistoryList">
+                        <!-- Сюда будут добавляться элементы истории -->
+                    </div>
+                </div>
+                <div class="chat-main">
+                    <div class="chat-header">
+                        <div class="chat-avatar">AI</div>
+                        <div class="chat-title">
+                            <h3>Техническая нейросеть</h3>
+                            <p>полный доступ</p>
+                        </div>
+                        <div class="query-counter" id="profileQueryCounter">Безлимитно</div>
+                    </div>
+
+                    <div class="chat-messages" id="profileChatMessages">
+                        <div class="message bot">
+                            <div class="message-avatar">AI</div>
+                            <div class="message-content">
+                                Здравствуйте! Я ваша техническая нейросеть. Задавайте любые вопросы, прикрепляйте файлы — я помогу найти решение.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrapper">
+                            <button class="attach-btn" onclick="attachFile('profile')"><i class="fas fa-paperclip"></i></button>
+                            <input type="text" class="chat-input" id="profileChatInput" placeholder="Опишите проблему...">
+                            <button class="chat-send" onclick="sendProfileMessage()"><i class="fas fa-paper-plane"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2096,28 +2307,44 @@
     <script>
         // ========== СИСТЕМА ПОЛЬЗОВАТЕЛЕЙ ==========
         
-        // Хранилище пользователей (в реальном проекте - база данных)
+        // Хранилище пользователей
         let users = JSON.parse(localStorage.getItem('industrai_users')) || {};
+        
+        // Администратор по умолчанию
+        if (!users['admin']) {
+            users['admin'] = {
+                password: btoa('industrai2026'),
+                email: 'admin@industrai.ru',
+                plan: 'admin',
+                created: new Date().toISOString()
+            };
+            localStorage.setItem('industrai_users', JSON.stringify(users));
+        }
+        
         let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
+        
+        // Хранилище истории чатов для каждого пользователя
+        let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
         
         // Функция для создания нового пользователя при покупке
         function createUser(email, plan) {
-            // Генерация логина (часть email + случайные цифры)
             const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
-            
-            // Генерация пароля
             const password = Math.random().toString(36).substring(2, 10) + Math.floor(Math.random() * 100);
             
-            // Сохраняем пользователя (пароль храним в base64 для минимальной защиты)
             users[login] = {
                 password: btoa(password),
                 email: email,
                 plan: plan,
-                created: new Date().toISOString(),
-                queriesLeft: plan === 'basic' ? 100 : (plan === 'pro' ? 999999 : 999999)
+                created: new Date().toISOString()
             };
             
             localStorage.setItem('industrai_users', JSON.stringify(users));
+            
+            // Создаем пустую историю для нового пользователя
+            if (!chatHistory[login]) {
+                chatHistory[login] = [];
+            }
+            localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
             
             return { login, password };
         }
@@ -2133,6 +2360,9 @@
                 if (currentUser.login === 'admin') {
                     document.getElementById('cabinetTabButton').style.display = 'inline-block';
                 }
+                
+                // Загружаем историю для пользователя
+                loadUserChatHistory();
             } else {
                 document.getElementById('userMenu').style.display = 'none';
                 document.getElementById('loginBtn').style.display = 'inline-block';
@@ -2146,6 +2376,308 @@
             checkAuth();
             showNotification('Вы вышли из системы');
             showPage('home');
+        }
+        
+        // ========== ИСТОРИЯ ЧАТОВ ==========
+        
+        // Загрузка истории для текущего пользователя
+        function loadUserChatHistory() {
+            if (!currentUser) return;
+            
+            if (!chatHistory[currentUser.login]) {
+                chatHistory[currentUser.login] = [];
+            }
+            
+            // Создаем первый чат, если нет ни одного
+            if (chatHistory[currentUser.login].length === 0) {
+                const firstChat = {
+                    id: Date.now(),
+                    title: 'Новый диалог',
+                    messages: [
+                        {
+                            sender: 'bot',
+                            text: 'Здравствуйте! Я ваша техническая нейросеть. Задавайте любые вопросы, прикрепляйте файлы — я помогу найти решение.',
+                            timestamp: new Date().toISOString()
+                        }
+                    ],
+                    createdAt: new Date().toISOString()
+                };
+                chatHistory[currentUser.login].push(firstChat);
+                localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
+            }
+            
+            // Отображаем историю в профиле
+            renderProfileHistory();
+            
+            // Загружаем первый чат
+            if (chatHistory[currentUser.login].length > 0) {
+                loadProfileChat(chatHistory[currentUser.login][0].id);
+            }
+        }
+        
+        // Отображение истории в профиле
+        function renderProfileHistory() {
+            const historyList = document.getElementById('profileHistoryList');
+            if (!historyList || !currentUser) return;
+            
+            const userChats = chatHistory[currentUser.login] || [];
+            
+            let html = '';
+            userChats.forEach(chat => {
+                const date = new Date(chat.createdAt).toLocaleDateString('ru-RU');
+                html += `
+                    <div class="history-item ${chat.id === currentChatId ? 'active' : ''}" onclick="loadProfileChat(${chat.id})">
+                        <div class="history-item-title">${chat.title}</div>
+                        <div class="history-item-date">${date}</div>
+                        <button class="delete-history" onclick="deleteChat(${chat.id}, event)"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+        
+        // Создание нового чата в профиле
+        function createNewProfileChat() {
+            if (!currentUser) return;
+            
+            const newChat = {
+                id: Date.now(),
+                title: 'Новый диалог',
+                messages: [
+                    {
+                        sender: 'bot',
+                        text: 'Здравствуйте! Я ваша техническая нейросеть. Задавайте любые вопросы, прикрепляйте файлы — я помогу найти решение.',
+                        timestamp: new Date().toISOString()
+                    }
+                ],
+                createdAt: new Date().toISOString()
+            };
+            
+            chatHistory[currentUser.login].push(newChat);
+            localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
+            
+            renderProfileHistory();
+            loadProfileChat(newChat.id);
+        }
+        
+        // Загрузка конкретного чата в профиле
+        let currentChatId = null;
+        
+        function loadProfileChat(chatId) {
+            if (!currentUser) return;
+            
+            currentChatId = chatId;
+            const chat = chatHistory[currentUser.login].find(c => c.id === chatId);
+            if (!chat) return;
+            
+            // Обновляем выделение в истории
+            renderProfileHistory();
+            
+            // Отображаем сообщения
+            const messagesContainer = document.getElementById('profileChatMessages');
+            let html = '';
+            chat.messages.forEach(msg => {
+                html += `
+                    <div class="message ${msg.sender}">
+                        <div class="message-avatar">${msg.sender === 'user' ? 'Я' : 'AI'}</div>
+                        <div class="message-content">
+                            ${msg.text}
+                            ${msg.attachment ? `
+                                <div class="message-attachment">
+                                    <i class="fas fa-paperclip"></i>
+                                    ${msg.attachment.name}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            messagesContainer.innerHTML = html;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Отправка сообщения в профиле
+        function sendProfileMessage() {
+            if (!currentUser) {
+                alert('Необходимо авторизоваться');
+                return;
+            }
+            
+            const input = document.getElementById('profileChatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            // Находим текущий чат
+            const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
+            if (!chat) return;
+            
+            // Добавляем сообщение пользователя
+            chat.messages.push({
+                sender: 'user',
+                text: msg,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Обновляем заголовок чата (первое сообщение)
+            if (chat.messages.length === 2) {
+                chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
+            }
+            
+            // Отображаем сообщение
+            loadProfileChat(currentChatId);
+            
+            // Очищаем input
+            input.value = '';
+            
+            // Имитация ответа нейросети
+            setTimeout(() => {
+                let reply = '🔍 Анализирую на основе базы из 15 000+ решений...';
+                if (msg.toLowerCase().includes('sew')) reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом). Вероятность 94%';
+                else if (msg.toLowerCase().includes('sinumerik')) reply = 'Sinumerik 3000: проверьте концевик оси X. Вероятность 96%';
+                else if (msg.toLowerCase().includes('wieland')) reply = 'Wieland: уточните модель контроллера или модуля';
+                else reply = 'Найдено 47 похожих случаев. Уточните модель.';
+                
+                chat.messages.push({
+                    sender: 'bot',
+                    text: reply,
+                    timestamp: new Date().toISOString()
+                });
+                
+                localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
+                loadProfileChat(currentChatId);
+            }, 1000);
+        }
+        
+        // Удаление чата
+        function deleteChat(chatId, event) {
+            event.stopPropagation();
+            if (!currentUser) return;
+            
+            if (confirm('Удалить этот диалог?')) {
+                chatHistory[currentUser.login] = chatHistory[currentUser.login].filter(c => c.id !== chatId);
+                localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
+                
+                if (chatHistory[currentUser.login].length === 0) {
+                    createNewProfileChat();
+                } else {
+                    renderProfileHistory();
+                    loadProfileChat(chatHistory[currentUser.login][0].id);
+                }
+            }
+        }
+        
+        // ========== ТЕСТ-ДРАЙВ ==========
+        
+        let testQueriesLeft = 1;
+        let testChatHistory = [];
+        let testCurrentChatId = null;
+        
+        function createNewChat() {
+            const newChat = {
+                id: Date.now(),
+                title: 'Новый диалог',
+                messages: [
+                    {
+                        sender: 'bot',
+                        text: 'Здравствуйте! Задайте вопрос. Например:\n• "Ошибка SEW F04"\n• "Sinumerik 840D ALARM 3000"',
+                        timestamp: new Date().toISOString()
+                    }
+                ],
+                createdAt: new Date().toISOString()
+            };
+            
+            testChatHistory.push(newChat);
+            renderTestHistory();
+            loadTestChat(newChat.id);
+        }
+        
+        function renderTestHistory() {
+            const historyList = document.getElementById('testHistoryList');
+            if (!historyList) return;
+            
+            let html = '';
+            testChatHistory.forEach(chat => {
+                const date = new Date(chat.createdAt).toLocaleDateString('ru-RU');
+                html += `
+                    <div class="history-item ${chat.id === testCurrentChatId ? 'active' : ''}" onclick="loadTestChat(${chat.id})">
+                        <div class="history-item-title">${chat.title}</div>
+                        <div class="history-item-date">${date}</div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+        
+        function loadTestChat(chatId) {
+            testCurrentChatId = chatId;
+            const chat = testChatHistory.find(c => c.id === chatId);
+            if (!chat) return;
+            
+            renderTestHistory();
+            
+            const messagesContainer = document.getElementById('testChatMessages');
+            let html = '';
+            chat.messages.forEach(msg => {
+                html += `
+                    <div class="message ${msg.sender}">
+                        <div class="message-avatar">${msg.sender === 'user' ? 'Я' : 'AI'}</div>
+                        <div class="message-content">${msg.text}</div>
+                    </div>
+                `;
+            });
+            messagesContainer.innerHTML = html;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function sendTestMessage() {
+            const input = document.getElementById('testChatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            if (testQueriesLeft <= 0) {
+                alert('Бесплатные запросы закончились. Оформите подписку для продолжения');
+                return;
+            }
+            
+            testQueriesLeft--;
+            document.getElementById('testQueryCounter').innerText = testQueriesLeft + ' запрос';
+            
+            // Находим текущий чат
+            const chat = testChatHistory.find(c => c.id === testCurrentChatId);
+            if (!chat) return;
+            
+            // Добавляем сообщение пользователя
+            chat.messages.push({
+                sender: 'user',
+                text: msg,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Обновляем заголовок
+            if (chat.messages.length === 2) {
+                chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
+            }
+            
+            loadTestChat(testCurrentChatId);
+            input.value = '';
+            
+            // Ответ нейросети
+            setTimeout(() => {
+                let reply = '🔍 Анализирую...';
+                if (msg.toLowerCase().includes('sew')) reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом)';
+                else if (msg.toLowerCase().includes('sinumerik')) reply = 'Sinumerik 3000: проверьте концевик оси X';
+                else reply = 'Уточните модель оборудования и код ошибки';
+                
+                chat.messages.push({
+                    sender: 'bot',
+                    text: reply,
+                    timestamp: new Date().toISOString()
+                });
+                
+                loadTestChat(testCurrentChatId);
+            }, 1000);
         }
         
         // ========== СИСТЕМА ОПЛАТЫ ==========
@@ -2173,32 +2705,27 @@
         function processPayment() {
             if (!currentPayment) return;
             
-            // В реальном проекте здесь будет редирект на ЮKassa
-            // Сейчас показываем демо-форму для ввода email
-            
             const email = prompt('Введите ваш email для получения доступа:');
             if (!email || !email.includes('@')) {
                 alert('Введите корректный email');
                 return;
             }
             
-            // Создаем пользователя
             const { login, password } = createUser(email, currentPayment.type);
             
-            // Отправляем уведомление админу
             sendEmailToAdmin('Новая подписка', 
                 `План: ${currentPayment.name}\nСумма: ${currentPayment.price} ₽\nEmail: ${email}\nЛогин: ${login}\nПароль: ${password}`
             );
             
-            // В демо-режиме показываем данные
             alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${login}\nПароль: ${password}\n\nПисьмо отправлено на ${email}`);
             
             // Автоматически входим
-            currentUser = { login: login, ...users[login] };
+            currentUser = { login: login };
             localStorage.setItem('industrai_current_user', JSON.stringify({ login: login }));
             checkAuth();
             
             closeConfirmModal();
+            showPage('profile');
         }
         
         // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
@@ -2274,7 +2801,6 @@
         ];
 
         let currentItemId = null;
-        let freeQueriesLeft = 1;
         let isAdmin = currentUser && currentUser.login === 'admin';
 
         // Мобильное меню
@@ -2292,6 +2818,7 @@
             document.getElementById('test-page').style.display = page === 'test' ? 'block' : 'none';
             document.getElementById('marketplace-page').style.display = page === 'marketplace' ? 'block' : 'none';
             document.getElementById('about-page').style.display = page === 'about' ? 'block' : 'none';
+            document.getElementById('profile-page').style.display = page === 'profile' ? 'block' : 'none';
             
             document.querySelectorAll('.nav-link').forEach((link, index) => {
                 if (index < 4) {
@@ -2304,7 +2831,30 @@
                 }
             });
             
-            if (page === 'test') resetChat();
+            if (page === 'test') {
+                testQueriesLeft = 1;
+                document.getElementById('testQueryCounter').innerText = '1 запрос';
+                testChatHistory = [{
+                    id: Date.now(),
+                    title: 'Новый диалог',
+                    messages: [
+                        {
+                            sender: 'bot',
+                            text: 'Здравствуйте! Задайте вопрос. Например:\n• "Ошибка SEW F04"\n• "Sinumerik 840D ALARM 3000"',
+                            timestamp: new Date().toISOString()
+                        }
+                    ],
+                    createdAt: new Date().toISOString()
+                }];
+                testCurrentChatId = testChatHistory[0].id;
+                renderTestHistory();
+                loadTestChat(testCurrentChatId);
+            }
+            
+            if (page === 'profile' && currentUser) {
+                loadUserChatHistory();
+            }
+            
             if (page === 'marketplace') loadMarketplaceData();
             closeMobileMenu();
         }
@@ -2443,6 +2993,44 @@
             closeModal();
         }
 
+        // Прикрепление файлов
+        function attachFile(context) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf,.doc,.docx,.jpg,.png,.xls,.xlsx';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    showNotification(`Файл "${file.name}" прикреплён`);
+                    
+                    if (context === 'profile' && currentUser && currentChatId) {
+                        const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
+                        if (chat) {
+                            chat.messages.push({
+                                sender: 'user',
+                                text: `[Прикреплён файл: ${file.name}]`,
+                                attachment: { name: file.name },
+                                timestamp: new Date().toISOString()
+                            });
+                            loadProfileChat(currentChatId);
+                        }
+                    } else if (context === 'test' && testCurrentChatId) {
+                        const chat = testChatHistory.find(c => c.id === testCurrentChatId);
+                        if (chat) {
+                            chat.messages.push({
+                                sender: 'user',
+                                text: `[Прикреплён файл: ${file.name}]`,
+                                attachment: { name: file.name },
+                                timestamp: new Date().toISOString()
+                            });
+                            loadTestChat(testCurrentChatId);
+                        }
+                    }
+                }
+            };
+            input.click();
+        }
+
         // Email
         function sendEmailToAdmin(subject, body) {
             const iframe = document.createElement('iframe');
@@ -2459,49 +3047,6 @@
             n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
             document.body.appendChild(n);
             setTimeout(() => n.remove(), 5000);
-        }
-
-        // Чат
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-            
-            // Проверка авторизации для платных запросов
-            if (freeQueriesLeft <= 0 && !currentUser) {
-                alert('Бесплатные запросы закончились. Оформите подписку или войдите в аккаунт');
-                return;
-            }
-            
-            addMessage(msg, 'user');
-            input.value = '';
-            
-            if (!currentUser) {
-                freeQueriesLeft--;
-                document.getElementById('queryCounter').innerText = freeQueriesLeft + ' запрос';
-            }
-            
-            setTimeout(() => {
-                let reply = '🔍 Анализирую на основе базы из 15 000+ решений...';
-                if (msg.toLowerCase().includes('sew')) reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом). Вероятность 94%';
-                else if (msg.toLowerCase().includes('sinumerik')) reply = 'Sinumerik 3000: проверьте концевик оси X. Вероятность 96%';
-                else if (msg.toLowerCase().includes('wieland')) reply = 'Wieland: уточните модель контроллера или модуля';
-                else reply = 'Найдено 47 похожих случаев. Уточните модель.';
-                addMessage(reply, 'bot');
-            }, 1000);
-        }
-
-        function addMessage(text, sender) {
-            const m = document.getElementById('chatMessages');
-            m.innerHTML += `<div class="message ${sender}"><div class="message-avatar">${sender==='user'?'Я':'AI'}</div><div class="message-content">${text}</div></div>`;
-            m.scrollTop = m.scrollHeight;
-        }
-
-        function resetChat() {
-            freeQueriesLeft = 1;
-            document.getElementById('queryCounter').innerText = '1 запрос';
-            document.getElementById('chatMessages').innerHTML = '<div class="message bot"><div class="message-avatar">AI</div><div class="message-content">Здравствуйте! Задайте вопрос.</div></div>';
-            document.getElementById('chatInput').disabled = false;
         }
 
         // Обратная связь
