@@ -209,7 +209,6 @@
     </div>
 
     <script>
-        // Функция для показа уведомления
         function showNotification(msg) {
             const n = document.createElement('div');
             n.className = 'notification';
@@ -218,7 +217,6 @@
             setTimeout(() => n.remove(), 5000);
         }
 
-        // Функция входа
         function login() {
             const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
@@ -229,16 +227,12 @@
                 return;
             }
             
-            // Получаем пользователей из localStorage (общая база с основным сайтом)
             const users = JSON.parse(localStorage.getItem('industrai_users')) || {};
             
-            // Проверяем существование пользователя
             if (users[login]) {
-                // Проверяем пароль (хранится в base64)
                 const storedPassword = atob(users[login].password);
                 
                 if (storedPassword === password) {
-                    // Успешный вход
                     localStorage.setItem('industrai_current_user', JSON.stringify({ login: login }));
                     showNotification('Вход выполнен успешно!');
                     setTimeout(() => {
@@ -248,11 +242,9 @@
                 }
             }
             
-            // Неверные данные
             document.getElementById('loginError').style.display = 'block';
         }
 
-        // Обработка Enter
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 login();
