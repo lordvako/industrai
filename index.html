@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     
-    <!-- Защита кода -->
+    <!-- Мета-теги -->
     <meta name="copyright" content="IndustrAI - Василий Сальников, 2026. Все права защищены">
     <meta name="author" content="Василий Сальников">
     
@@ -22,14 +22,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
-        /* 
-        ========================================
-        INDUSTRAI - ЭКОСИСТЕМА ИНЖЕНЕРОВ
-        Автор: Василий Сальников
-        Все права защищены. Копирование запрещено.
-        ========================================
-        */
-        
+        /* ===== ОСНОВНЫЕ СТИЛИ ===== */
         * {
             margin: 0;
             padding: 0;
@@ -192,6 +185,37 @@
             color: white;
         }
         
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-name {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 12px;
+            border-radius: 30px;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+        
         .nav-button {
             background: linear-gradient(135deg, #2B6FF0, #00B4A0);
             color: white;
@@ -240,121 +264,6 @@
         .page {
             padding-top: 70px;
             min-height: 100vh;
-        }
-        
-        /* Модальное окно авторизации */
-        .auth-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .auth-modal.active {
-            display: flex;
-        }
-        
-        .auth-content {
-            background: white;
-            border-radius: 30px;
-            padding: 40px;
-            max-width: 420px;
-            width: 100%;
-            position: relative;
-            animation: fadeInUp 0.3s ease;
-        }
-        
-        .auth-close {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #5A6B7A;
-            transition: 0.3s;
-        }
-        
-        .auth-close:hover {
-            color: #2B6FF0;
-            transform: scale(1.1);
-        }
-        
-        .auth-content h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #0A1929;
-        }
-        
-        .auth-content p {
-            color: #5A6B7A;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-        
-        .auth-input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #E0E8F0;
-            border-radius: 40px;
-            font-family: 'Inter', sans-serif;
-            font-size: 15px;
-            margin-bottom: 15px;
-            transition: 0.3s;
-        }
-        
-        .auth-input:focus {
-            outline: none;
-            border-color: #2B6FF0;
-        }
-        
-        .auth-button {
-            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.3s;
-            margin-bottom: 15px;
-        }
-        
-        .auth-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
-        }
-        
-        .auth-link {
-            text-align: center;
-            color: #2B6FF0;
-            cursor: pointer;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        
-        .auth-link:hover {
-            text-decoration: underline;
-        }
-        
-        .admin-badge {
-            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            margin-left: 8px;
-            display: inline-block;
-            vertical-align: middle;
         }
         
         /* Главная — градиент */
@@ -890,6 +799,8 @@
             font-size: 14px;
             transition: 0.3s;
             cursor: pointer;
+            border: none;
+            width: 100%;
         }
         
         .pricing-button.basic {
@@ -1532,14 +1443,6 @@
             flex-shrink: 0;
         }
         
-        .seller-item-info {
-            flex: 2;
-        }
-        
-        .seller-item-price {
-            text-align: right;
-        }
-        
         /* Модальное окно */
         .modal {
             display: none;
@@ -1563,7 +1466,7 @@
             background: white;
             border-radius: 24px;
             padding: 30px 20px;
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
             position: relative;
         }
@@ -1584,14 +1487,14 @@
         }
         
         .modal h3 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
         
         .modal p {
             color: #5A6B7A;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             font-size: 14px;
         }
         
@@ -1626,6 +1529,75 @@
         .modal-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(43,111,240,0.3);
+        }
+        
+        /* Модальное окно подтверждения */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2500;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .confirm-modal.active {
+            display: flex;
+        }
+        
+        .confirm-content {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .confirm-content h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .confirm-content p {
+            color: #5A6B7A;
+            margin-bottom: 25px;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .confirm-button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+        
+        .confirm-button.yes {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+        }
+        
+        .confirm-button.no {
+            background: #F0F4F8;
+            color: #0A1929;
+        }
+        
+        .confirm-button:hover {
+            transform: translateY(-2px);
         }
         
         /* Уведомление */
@@ -1678,16 +1650,13 @@
     </style>
 </head>
 <body>
-    <!-- Защита от просмотра кода -->
-    <div style="display:none">IndustrAI - Василий Сальников, 2026. Все права защищены.</div>
-    
     <!-- Мобильное меню -->
     <div class="mobile-menu" id="mobileMenu">
         <a href="#" class="nav-link" onclick="showPage('home'); closeMobileMenu(); return false;">Главная</a>
         <a href="#" class="nav-link" onclick="showPage('test'); closeMobileMenu(); return false;">Тест-драйв</a>
         <a href="#" class="nav-link" onclick="showPage('marketplace'); closeMobileMenu(); return false;">Биржа</a>
         <a href="#" class="nav-link" onclick="showPage('about'); closeMobileMenu(); return false;">О нас</a>
-        <a href="#" class="nav-link" onclick="openAuthModal(); closeMobileMenu(); return false;">Войти</a>
+        <a href="#" class="nav-link" onclick="window.location.href='login.html'; closeMobileMenu(); return false;">Войти</a>
     </div>
 
     <!-- Навигация -->
@@ -1699,7 +1668,11 @@
                 <a href="#" class="nav-link" onclick="showPage('test'); return false;">Тест-драйв</a>
                 <a href="#" class="nav-link" onclick="showPage('marketplace'); return false;">Биржа</a>
                 <a href="#" class="nav-link" onclick="showPage('about'); return false;">О нас</a>
-                <a href="#" class="nav-button" onclick="openAuthModal()">Войти</a>
+                <div id="userMenu" style="display: none;">
+                    <span class="user-name" id="userNameDisplay"></span>
+                    <span class="logout-btn" onclick="logout()">Выйти</span>
+                </div>
+                <a href="#" class="nav-button" id="loginBtn" onclick="window.location.href='login.html'">Войти</a>
             </div>
             <div class="mobile-menu-button" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -1707,16 +1680,15 @@
         </div>
     </nav>
 
-    <!-- Модальное окно авторизации -->
-    <div class="auth-modal" id="authModal">
-        <div class="auth-content">
-            <div class="auth-close" onclick="closeAuthModal()">×</div>
-            <h2>Вход в систему</h2>
-            <p>Введите логин и пароль для доступа</p>
-            <input type="text" class="auth-input" id="authLogin" placeholder="Логин" value="admin">
-            <input type="password" class="auth-input" id="authPassword" placeholder="Пароль" value="industrai2026">
-            <button class="auth-button" onclick="login()">Войти</button>
-            <div class="auth-link" onclick="closeAuthModal()">Отмена</div>
+    <!-- Модальное окно подтверждения оплаты -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-content">
+            <h3 id="confirmTitle">Подтверждение</h3>
+            <p id="confirmText">Вы согласны с условиями покупки?</p>
+            <div class="confirm-buttons">
+                <button class="confirm-button yes" onclick="processPayment()">Да, оплатить</button>
+                <button class="confirm-button no" onclick="closeConfirmModal()">Отмена</button>
+            </div>
         </div>
     </div>
 
@@ -1892,7 +1864,7 @@
                             <li style="color: #ccc;"><i class="fas fa-times"></i> Биржа</li>
                             <li style="color: #ccc;"><i class="fas fa-times"></i> Поддержка</li>
                         </ul>
-                        <div class="pricing-button basic" onclick="buySubscription('basic')">Выбрать</div>
+                        <button class="pricing-button basic" onclick="showConfirm('basic', 'Базовый', 4900)">Выбрать</button>
                     </div>
 
                     <!-- Профессиональный -->
@@ -1906,7 +1878,7 @@
                             <li><i class="fas fa-check"></i> Биржа (0% комиссии)</li>
                             <li><i class="fas fa-check"></i> Поддержка: оплачивается отдельно</li>
                         </ul>
-                        <div class="pricing-button premium" onclick="buySubscription('pro')">Выбрать</div>
+                        <button class="pricing-button premium" onclick="showConfirm('pro', 'Профессиональный', 14900)">Выбрать</button>
                     </div>
 
                     <!-- Корпоративный -->
@@ -1919,7 +1891,7 @@
                             <li><i class="fas fa-check"></i> Интеграция с 1С/SAP</li>
                             <li><i class="fas fa-check"></i> Онлайн-поддержка инженеров 24/7</li>
                         </ul>
-                        <div class="pricing-button basic" onclick="buySubscription('corp')">Связаться</div>
+                        <button class="pricing-button basic" onclick="showConfirm('corp', 'Корпоративный', 49900)">Связаться</button>
                     </div>
                 </div>
             </div>
@@ -1997,7 +1969,6 @@
             <div class="marketplace-tabs">
                 <div class="tab-button active" onclick="switchMarketplaceTab('catalog')">Каталог</div>
                 <div class="tab-button" onclick="switchMarketplaceTab('add')">Добавить</div>
-                <!-- Вкладка "Кабинет" видна только админу -->
                 <div class="tab-button" id="cabinetTabButton" style="display:none;" onclick="switchMarketplaceTab('cabinet')">Кабинет</div>
             </div>
 
@@ -2123,21 +2094,115 @@
     </footer>
 
     <script>
-        // Защита от копирования кода
-        (function() {
-            // Отключение правой кнопки мыши
-            document.addEventListener('contextmenu', function(e) {
-                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    return false;
-                }
-            });
+        // ========== СИСТЕМА ПОЛЬЗОВАТЕЛЕЙ ==========
+        
+        // Хранилище пользователей (в реальном проекте - база данных)
+        let users = JSON.parse(localStorage.getItem('industrai_users')) || {};
+        let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
+        
+        // Функция для создания нового пользователя при покупке
+        function createUser(email, plan) {
+            // Генерация логина (часть email + случайные цифры)
+            const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
             
-            // Предупреждение при попытке открыть консоль
-            console.log('%c⚠️ Этот код защищен авторским правом ⚠️', 'color: red; font-size: 16px; font-weight: bold;');
-            console.log('%cIndustrAI - Василий Сальников, 2026', 'color: #2B6FF0; font-size: 14px;');
-        })();
-
+            // Генерация пароля
+            const password = Math.random().toString(36).substring(2, 10) + Math.floor(Math.random() * 100);
+            
+            // Сохраняем пользователя (пароль храним в base64 для минимальной защиты)
+            users[login] = {
+                password: btoa(password),
+                email: email,
+                plan: plan,
+                created: new Date().toISOString(),
+                queriesLeft: plan === 'basic' ? 100 : (plan === 'pro' ? 999999 : 999999)
+            };
+            
+            localStorage.setItem('industrai_users', JSON.stringify(users));
+            
+            return { login, password };
+        }
+        
+        // Проверка авторизации при загрузке
+        function checkAuth() {
+            if (currentUser) {
+                document.getElementById('userMenu').style.display = 'flex';
+                document.getElementById('userNameDisplay').textContent = currentUser.login;
+                document.getElementById('loginBtn').style.display = 'none';
+                
+                // Проверка админа
+                if (currentUser.login === 'admin') {
+                    document.getElementById('cabinetTabButton').style.display = 'inline-block';
+                }
+            } else {
+                document.getElementById('userMenu').style.display = 'none';
+                document.getElementById('loginBtn').style.display = 'inline-block';
+            }
+        }
+        
+        // Выход
+        function logout() {
+            localStorage.removeItem('industrai_current_user');
+            currentUser = null;
+            checkAuth();
+            showNotification('Вы вышли из системы');
+            showPage('home');
+        }
+        
+        // ========== СИСТЕМА ОПЛАТЫ ==========
+        
+        let currentPayment = null;
+        
+        function showConfirm(type, name, price) {
+            if (currentUser) {
+                alert('Вы уже авторизованы. Для покупки нового тарифа обратитесь в поддержку.');
+                return;
+            }
+            
+            document.getElementById('confirmTitle').textContent = `Тариф "${name}"`;
+            document.getElementById('confirmText').textContent = `Сумма к оплате: ${price.toLocaleString()} ₽. После оплаты вы получите логин и пароль на email.`;
+            document.getElementById('confirmModal').classList.add('active');
+            
+            currentPayment = { type, name, price };
+        }
+        
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            currentPayment = null;
+        }
+        
+        function processPayment() {
+            if (!currentPayment) return;
+            
+            // В реальном проекте здесь будет редирект на ЮKassa
+            // Сейчас показываем демо-форму для ввода email
+            
+            const email = prompt('Введите ваш email для получения доступа:');
+            if (!email || !email.includes('@')) {
+                alert('Введите корректный email');
+                return;
+            }
+            
+            // Создаем пользователя
+            const { login, password } = createUser(email, currentPayment.type);
+            
+            // Отправляем уведомление админу
+            sendEmailToAdmin('Новая подписка', 
+                `План: ${currentPayment.name}\nСумма: ${currentPayment.price} ₽\nEmail: ${email}\nЛогин: ${login}\nПароль: ${password}`
+            );
+            
+            // В демо-режиме показываем данные
+            alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${login}\nПароль: ${password}\n\nПисьмо отправлено на ${email}`);
+            
+            // Автоматически входим
+            currentUser = { login: login, ...users[login] };
+            localStorage.setItem('industrai_current_user', JSON.stringify({ login: login }));
+            checkAuth();
+            
+            closeConfirmModal();
+        }
+        
+        // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
+        
         // Данные оборудования
         const equipmentData = [
             { 
@@ -2210,72 +2275,7 @@
 
         let currentItemId = null;
         let freeQueriesLeft = 1;
-        let isAdmin = false;
-
-        // Авторизация
-        function openAuthModal() {
-            document.getElementById('authModal').classList.add('active');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.remove('active');
-        }
-
-        function login() {
-            const login = document.getElementById('authLogin').value;
-            const password = document.getElementById('authPassword').value;
-            
-            // Проверка админских данных
-            if (login === 'admin' && password === 'industrai2026') {
-                isAdmin = true;
-                document.getElementById('cabinetTabButton').style.display = 'inline-block';
-                showNotification('Добро пожаловать, администратор!');
-                closeAuthModal();
-                
-                // Обновляем меню
-                const loginButton = document.querySelector('.nav-button');
-                loginButton.textContent = 'Админ';
-                loginButton.onclick = null;
-                loginButton.style.background = 'linear-gradient(135deg, #00B4A0, #2B6FF0)';
-            } else {
-                alert('Неверный логин или пароль');
-            }
-        }
-
-        // Покупка подписки
-        function buySubscription(type) {
-            let planName = '';
-            let price = 0;
-            
-            if (type === 'basic') {
-                planName = 'Базовый';
-                price = 4900;
-            } else if (type === 'pro') {
-                planName = 'Профессиональный';
-                price = 14900;
-            } else if (type === 'corp') {
-                planName = 'Корпоративный';
-                price = 49900;
-            }
-            
-            // Генерация логина и пароля
-            const email = prompt('Введите ваш email для получения доступа:');
-            if (!email) return;
-            
-            const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
-            const password = Math.random().toString(36).substring(2, 10) + Math.floor(Math.random() * 100);
-            
-            // Отправка на почту
-            sendEmailToAdmin('Новая подписка', 
-                `План: ${planName}\nЦена: ${price} ₽\nEmail: ${email}\nЛогин: ${login}\nПароль: ${password}`
-            );
-            
-            showNotification(`Спасибо за покупку! Данные для входа отправлены на ${email}`);
-        }
-
-        function requestSupport() {
-            showNotification('Запрос отправлен. Инженер свяжется с вами');
-        }
+        let isAdmin = currentUser && currentUser.login === 'admin';
 
         // Мобильное меню
         function toggleMobileMenu() {
@@ -2294,12 +2294,14 @@
             document.getElementById('about-page').style.display = page === 'about' ? 'block' : 'none';
             
             document.querySelectorAll('.nav-link').forEach((link, index) => {
-                link.classList.toggle('active', 
-                    (index === 0 && page === 'home') ||
-                    (index === 1 && page === 'test') ||
-                    (index === 2 && page === 'marketplace') ||
-                    (index === 3 && page === 'about')
-                );
+                if (index < 4) {
+                    link.classList.toggle('active', 
+                        (index === 0 && page === 'home') ||
+                        (index === 1 && page === 'test') ||
+                        (index === 2 && page === 'marketplace') ||
+                        (index === 3 && page === 'about')
+                    );
+                }
             });
             
             if (page === 'test') resetChat();
@@ -2448,7 +2450,6 @@
             iframe.src = `mailto:iris.salnikov@yandex.ru?subject=${encodeURIComponent('[IndustrAI] ' + subject)}&body=${encodeURIComponent(body)}`;
             document.body.appendChild(iframe);
             setTimeout(() => document.body.removeChild(iframe), 1000);
-            console.log('Email отправлен:', subject, body);
         }
 
         // Уведомление
@@ -2465,12 +2466,20 @@
             const input = document.getElementById('chatInput');
             const msg = input.value.trim();
             if (!msg) return;
-            if (freeQueriesLeft <= 0) { alert('Запросы закончились'); return; }
+            
+            // Проверка авторизации для платных запросов
+            if (freeQueriesLeft <= 0 && !currentUser) {
+                alert('Бесплатные запросы закончились. Оформите подписку или войдите в аккаунт');
+                return;
+            }
             
             addMessage(msg, 'user');
             input.value = '';
-            freeQueriesLeft--;
-            document.getElementById('queryCounter').innerText = freeQueriesLeft + ' запрос';
+            
+            if (!currentUser) {
+                freeQueriesLeft--;
+                document.getElementById('queryCounter').innerText = freeQueriesLeft + ' запрос';
+            }
             
             setTimeout(() => {
                 let reply = '🔍 Анализирую на основе базы из 15 000+ решений...';
@@ -2510,8 +2519,18 @@
             document.getElementById('feedbackForm').reset();
         }
 
+        function requestSupport() {
+            if (!currentUser) {
+                alert('Для запроса поддержки необходимо авторизоваться');
+                window.location.href = 'login.html';
+                return;
+            }
+            showNotification('Запрос отправлен. Инженер свяжется с вами');
+        }
+
         // Инициализация
         window.onload = () => {
+            checkAuth();
             showPage('home');
             loadMarketplaceData();
         };
