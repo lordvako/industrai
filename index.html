@@ -270,7 +270,7 @@
             .hero-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 60px;
-                align-items: start; /* Важно: выравнивание по верхнему краю */
+                align-items: start;
             }
         }
         
@@ -284,12 +284,12 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            margin-top: 120px; /* Опускаем карточки вниз относительно левой колонки */
+            margin-top: 180px; /* Ещё больше опустил карточки */
         }
         
         @media (max-width: 1199px) {
             .hero-right {
-                margin-top: 0; /* На мобильных отступ не нужен */
+                margin-top: 0;
             }
         }
         
@@ -824,6 +824,179 @@
             box-shadow: 0 10px 20px rgba(255,255,255,0.2);
         }
         
+        /* ===== СТРАНИЦА "О НАС" ===== */
+        .about-hero {
+            background: linear-gradient(135deg, #0A1929, #1A2A3A);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        
+        .about-hero h1 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        
+        .about-hero p {
+            font-size: 18px;
+            opacity: 0.8;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .about-content {
+            padding: 60px 0;
+            background: white;
+        }
+        
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-bottom: 60px;
+        }
+        
+        @media (max-width: 768px) {
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+        
+        .about-text h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #0A1929;
+        }
+        
+        .about-text h2 span {
+            color: #2B6FF0;
+        }
+        
+        .about-text p {
+            color: #5A6B7A;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+        
+        .about-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .about-stat-item {
+            text-align: center;
+        }
+        
+        .about-stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: #2B6FF0;
+        }
+        
+        .about-stat-label {
+            font-size: 14px;
+            color: #5A6B7A;
+        }
+        
+        .expertise-list {
+            list-style: none;
+            background: #F8FAFE;
+            border-radius: 20px;
+            padding: 30px;
+        }
+        
+        .expertise-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #E0E8F0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .expertise-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .expertise-list i {
+            color: #00B4A0;
+            width: 24px;
+        }
+        
+        /* Форма обратной связи */
+        .feedback-form {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #F8FAFE;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+        
+        .feedback-form h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .feedback-form h3 span {
+            color: #2B6FF0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #E0E8F0;
+            border-radius: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #2B6FF0;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-submit {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        
+        .form-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
+        }
+        
         /* Тест-драйв */
         .test-hero {
             background: linear-gradient(135deg, #0A1929, #1A2A3A);
@@ -1093,11 +1266,25 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             transition: 0.3s;
             cursor: pointer;
+            position: relative;
         }
         
         .item-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(43,111,240,0.1);
+        }
+        
+        .item-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #00B4A0, #2B6FF0);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            z-index: 2;
         }
         
         .item-image {
@@ -1108,6 +1295,7 @@
             justify-content: center;
             color: #2B6FF0;
             font-size: 36px;
+            position: relative;
         }
         
         .item-details {
@@ -1125,6 +1313,14 @@
         .item-title {
             font-weight: 700;
             font-size: 14px;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        
+        .item-status {
+            font-size: 11px;
+            color: #00B4A0;
+            font-weight: 600;
             margin-bottom: 8px;
         }
         
@@ -1132,7 +1328,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
+            margin-top: 8px;
         }
         
         .item-price {
@@ -1154,11 +1350,6 @@
             pointer-events: none;
         }
         
-        .item-buy:hover {
-            background: #00B4A0;
-            transform: scale(1.05);
-        }
-        
         .add-form {
             max-width: 600px;
             margin: 30px auto;
@@ -1166,84 +1357,6 @@
             border-radius: 24px;
             padding: 30px 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-        
-        .form-input,
-        .form-textarea,
-        .form-select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #E0E8F0;
-            border-radius: 12px;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        
-        .form-input:focus,
-        .form-textarea:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: #2B6FF0;
-        }
-        
-        .form-textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-        
-        .price-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .price-input {
-            flex: 1;
-            min-width: 150px;
-        }
-        
-        .price-hint {
-            background: #F0F4F8;
-            padding: 8px 14px;
-            border-radius: 12px;
-            color: #5A6B7A;
-            font-size: 13px;
-        }
-        
-        .price-hint i {
-            color: #2B6FF0;
-            margin-right: 5px;
-        }
-        
-        .form-submit {
-            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.3s;
-        }
-        
-        .form-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
         }
         
         .seller-cabinet {
@@ -1268,31 +1381,6 @@
                 align-items: center;
                 gap: 20px;
             }
-        }
-        
-        .seller-item:last-child {
-            border-bottom: none;
-        }
-        
-        .seller-item-image {
-            width: 50px;
-            height: 50px;
-            background: #F0F4F8;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2B6FF0;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-        
-        .seller-item-info {
-            flex: 2;
-        }
-        
-        .seller-item-price {
-            text-align: right;
         }
         
         /* Модальное окно */
@@ -1432,6 +1520,7 @@
         <a href="#" class="nav-link" onclick="showPage('home'); closeMobileMenu(); return false;">Главная</a>
         <a href="#" class="nav-link" onclick="showPage('test'); closeMobileMenu(); return false;">Тест-драйв</a>
         <a href="#" class="nav-link" onclick="showPage('marketplace'); closeMobileMenu(); return false;">Биржа</a>
+        <a href="#" class="nav-link" onclick="showPage('about'); closeMobileMenu(); return false;">О нас</a>
         <a href="#" class="nav-button" style="margin-top: 20px; text-align: center;" onclick="closeMobileMenu()">Войти</a>
     </div>
 
@@ -1443,6 +1532,7 @@
                 <a href="#" class="nav-link active" onclick="showPage('home'); return false;">Главная</a>
                 <a href="#" class="nav-link" onclick="showPage('test'); return false;">Тест-драйв</a>
                 <a href="#" class="nav-link" onclick="showPage('marketplace'); return false;">Биржа</a>
+                <a href="#" class="nav-link" onclick="showPage('about'); return false;">О нас</a>
                 <a href="#" class="nav-button">Войти</a>
             </div>
             <div class="mobile-menu-button" onclick="toggleMobileMenu()">
@@ -1740,10 +1830,17 @@
                     <div class="form-group">
                         <label>Категория</label>
                         <select class="form-select" id="itemCategory">
-                            <option>Контроллеры</option><option>Приводы</option><option>Модули</option>
+                            <option>Контроллеры</option><option>Приводы</option><option>Модули</option><option>Интерфейсные модули</option>
                         </select>
                     </div>
                     <div class="form-group"><label>Описание</label><textarea class="form-textarea" id="itemDescription" placeholder="Состояние, год..."></textarea></div>
+                    <div class="form-group">
+                        <label>Статус</label>
+                        <select class="form-select" id="itemStatus">
+                            <option>НОВОЕ, В НАЛИЧИИ</option>
+                            <option>Б/У, в хорошем состоянии</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label>Ваша цена (₽)</label>
                         <div class="price-row">
@@ -1764,6 +1861,76 @@
         </div>
     </div>
 
+    <!-- Страница "О нас" -->
+    <div id="about-page" class="page" style="display: none;">
+        <section class="about-hero">
+            <div class="container">
+                <h1>О проекте IndustrAI</h1>
+                <p>12 лет инженерного опыта, тысячи решений и мощная нейросеть — для вас</p>
+            </div>
+        </section>
+
+        <div class="about-content">
+            <div class="container">
+                <div class="about-grid">
+                    <div class="about-text">
+                        <h2>Как появилась <span>IndustrAI</span></h2>
+                        <p>Всё началось с простой инженерной проблемы. Ночь, цех стоит, станок с ЧПУ выдаёт ошибку, а ответа нет. Форумы переполнены противоречивой информацией, документация разбросана, времени в обрез.</p>
+                        <p>Я, Василий Сальников, инженер АСУТП с 12-летним стажем, решил это изменить. Мы начали собирать данные со всех открытых источников: форумы, техническая документация, реальные кейсы. Собрали более 15 000 решений по Siemens, SEW, Delta и другим производителям.</p>
+                        <p>А затем мы подключили мощную техническую нейросеть, которая анализирует эту базу и выдаёт готовые решения за секунды. Теперь каждый инженер может получить ответ, не тратя часы на поиски.</p>
+                        
+                        <div class="about-stats">
+                            <div class="about-stat-item">
+                                <div class="about-stat-number">12 лет</div>
+                                <div class="about-stat-label">опыта</div>
+                            </div>
+                            <div class="about-stat-item">
+                                <div class="about-stat-number">15 000+</div>
+                                <div class="about-stat-label">решений</div>
+                            </div>
+                            <div class="about-stat-item">
+                                <div class="about-stat-number">47</div>
+                                <div class="about-stat-label">форумов</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="expertise-list">
+                        <h3 style="margin-bottom:20px;">Наша экспертиза</h3>
+                        <li><i class="fas fa-microchip"></i> Siemens (S7-200, S7-300, S7-1200, S7-1500)</li>
+                        <li><i class="fas fa-bolt"></i> SEW (приводы, инверторы, MOVIMOT)</li>
+                        <li><i class="fas fa-sliders-h"></i> Delta (контроллеры, панели, приводы)</li>
+                        <li><i class="fas fa-cogs"></i> Wieland (контроллеры, модули ввода-вывода)</li>
+                        <li><i class="fas fa-robot"></i> Sinumerik (ЧПУ, диагностика)</li>
+                        <li><i class="fas fa-network-wired"></i> Промышленные сети (PROFIBUS, PROFINET)</li>
+                    </div>
+                </div>
+
+                <!-- Форма обратной связи -->
+                <div class="feedback-form">
+                    <h3>Есть вопросы или <span>пожелания</span>?</h3>
+                    <p style="text-align:center; color:#5A6B7A; margin-bottom:30px;">Напишите нам — мы ответим в ближайшее время</p>
+                    
+                    <form id="feedbackForm" onsubmit="sendFeedback(event)">
+                        <div class="form-group">
+                            <label>Ваше имя</label>
+                            <input type="text" class="form-control" id="feedbackName" placeholder="Иван Петров" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email или телефон</label>
+                            <input type="text" class="form-control" id="feedbackContact" placeholder="+7 (___) ___-__-__" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Сообщение</label>
+                            <textarea class="form-control" id="feedbackMessage" placeholder="Ваш вопрос, комментарий или пожелание..." required></textarea>
+                        </div>
+                        <button type="submit" class="form-submit">Отправить сообщение</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Футер -->
     <footer class="footer">
         <div class="container">
@@ -1775,16 +1942,97 @@
     </footer>
 
     <script>
-        // Данные оборудования
+        // Обновленные данные оборудования с новыми позициями
         const equipmentData = [
-            { id:1, name:"Siemens S7-200 CPU 226", category:"Контроллеры", description:"Рабочий, с клеммами", image:"⚙️", sellerPrice:8500, finalPrice:11475, sellerName:"Василий" },
-            { id:2, name:"SEW MDX61B 22kW", category:"Приводы", description:"б/у 1 год", image:"⚡", sellerPrice:120000, finalPrice:162000, sellerName:"Василий" },
-            { id:3, name:"Delta DOP-107BV", category:"Панели", description:"Новый", image:"📟", sellerPrice:28000, finalPrice:37800, sellerName:"Василий" },
-            { id:4, name:"Siemens ET200S модули", category:"Модули", description:"2DI,2DO,2AI", image:"🔌", sellerPrice:12000, finalPrice:16200, sellerName:"Василий" },
-            { id:5, name:"Siemens G120 3kW", category:"Приводы", description:"Новый", image:"⚡", sellerPrice:45000, finalPrice:60750, sellerName:"Василий" },
-            { id:6, name:"Delta AS300 CPU", category:"Контроллеры", description:"Новый", image:"⚙️", sellerPrice:18500, finalPrice:24975, sellerName:"Василий" },
-            { id:7, name:"SEW MOVIMOT MM03", category:"Приводы", description:"б/у 6 мес", image:"🔧", sellerPrice:65000, finalPrice:87750, sellerName:"Василий" },
-            { id:8, name:"Siemens S7-300 SM321", category:"Модули", description:"32DI", image:"🔌", sellerPrice:5500, finalPrice:7425, sellerName:"Василий" }
+            { 
+                id:1, 
+                name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", 
+                category:"Контроллеры", 
+                description:"НОВОЕ, В НАЛИЧИИ", 
+                image:"⚙️", 
+                sellerPrice:320000, 
+                finalPrice:432000, // +35%
+                status:"НОВОЕ, В НАЛИЧИИ",
+                sellerName:"Василий" 
+            },
+            { 
+                id:2, 
+                name:"Модуль вывода siemens 6ES7331-1KF02-0AB0", 
+                category:"Модули", 
+                description:"НОВОЕ, В НАЛИЧИИ", 
+                image:"🔌", 
+                sellerPrice:56000, 
+                finalPrice:75600,
+                status:"НОВОЕ, В НАЛИЧИИ",
+                sellerName:"Василий" 
+            },
+            { 
+                id:3, 
+                name:"Модуль ввода siemens 6ES7322-1BL00-0AA0", 
+                category:"Модули", 
+                description:"НОВОЕ, В НАЛИЧИИ", 
+                image:"🔌", 
+                sellerPrice:56000, 
+                finalPrice:75600,
+                status:"НОВОЕ, В НАЛИЧИИ",
+                sellerName:"Василий" 
+            },
+            { 
+                id:4, 
+                name:"Интерфейсный модуль siemens 6ES7153-2BA10-0XB0", 
+                category:"Интерфейсные модули", 
+                description:"НОВОЕ, В НАЛИЧИИ", 
+                image:"📡", 
+                sellerPrice:75000, 
+                finalPrice:101250,
+                status:"НОВОЕ, В НАЛИЧИИ",
+                sellerName:"Василий" 
+            },
+            { 
+                id:5, 
+                name:"Модуль вх/вых SP-sdio84-P1-K-A Wieland", 
+                category:"Модули", 
+                description:"НОВОЕ, В НАЛИЧИИ", 
+                image:"🔌", 
+                sellerPrice:110000, 
+                finalPrice:148500,
+                status:"НОВОЕ, В НАЛИЧИИ",
+                sellerName:"Василий" 
+            },
+            { 
+                id:6, 
+                name:"Модуль вывода siemens 6ES7332-5HF00-0AB0", 
+                category:"Модули", 
+                description:"НОВОЕ, В НАЛИЧИИ", 
+                image:"🔌", 
+                sellerPrice:56000, 
+                finalPrice:75600,
+                status:"НОВОЕ, В НАЛИЧИИ",
+                sellerName:"Василий" 
+            },
+            // Старые позиции (можно удалить если не нужны)
+            { 
+                id:7, 
+                name:"Siemens S7-200 CPU 226 (б/у)", 
+                category:"Контроллеры", 
+                description:"Б/У, в хорошем состоянии", 
+                image:"⚙️", 
+                sellerPrice:8500, 
+                finalPrice:11475,
+                status:"Б/У",
+                sellerName:"Василий" 
+            },
+            { 
+                id:8, 
+                name:"SEW MDX61B 22kW (б/у)", 
+                category:"Приводы", 
+                description:"Б/У 1 год", 
+                image:"⚡", 
+                sellerPrice:120000, 
+                finalPrice:162000,
+                status:"Б/У",
+                sellerName:"Василий" 
+            }
         ];
 
         let currentItemId = null;
@@ -1804,12 +2052,14 @@
             document.getElementById('home-page').style.display = page === 'home' ? 'block' : 'none';
             document.getElementById('test-page').style.display = page === 'test' ? 'block' : 'none';
             document.getElementById('marketplace-page').style.display = page === 'marketplace' ? 'block' : 'none';
+            document.getElementById('about-page').style.display = page === 'about' ? 'block' : 'none';
             
             document.querySelectorAll('.nav-link').forEach((link, index) => {
                 link.classList.toggle('active', 
                     (index === 0 && page === 'home') ||
                     (index === 1 && page === 'test') ||
-                    (index === 2 && page === 'marketplace')
+                    (index === 2 && page === 'marketplace') ||
+                    (index === 3 && page === 'about')
                 );
             });
             
@@ -1848,10 +2098,12 @@
             equipmentData.forEach(item => {
                 html += `
                     <div class="item-card" onclick="openBuyModal(${item.id})">
+                        <div class="item-badge">${item.status}</div>
                         <div class="item-image">${item.image}</div>
                         <div class="item-details">
                             <div class="item-category">${item.category}</div>
                             <div class="item-title">${item.name}</div>
+                            <div class="item-status">${item.description}</div>
                             <div class="item-price-block">
                                 <span class="item-price">${item.finalPrice.toLocaleString()} ₽</span>
                                 <button class="item-buy">Купить</button>
@@ -1871,13 +2123,18 @@
             
             const newItem = {
                 id: equipmentData.length+1,
-                name, category: document.getElementById('itemCategory').value,
+                name, 
+                category: document.getElementById('itemCategory').value,
                 description: document.getElementById('itemDescription').value,
-                image: "📦", sellerPrice: price, finalPrice: Math.round(price*1.35), sellerName: "Василий"
+                status: document.getElementById('itemStatus').value,
+                image: "📦", 
+                sellerPrice: price, 
+                finalPrice: Math.round(price*1.35), 
+                sellerName: "Василий"
             };
             equipmentData.push(newItem);
             
-            sendEmailToAdmin('Новое объявление', `${name}\nЦена продавца: ${price} ₽`);
+            sendEmailToAdmin('Новое объявление', `${name}\nЦена продавца: ${price} ₽\nСтатус: ${newItem.status}`);
             showNotification('Товар отправлен на модерацию');
             
             document.getElementById('itemName').value = '';
@@ -1898,11 +2155,15 @@
             myItems.forEach(item => {
                 html += `<div class="seller-item">
                     <div class="seller-item-image">${item.image}</div>
-                    <div style="flex:2"><h4>${item.name}</h4><p style="color:#5A6B7A;">${item.description}</p></div>
+                    <div style="flex:2">
+                        <h4>${item.name}</h4>
+                        <p style="color:#5A6B7A;">${item.description}</p>
+                        <p style="color:#00B4A0; font-size:12px;">${item.status}</p>
+                    </div>
                     <div style="text-align:right">
-                        <div style="color:#5A6B7A;">Ваша: ${item.sellerPrice} ₽</div>
-                        <div style="color:#00B4A0;">Продажа: ${item.finalPrice} ₽</div>
-                        <div style="color:#2B6FF0;">+${item.finalPrice-item.sellerPrice} ₽</div>
+                        <div style="color:#5A6B7A;">Ваша: ${item.sellerPrice.toLocaleString()} ₽</div>
+                        <div style="color:#00B4A0; font-weight:700;">Продажа: ${item.finalPrice.toLocaleString()} ₽</div>
+                        <div style="color:#2B6FF0;">+${(item.finalPrice-item.sellerPrice).toLocaleString()} ₽</div>
                     </div>
                 </div>`;
             });
@@ -1924,7 +2185,7 @@
             const phone = document.getElementById('buyerPhone').value;
             if (!phone) { alert('Введите телефон'); return; }
             const item = equipmentData.find(i => i.id === currentItemId) || { name: "Запрос по ошибке" };
-            sendEmailToAdmin('Новый покупатель', `${item.name}\nТелефон: ${phone}`);
+            sendEmailToAdmin('Новый покупатель', `${item.name}\nТелефон: ${phone}\nСтатус: ${item.status || 'не указан'}`);
             showNotification('Спасибо! Мы свяжемся с вами');
             closeModal();
         }
@@ -1963,6 +2224,7 @@
                 let reply = '🔍 Анализирую на основе базы из 15 000+ решений...';
                 if (msg.toLowerCase().includes('sew')) reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом). Вероятность 94%';
                 else if (msg.toLowerCase().includes('sinumerik')) reply = 'Sinumerik 3000: проверьте концевик оси X. Вероятность 96%';
+                else if (msg.toLowerCase().includes('wieland')) reply = 'Wieland: уточните модель контроллера или модуля';
                 else reply = 'Найдено 47 похожих случаев. Уточните модель.';
                 addMessage(reply, 'bot');
             }, 1000);
@@ -1979,6 +2241,21 @@
             document.getElementById('queryCounter').innerText = '1 запрос';
             document.getElementById('chatMessages').innerHTML = '<div class="message bot"><div class="message-avatar">AI</div><div class="message-content">Здравствуйте! Задайте вопрос.</div></div>';
             document.getElementById('chatInput').disabled = false;
+        }
+
+        // Обратная связь
+        function sendFeedback(event) {
+            event.preventDefault();
+            const name = document.getElementById('feedbackName').value;
+            const contact = document.getElementById('feedbackContact').value;
+            const message = document.getElementById('feedbackMessage').value;
+            
+            sendEmailToAdmin('Обратная связь от пользователя', 
+                `Имя: ${name}\nКонтакт: ${contact}\nСообщение: ${message}`
+            );
+            
+            showNotification('Спасибо! Ваше сообщение отправлено');
+            document.getElementById('feedbackForm').reset();
         }
 
         // Инициализация
