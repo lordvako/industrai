@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="copyright" content="IndustrAI - Василий Сальников, 2026. Все права защищены">
+    <meta name="author" content="Василий Сальников">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232B6FF0'/><text x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>IA</text></svg>">
+    <title>Биржа оборудования — IndustrAI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Мобильное меню -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="test.html" class="nav-link">Тест-драйв</a>
+        <a href="marketplace.html" class="nav-link active">Биржа</a>
+        <a href="about.html" class="nav-link">О нас</a>
+        <a href="login.html" class="nav-button" style="margin-top: 20px; text-align: center;">Войти</a>
+    </div>
+
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">INDUSTR<span>AI</span></a>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Главная</a>
+                <a href="test.html" class="nav-link" id="testDriveLink">Тест-драйв</a>
+                <a href="marketplace.html" class="nav-link active">Биржа</a>
+                <a href="about.html" class="nav-link">О нас</a>
+                <div id="userMenu" style="display: none; align-items: center; gap: 15px;">
+                    <span class="user-name" id="userNameDisplay" onclick="window.location.href='profile.html'"></span>
+                    <span class="logout-btn" onclick="logout()">Выйти</span>
+                </div>
+                <a href="login.html" class="nav-button" id="loginBtn">Войти</a>
+            </div>
+            <div class="mobile-menu-button" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Биржа -->
+    <section class="marketplace-hero">
+        <div class="container">
+            <h1>Биржа оборудования</h1>
+            <p>Покупайте и продавайте промышленное оборудование</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="marketplace-tabs">
+            <div class="tab-button active" onclick="switchMarketplaceTab('catalog')">Каталог</div>
+            <div class="tab-button" onclick="switchMarketplaceTab('add')">Добавить</div>
+            <div class="tab-button" id="cabinetTabButton" style="display:none;" onclick="switchMarketplaceTab('cabinet')">Кабинет</div>
+        </div>
+
+        <div id="catalog-tab" class="tab-content active">
+            <div class="items-grid" id="itemsGrid"></div>
+        </div>
+
+        <div id="add-tab" class="tab-content">
+            <div class="add-form">
+                <h3 style="margin-bottom:20px;">Продать оборудование</h3>
+                <div class="form-group"><label>Название</label><input class="form-input" id="itemName" placeholder="Siemens S7-200"></div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <select class="form-select" id="itemCategory">
+                        <option>Контроллеры</option><option>Приводы</option><option>Модули</option><option>Интерфейсные модули</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Описание</label><textarea class="form-textarea" id="itemDescription" placeholder="Состояние, год..."></textarea></div>
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select class="form-select" id="itemStatus">
+                        <option>НОВОЕ, В НАЛИЧИИ</option>
+                        <option>Б/У, в хорошем состоянии</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ваша цена (₽)</label>
+                    <div class="price-row">
+                        <div class="price-input"><input class="form-input" id="sellerPrice" type="number" placeholder="10000"></div>
+                        <div class="price-hint"><i class="fas fa-lock"></i> скрыта</div>
+                    </div>
+                </div>
+                <button class="form-submit" onclick="addNewItem()">Отправить</button>
+            </div>
+        </div>
+
+        <div id="cabinet-tab" class="tab-content">
+            <div class="seller-cabinet">
+                <h3>Ваши объявления <span class="admin-badge">только для администратора</span></h3>
+                <div class="seller-items" id="sellerItems"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для телефона -->
+    <div class="modal" id="phoneModal">
+        <div class="modal-content">
+            <div class="modal-close" onclick="closeModal()">×</div>
+            <h3>Оставьте ваш телефон</h3>
+            <p>Мы свяжемся с вами в ближайшее время</p>
+            <input type="tel" class="modal-input" id="buyerPhone" placeholder="+7 (___) ___-__-__">
+            <button class="modal-button" onclick="submitPhone()">Отправить</button>
+        </div>
+    </div>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                © 2026 IndustrAI — База знаний из открытых источников + мощная нейросеть<br>
+                ИП Сальников Василий | Все права защищены
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
