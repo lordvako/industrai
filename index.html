@@ -286,8 +286,8 @@
         .subscription-banner {
             background: linear-gradient(135deg, #2B6FF0, #00B4A0);
             color: white;
-            padding: 15px 0;
-            margin-bottom: 30px;
+            padding: 20px 0;
+            margin-top: 70px;
         }
         
         .subscription-banner .container {
@@ -295,38 +295,40 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
         }
         
         .subscription-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
+            flex: 1;
         }
         
-        .subscription-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 15px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 600;
+        .subscription-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .subscription-text {
+            font-size: 15px;
+            opacity: 0.9;
         }
         
         .subscription-expiry {
             font-size: 14px;
-            opacity: 0.9;
+            opacity: 0.8;
+            margin-top: 5px;
         }
         
         .subscription-button {
             background: white;
             color: #0A1929;
-            padding: 8px 25px;
-            border-radius: 30px;
+            padding: 12px 30px;
+            border-radius: 40px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 15px;
             transition: 0.3s;
+            white-space: nowrap;
         }
         
         .subscription-button:hover {
@@ -1348,6 +1350,8 @@
         
         .message.bot .message-content {
             border-left: 3px solid #2B6FF0;
+            font-family: 'JetBrains Mono', monospace;
+            background: #F5F7FA;
         }
         
         .message.user .message-content {
@@ -1894,8 +1898,9 @@
     <div id="subscriptionBanner" class="subscription-banner" style="display: none;">
         <div class="container">
             <div class="subscription-info">
-                <span class="subscription-badge" id="subscriptionPlan">Активная подписка</span>
-                <span class="subscription-expiry" id="subscriptionExpiry">Действует до: 30 дней</span>
+                <div class="subscription-title" id="subscriptionTitle">✓ Подписка активна</div>
+                <div class="subscription-text" id="subscriptionText">Спасибо за приобретение подписки! Теперь у вас есть неограниченный доступ к технической нейросети.</div>
+                <div class="subscription-expiry" id="subscriptionExpiry"></div>
             </div>
             <a href="#" class="subscription-button" onclick="showPage('profile'); return false;">Перейти в нейросеть →</a>
         </div>
@@ -2170,9 +2175,7 @@
                         <div class="message bot">
                             <div class="message-avatar">AI</div>
                             <div class="message-content">
-                                Здравствуйте! Задайте вопрос. Например:<br>
-                                • "Ошибка SEW F04"<br>
-                                • "Sinumerik 840D ALARM 3000"
+                                Введите запрос. Например: SEW F04, Sinumerik 3000
                             </div>
                         </div>
                     </div>
@@ -2193,7 +2196,7 @@
     <div id="profile-page" class="page" style="display: none;">
         <section class="test-hero">
             <div class="container">
-                <h1>Нейросеть IndustrAI</h1>
+                <h1>Техническая нейросеть</h1>
                 <p>Неограниченное общение, история запросов, загрузка файлов</p>
             </div>
         </section>
@@ -2202,7 +2205,7 @@
             <div class="chat-container">
                 <div class="chat-sidebar">
                     <div class="sidebar-header">
-                        <h3>Мои диалоги</h3>
+                        <h3>История диалогов</h3>
                         <button class="new-chat-btn" onclick="createNewProfileChat()"><i class="fas fa-plus"></i></button>
                     </div>
                     <div class="history-list" id="profileHistoryList">
@@ -2223,7 +2226,7 @@
                         <div class="message bot">
                             <div class="message-avatar">AI</div>
                             <div class="message-content">
-                                Здравствуйте! Я ваша техническая нейросеть. Задавайте любые вопросы, прикрепляйте файлы — я помогу найти решение.
+                                Введите запрос по оборудованию. Например: SEW F04, Siemens ALARM 3000
                             </div>
                         </div>
                     </div>
@@ -2390,7 +2393,7 @@
                 email: 'admin@industrai.ru',
                 plan: 'admin',
                 created: new Date().toISOString(),
-                expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // год
+                expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
             };
             localStorage.setItem('industrai_users', JSON.stringify(users));
         }
@@ -2405,7 +2408,6 @@
             const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
             const password = Math.random().toString(36).substring(2, 10) + Math.floor(Math.random() * 100);
             
-            // Срок действия подписки (30 дней для демо)
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + 30);
             
@@ -2419,7 +2421,6 @@
             
             localStorage.setItem('industrai_users', JSON.stringify(users));
             
-            // Создаем пустую историю для нового пользователя
             if (!chatHistory[login]) {
                 chatHistory[login] = [];
             }
@@ -2428,60 +2429,54 @@
             return { login, password };
         }
         
-        // Проверка авторизации при загрузке
+        // Проверка авторизации
         function checkAuth() {
             if (currentUser) {
                 document.getElementById('userMenu').style.display = 'flex';
                 document.getElementById('userNameDisplay').textContent = currentUser.login;
                 document.getElementById('loginBtn').style.display = 'none';
                 
-                // Меняем кнопку Тест-драйв на Нейросеть
                 const testDriveLink = document.getElementById('testDriveLink');
                 testDriveLink.textContent = 'Нейросеть';
                 testDriveLink.onclick = function() { showPage('profile'); };
                 
-                // Показываем баннер подписки
                 const banner = document.getElementById('subscriptionBanner');
                 banner.style.display = 'block';
                 
-                // Обновляем информацию о подписке
                 const userData = users[currentUser.login];
                 if (userData) {
                     const planName = userData.plan === 'basic' ? 'Базовый' : 
                                     (userData.plan === 'pro' ? 'Профессиональный' : 'Корпоративный');
-                    document.getElementById('subscriptionPlan').textContent = `Тариф "${planName}"`;
+                    
+                    document.getElementById('subscriptionTitle').textContent = `✓ Подписка "${planName}" активна`;
+                    document.getElementById('subscriptionText').textContent = 
+                        `Спасибо за приобретение подписки! Теперь у вас есть неограниченный доступ к технической нейросети.`;
                     
                     if (userData.expiry) {
                         const expiryDate = new Date(userData.expiry);
                         document.getElementById('subscriptionExpiry').textContent = 
-                            `Действует до: ${expiryDate.toLocaleDateString('ru-RU')}`;
+                            `Срок действия: до ${expiryDate.toLocaleDateString('ru-RU')}`;
                     }
                 }
                 
-                // Меняем главную кнопку
                 document.getElementById('mainActionBtn').textContent = 'Перейти в нейросеть →';
                 document.getElementById('mainActionHint').textContent = 'У вас активная подписка';
                 
-                // Проверка админа
                 if (currentUser.login === 'admin') {
                     document.getElementById('cabinetTabButton').style.display = 'inline-block';
                 }
                 
-                // Загружаем историю для пользователя
                 loadUserChatHistory();
             } else {
                 document.getElementById('userMenu').style.display = 'none';
                 document.getElementById('loginBtn').style.display = 'inline-block';
                 
-                // Возвращаем кнопку Тест-драйв
                 const testDriveLink = document.getElementById('testDriveLink');
                 testDriveLink.textContent = 'Тест-драйв';
                 testDriveLink.onclick = function() { showPage('test'); };
                 
-                // Прячем баннер
                 document.getElementById('subscriptionBanner').style.display = 'none';
                 
-                // Возвращаем главную кнопку
                 document.getElementById('mainActionBtn').textContent = 'Попробовать нейросеть бесплатно →';
                 document.getElementById('mainActionHint').textContent = 'Один запрос — в подарок';
             }
@@ -2495,7 +2490,6 @@
             }
         }
         
-        // Выход
         function logout() {
             localStorage.removeItem('industrai_current_user');
             currentUser = null;
@@ -2506,7 +2500,6 @@
         
         // ========== ИСТОРИЯ ЧАТОВ ==========
         
-        // Загрузка истории для текущего пользователя
         function loadUserChatHistory() {
             if (!currentUser) return;
             
@@ -2514,7 +2507,6 @@
                 chatHistory[currentUser.login] = [];
             }
             
-            // Создаем первый чат, если нет ни одного
             if (chatHistory[currentUser.login].length === 0) {
                 const firstChat = {
                     id: Date.now(),
@@ -2522,7 +2514,7 @@
                     messages: [
                         {
                             sender: 'bot',
-                            text: 'Здравствуйте! Я ваша техническая нейросеть. Задавайте любые вопросы, прикрепляйте файлы — я помогу найти решение.',
+                            text: 'Введите запрос по оборудованию. Например: SEW F04, Siemens ALARM 3000',
                             timestamp: new Date().toISOString()
                         }
                     ],
@@ -2532,16 +2524,13 @@
                 localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
             }
             
-            // Отображаем историю в профиле
             renderProfileHistory();
             
-            // Загружаем первый чат
             if (chatHistory[currentUser.login].length > 0) {
                 loadProfileChat(chatHistory[currentUser.login][0].id);
             }
         }
         
-        // Отображение истории в профиле
         function renderProfileHistory() {
             const historyList = document.getElementById('profileHistoryList');
             if (!historyList || !currentUser) return;
@@ -2563,7 +2552,6 @@
             historyList.innerHTML = html;
         }
         
-        // Создание нового чата в профиле
         function createNewProfileChat() {
             if (!currentUser) return;
             
@@ -2573,7 +2561,7 @@
                 messages: [
                     {
                         sender: 'bot',
-                        text: 'Здравствуйте! Я ваша техническая нейросеть. Задавайте любые вопросы, прикрепляйте файлы — я помогу найти решение.',
+                        text: 'Введите запрос по оборудованию. Например: SEW F04, Siemens ALARM 3000',
                         timestamp: new Date().toISOString()
                     }
                 ],
@@ -2587,7 +2575,6 @@
             loadProfileChat(newChat.id);
         }
         
-        // Загрузка конкретного чата в профиле
         let currentChatId = null;
         
         function loadProfileChat(chatId) {
@@ -2597,10 +2584,8 @@
             const chat = chatHistory[currentUser.login].find(c => c.id === chatId);
             if (!chat) return;
             
-            // Обновляем выделение в истории
             renderProfileHistory();
             
-            // Отображаем сообщения
             const messagesContainer = document.getElementById('profileChatMessages');
             let html = '';
             chat.messages.forEach(msg => {
@@ -2623,7 +2608,6 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
         
-        // Отправка сообщения в профиле
         function sendProfileMessage() {
             if (!currentUser) {
                 alert('Необходимо авторизоваться');
@@ -2634,35 +2618,39 @@
             const msg = input.value.trim();
             if (!msg) return;
             
-            // Находим текущий чат
             const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
             if (!chat) return;
             
-            // Добавляем сообщение пользователя
             chat.messages.push({
                 sender: 'user',
                 text: msg,
                 timestamp: new Date().toISOString()
             });
             
-            // Обновляем заголовок чата (первое сообщение)
             if (chat.messages.length === 2) {
                 chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
             }
             
-            // Отображаем сообщение
             loadProfileChat(currentChatId);
-            
-            // Очищаем input
             input.value = '';
             
-            // Имитация ответа нейросети
             setTimeout(() => {
-                let reply = '🔍 Анализирую на основе базы из 15 000+ решений...';
-                if (msg.toLowerCase().includes('sew')) reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом). Вероятность 94%';
-                else if (msg.toLowerCase().includes('sinumerik')) reply = 'Sinumerik 3000: проверьте концевик оси X. Вероятность 96%';
-                else if (msg.toLowerCase().includes('wieland')) reply = 'Wieland: уточните модель контроллера или модуля';
-                else reply = 'Найдено 47 похожих случаев. Уточните модель.';
+                let reply = '';
+                const q = msg.toLowerCase();
+                
+                if (q.includes('sew') && q.includes('f04')) {
+                    reply = 'SEW F04: перегрузка по току. Проверьте тормозной резистор (15-100 Ом). Вероятность: 94%';
+                } else if (q.includes('sew') && q.includes('f05')) {
+                    reply = 'SEW F05: перегрузка инвертора / перегрев. Проверьте: 1) ток двигателя 2) вентилятор охлаждения 3) загрузку механизма. Вероятность: 76%';
+                } else if (q.includes('85 ом') && q.includes('дальше')) {
+                    reply = 'F05 - перегрузка. При токе в норме: проверьте механику редуктора, подшипники. Возможна периодическая перегрузка. Контроль тока в моменте.';
+                } else if (q.includes('sinumerik') || q.includes('3000')) {
+                    reply = 'Sinumerik 3000: концевой выключатель оси X. Проверьте концевик и кабель энкодера. Вероятность: 96%';
+                } else if (q.includes('s7-300') || q.includes('sf')) {
+                    reply = 'S7-300 SF: системная ошибка. Перезагрузите, проверьте настройки PROFIBUS. Вероятность: 91%';
+                } else {
+                    reply = 'Уточните модель оборудования и код ошибки.';
+                }
                 
                 chat.messages.push({
                     sender: 'bot',
@@ -2675,7 +2663,6 @@
             }, 1000);
         }
         
-        // Удаление чата
         function deleteChat(chatId, event) {
             event.stopPropagation();
             if (!currentUser) return;
@@ -2706,7 +2693,7 @@
                 messages: [
                     {
                         sender: 'bot',
-                        text: 'Здравствуйте! Задайте вопрос. Например:\n• "Ошибка SEW F04"\n• "Sinumerik 840D ALARM 3000"',
+                        text: 'Введите запрос. Например: SEW F04, Sinumerik 3000',
                         timestamp: new Date().toISOString()
                     }
                 ],
@@ -2770,18 +2757,15 @@
             testQueriesLeft--;
             document.getElementById('testQueryCounter').innerText = testQueriesLeft + ' запрос';
             
-            // Находим текущий чат
             const chat = testChatHistory.find(c => c.id === testCurrentChatId);
             if (!chat) return;
             
-            // Добавляем сообщение пользователя
             chat.messages.push({
                 sender: 'user',
                 text: msg,
                 timestamp: new Date().toISOString()
             });
             
-            // Обновляем заголовок
             if (chat.messages.length === 2) {
                 chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
             }
@@ -2789,12 +2773,17 @@
             loadTestChat(testCurrentChatId);
             input.value = '';
             
-            // Ответ нейросети
             setTimeout(() => {
-                let reply = '🔍 Анализирую...';
-                if (msg.toLowerCase().includes('sew')) reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом)';
-                else if (msg.toLowerCase().includes('sinumerik')) reply = 'Sinumerik 3000: проверьте концевик оси X';
-                else reply = 'Уточните модель оборудования и код ошибки';
+                let reply = '';
+                const q = msg.toLowerCase();
+                
+                if (q.includes('sew') && q.includes('f04')) {
+                    reply = 'SEW F04: проверьте тормозной резистор (15-100 Ом)';
+                } else if (q.includes('sinumerik')) {
+                    reply = 'Sinumerik 3000: проверьте концевик оси X';
+                } else {
+                    reply = 'Уточните модель оборудования и код ошибки';
+                }
                 
                 chat.messages.push({
                     sender: 'bot',
@@ -2845,7 +2834,6 @@
             
             alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${login}\nПароль: ${password}\n\nПисьмо отправлено на ${email}`);
             
-            // Автоматически входим
             currentUser = { login: login };
             localStorage.setItem('industrai_current_user', JSON.stringify({ login: login }));
             checkAuth();
@@ -2856,7 +2844,6 @@
         
         // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
         
-        // Данные оборудования
         const equipmentData = [
             { 
                 id:1, 
@@ -2929,7 +2916,6 @@
         let currentItemId = null;
         let isAdmin = currentUser && currentUser.login === 'admin';
 
-        // Мобильное меню
         function toggleMobileMenu() {
             document.getElementById('mobileMenu').classList.toggle('active');
         }
@@ -2938,7 +2924,6 @@
             document.getElementById('mobileMenu').classList.remove('active');
         }
 
-        // Навигация
         function showPage(page) {
             document.getElementById('home-page').style.display = page === 'home' ? 'block' : 'none';
             document.getElementById('test-page').style.display = page === 'test' ? 'block' : 'none';
@@ -2966,7 +2951,7 @@
                     messages: [
                         {
                             sender: 'bot',
-                            text: 'Здравствуйте! Задайте вопрос. Например:\n• "Ошибка SEW F04"\n• "Sinumerik 840D ALARM 3000"',
+                            text: 'Введите запрос. Например: SEW F04, Sinumerik 3000',
                             timestamp: new Date().toISOString()
                         }
                     ],
@@ -2980,7 +2965,6 @@
             if (page === 'profile' && currentUser) {
                 loadUserChatHistory();
                 
-                // Обновляем название плана
                 const userData = users[currentUser.login];
                 if (userData) {
                     const planName = userData.plan === 'basic' ? 'Базовый (100 запросов)' : 
@@ -2993,7 +2977,6 @@
             closeMobileMenu();
         }
 
-        // Биржа - вкладки
         function switchMarketplaceTab(tab) {
             document.querySelectorAll('.tab-button').forEach((btn, i) => {
                 btn.classList.toggle('active', 
@@ -3014,7 +2997,6 @@
             if (tab === 'cabinet' && isAdmin) loadSellerItems();
         }
 
-        // Загрузка каталога
         function loadMarketplaceData() {
             const grid = document.getElementById('itemsGrid');
             if (!grid) return;
@@ -3040,7 +3022,6 @@
             grid.innerHTML = html;
         }
 
-        // Добавление товара (только для админа)
         function addNewItem() {
             if (!isAdmin) {
                 alert('Только администратор может добавлять товары');
@@ -3077,7 +3058,6 @@
             loadMarketplaceData();
         }
 
-        // Загрузка товаров продавца (только для админа)
         function loadSellerItems() {
             const container = document.getElementById('sellerItems');
             if (!isAdmin) {
@@ -3107,7 +3087,6 @@
             container.innerHTML = html;
         }
 
-        // Покупка
         function openBuyModal(id) { 
             currentItemId = id; 
             document.getElementById('phoneModal').classList.add('active'); 
@@ -3127,7 +3106,6 @@
             closeModal();
         }
 
-        // Прикрепление файлов
         function attachFile(context) {
             const input = document.createElement('input');
             input.type = 'file';
@@ -3165,7 +3143,6 @@
             input.click();
         }
 
-        // Email
         function sendEmailToAdmin(subject, body) {
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
@@ -3174,7 +3151,6 @@
             setTimeout(() => document.body.removeChild(iframe), 1000);
         }
 
-        // Уведомление
         function showNotification(msg) {
             const n = document.createElement('div');
             n.className = 'notification';
@@ -3183,7 +3159,6 @@
             setTimeout(() => n.remove(), 5000);
         }
 
-        // Обратная связь
         function sendFeedback(event) {
             event.preventDefault();
             const name = document.getElementById('feedbackName').value;
@@ -3207,7 +3182,6 @@
             showNotification('Запрос отправлен. Инженер свяжется с вами');
         }
 
-        // Инициализация
         window.onload = () => {
             checkAuth();
             showPage('home');
