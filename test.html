@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="copyright" content="IndustrAI - Василий Сальников, 2026. Все права защищены">
+    <meta name="author" content="Василий Сальников">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232B6FF0'/><text x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>IA</text></svg>">
+    <title>Тест-драйв — IndustrAI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Мобильное меню -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="index.html" class="nav-link">Главная</a>
+        <a href="test.html" class="nav-link active">Тест-драйв</a>
+        <a href="marketplace.html" class="nav-link">Биржа</a>
+        <a href="about.html" class="nav-link">О нас</a>
+        <a href="login.html" class="nav-button" style="margin-top: 20px; text-align: center;">Войти</a>
+    </div>
+
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="index.html" class="logo">INDUSTR<span>AI</span></a>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Главная</a>
+                <a href="test.html" class="nav-link active">Тест-драйв</a>
+                <a href="marketplace.html" class="nav-link">Биржа</a>
+                <a href="about.html" class="nav-link">О нас</a>
+                <div id="userMenu" style="display: none; align-items: center; gap: 15px;">
+                    <span class="user-name" id="userNameDisplay" onclick="window.location.href='profile.html'"></span>
+                    <span class="logout-btn" onclick="logout()">Выйти</span>
+                </div>
+                <a href="login.html" class="nav-button" id="loginBtn">Войти</a>
+            </div>
+            <div class="mobile-menu-button" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Тест-драйв -->
+    <section class="test-hero">
+        <div class="container">
+            <h1>Тест-драйв нейросети</h1>
+            <p>Один бесплатный запрос к нейросети, обученной на базе из 15 000+ решений</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-sidebar">
+                <div class="sidebar-header">
+                    <h3>История запросов</h3>
+                    <button class="new-chat-btn" onclick="createNewTestChat()"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="history-list" id="testHistoryList">
+                    <!-- Сюда будут добавляться элементы истории для тест-драйва -->
+                </div>
+            </div>
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div class="chat-avatar">AI</div>
+                    <div class="chat-title">
+                        <h3>Техническая нейросеть</h3>
+                        <p>тест-драйв (1 запрос)</p>
+                    </div>
+                    <div class="query-counter" id="testQueryCounter">1 запрос</div>
+                </div>
+
+                <div class="chat-messages" id="testChatMessages">
+                    <div class="message bot">
+                        <div class="message-avatar">AI</div>
+                        <div class="message-content">
+                            Введите запрос. Например: SEW F04, Sinumerik 3000
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <button class="attach-btn" onclick="attachFile('test')"><i class="fas fa-paperclip"></i></button>
+                        <input type="text" class="chat-input" id="testChatInput" placeholder="Опишите проблему...">
+                        <button class="chat-send" onclick="sendTestMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container
