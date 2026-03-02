@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndustrAI — вход в систему</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232B6FF0'/><text x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>IA</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0A1929, #1A2A3A);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            max-width: 420px;
+            width: 100%;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo a {
+            font-size: 32px;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .logo span {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo::after {
+            content: 'AI';
+            position: absolute;
+            top: -10px;
+            right: -30px;
+            font-size: 14px;
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+        
+        .login-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #0A1929;
+        }
+        
+        .login-card p {
+            color: #5A6B7A;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #0A1929;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #E0E8F0;
+            border-radius: 40px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #2B6FF0;
+        }
+        
+        .login-button {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            margin-bottom: 15px;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(43,111,240,0.3);
+        }
+        
+        .back-link {
+            text-align: center;
+        }
+        
+        .back-link a {
+            color: #2B6FF0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: #ff5f56;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-left: 4px solid #00B4A0;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <a href="index.html">INDUSTR<span>AI</span></a>
+        </div>
+        
+        <div class="login-card">
+            <h2>Вход в систему</h2>
+            <p>Введите логин и пароль, полученные после покупки подписки</p>
+            
+            <div class="form-group">
+                <label>Логин</label>
+                <input type="text" class="form-input" id="login" placeholder="Например: ivan123">
+            </div>
+            
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" class="form-input" id="password" placeholder="Ваш пароль">
+                <div class="error-message" id="loginError">Неверный логин или пароль</div>
+            </div>
+            
+            <button class="login-button" onclick="login()">Войти</button>
+            
+            <div class="back-link">
+                <a href="index.html">← Вернуться на главную</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Функция для показа уведомления
+        function showNotification(msg) {
+            const n = document.createElement('div');
+            n.className = 'notification';
+            n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 5000);
+        }
+
+        // Функция входа
+        function login() {
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            
+            if (!login || !password) {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('loginError').textContent = 'Заполните все поля';
+                return;
+            }
+            
+            // Получаем пользователей из localStorage (общая база с основным сайтом)
+            const users = JSON.parse(localStorage.getItem('industrai_users')) || {};
+            
+            // Проверяем существование пользователя
+            if (users[login]) {
+                // Проверяем пароль (хранится в base64)
+                const storedPassword = atob(users[login].password);
+                
+                if (storedPassword === password) {
+                    // Успешный вход
+                    localStorage.setItem('industrai_current_user', JSON.stringify({ login: login }));
+                    showNotification('Вход выполнен успешно!');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                    return;
+                }
+            }
+            
+            // Неверные данные
+            document.getElementById('loginError').style.display = 'block';
+        }
+
+        // Обработка Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>
