@@ -16,254 +16,56 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== БАЗА ЗНАНИЙ ==========
-let knowledgeBase = [];
-let isBaseLoaded = false;
+// ========== КОНФИГУРАЦИЯ DEEPSEEK API ==========
+const DEEPSEEK_CONFIG = {
+    apiKey: 'sk-6f2c9043acad4e278f5a3a230a1b5e33', // Ваш API ключ DeepSeek
+    apiUrl: 'https://api.deepseek.com/v1/chat/completions',
+    model: 'deepseek-chat'
+};
 
-// ========== ЛОКАЛЬНАЯ НЕЙРОСЕТЬ ==========
-let localModel = null;
-let isModelLoading = false;
-
-// Функция для разбора CSV с учетом кавычек
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-            inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-            result.push(current.trim());
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-    result.push(current.trim());
-    return result;
-}
-
-async function loadKnowledgeBase() {
-    if (isBaseLoaded) return true;
-    
+// ========== ФУНКЦИЯ ВЫЗОВА DEEPSEEK API ==========
+async function callDeepSeekAPI(messages) {
     try {
-        console.log('📚 Загрузка базы знаний...');
+        console.log('🤖 Отправка запроса к DeepSeek...');
         
-        const response = await fetch('https://raw.githubusercontent.com/lordvako/industrai/main/knowledge_base_clean.csv.gz');
-        
+        const response = await fetch(DEEPSEEK_CONFIG.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${DEEPSEEK_CONFIG.apiKey}`
+            },
+            body: JSON.stringify({
+                model: DEEPSEEK_CONFIG.model,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 2000,
+                top_p: 0.9,
+                frequency_penalty: 0,
+                presence_penalty: 0
+            })
+        });
+
         if (!response.ok) {
-            throw new Error('Не удалось загрузить базу знаний');
-        }
-        
-        const blob = await response.blob();
-        const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
-        const decompressedBlob = await new Response(decompressedStream).blob();
-        const csvText = await decompressedBlob.text();
-        
-        const lines = csvText.split('\n');
-        const headers = parseCSVLine(lines[0]);
-        
-        knowledgeBase = [];
-        
-        for (let i = 1; i < Math.min(lines.length, 2000); i++) {
-            if (!lines[i].trim()) continue;
+            const errorData = await response.text();
+            console.error('❌ Ошибка DeepSeek API:', response.status, errorData);
             
-            const values = parseCSVLine(lines[i]);
-            const obj = {};
-            
-            headers.forEach((header, index) => {
-                let value = values[index] || '';
-                value = value.replace(/^"|"$/g, '');
-                obj[header] = value;
-            });
-            
-            if (obj.content && obj.content.length > 30) {
-                knowledgeBase.push(obj);
+            if (response.status === 401) {
+                return "❌ Ошибка авторизации API. Проверьте ваш API ключ.";
+            } else if (response.status === 429) {
+                return "❌ Превышен лимит запросов. Попробуйте позже.";
+            } else {
+                return `❌ Ошибка API (${response.status}). Пожалуйста, попробуйте позже.`;
             }
         }
-        
-        isBaseLoaded = true;
-        console.log(`✅ База знаний загружена: ${knowledgeBase.length} записей`);
-        return true;
-        
+
+        const data = await response.json();
+        console.log('✅ Ответ получен от DeepSeek');
+        return data.choices[0].message.content;
+
     } catch (error) {
-        console.error('❌ Ошибка загрузки базы знаний:', error);
-        return false;
+        console.error('❌ Ошибка сети:', error);
+        return "❌ Ошибка соединения. Проверьте подключение к интернету.";
     }
-}
-
-function searchKnowledgeBase(query) {
-    const searchTerms = query.toLowerCase().split(' ')
-        .filter(term => term.length > 2)
-        .map(term => term.replace(/[^\wа-яё]/gi, ''));
-    
-    if (searchTerms.length === 0) return [];
-    
-    const results = [];
-    const seenContents = new Set();
-    
-    for (const item of knowledgeBase) {
-        let relevance = 0;
-        
-        const searchableText = [
-            item.topic_title || '',
-            item.content || '',
-            item.solution || '',
-            item.manufacturer || '',
-            item.forum || ''
-        ].join(' ').toLowerCase();
-        
-        for (const term of searchTerms) {
-            if (term.length < 2) continue;
-            
-            if (searchableText.includes(term)) {
-                relevance += searchableText.split(term).length - 1;
-            }
-        }
-        
-        const contentKey = (item.content || '').substring(0, 150);
-        if (relevance > 0 && !seenContents.has(contentKey)) {
-            seenContents.add(contentKey);
-            results.push({
-                item: item,
-                relevance: relevance
-            });
-        }
-    }
-    
-    results.sort((a, b) => b.relevance - a.relevance);
-    return results.slice(0, 5);
-}
-
-// ========== ЛОКАЛЬНЫЙ ИНТЕЛЛЕКТУАЛЬНЫЙ ОТВЕТ (БЕЗ API) ==========
-
-function getSmartLocalAnswer(query, results) {
-    if (results.length === 0) {
-        return `❌ По вашему запросу "${query}" ничего не найдено в базе знаний.`;
-    }
-    
-    // Анализируем результаты
-    let manufacturers = new Set();
-    let solutions = [];
-    let codes = [];
-    
-    results.forEach(result => {
-        const item = result.item;
-        if (item.manufacturer && item.manufacturer !== 'other') {
-            manufacturers.add(item.manufacturer);
-        }
-        
-        // Ищем коды ошибок
-        const errorMatch = item.content?.match(/[Ff]\d{2}|[Aa]larm \d{3,4}|[Оо]шибк[аи]\s*\d+/g) || 
-                          item.solution?.match(/[Ff]\d{2}|[Aa]larm \d{3,4}|[Оо]шибк[аи]\s*\d+/g) || [];
-        codes.push(...errorMatch);
-        
-        if (item.solution && item.solution.length > 50) {
-            solutions.push(item.solution);
-        }
-    });
-    
-    const manufacturer = manufacturers.size > 0 ? Array.from(manufacturers)[0] : 'неизвестного производителя';
-    const uniqueCodes = [...new Set(codes)];
-    const codeText = uniqueCodes.length > 0 ? ` (коды: ${uniqueCodes.slice(0,3).join(', ')})` : '';
-    
-    // Формируем интеллектуальный ответ на основе анализа базы
-    let answer = `🔧 **Диагностика по базе знаний для ${manufacturer}${codeText}:**\n\n`;
-    
-    if (query.toLowerCase().includes('sf') || query.toLowerCase().includes('s7')) {
-        answer += `Ошибка SF на контроллерах Siemens обычно указывает на системную ошибку. `;
-        answer += `На основе анализа похожих ситуаций из базы знаний, рекомендую:\n\n`;
-        answer += `1️⃣ **Проверьте индикаторы** — если SF мигает, ошибка программная; если горит постоянно — аппаратная.\n`;
-        answer += `2️⃣ **Проверьте питание 24В** на всех модулях — часто проблема в блоке питания.\n`;
-        answer += `3️⃣ **Подключитесь через Step7/TIA Portal** и посмотрите диагностический буфер.\n`;
-        answer += `4️⃣ **Проверьте конфигурацию оборудования** — возможно, несоответствие проекта.\n\n`;
-    } else {
-        answer += `По вашему запросу найдено ${results.length} похожих обсуждений.\n\n`;
-    }
-    
-    // Добавляем конкретное решение из базы, если есть
-    if (solutions.length > 0) {
-        answer += `✅ **Наиболее подходящее решение из базы:**\n`;
-        answer += `${solutions[0].substring(0, 400)}...\n\n`;
-    }
-    
-    answer += `📊 **Статистика по запросу:**\n`;
-    answer += `• Найдено обсуждений: ${results.length}\n`;
-    answer += `• Производители: ${Array.from(manufacturers).join(', ')}\n`;
-    answer += `• Коды ошибок: ${uniqueCodes.slice(0,5).join(', ') || 'не указаны'}\n\n`;
-    
-    answer += `_Ответ сформирован локально на основе базы знаний из ${knowledgeBase.length} записей_\n`;
-    answer += `_Для более точных ответов пополните API-ключ_`;
-    
-    return answer;
-}
-
-async function getAIResponse(query) {
-    if (!isBaseLoaded) await loadKnowledgeBase();
-    
-    const results = searchKnowledgeBase(query);
-    
-    // Используем локальный интеллектуальный ответ
-    return getSmartLocalAnswer(query, results);
-}
-
-// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
-
-function checkAuth() {
-    const userMenu = document.getElementById('userMenu');
-    const userNameDisplay = document.getElementById('userNameDisplay');
-    const loginBtn = document.getElementById('loginBtn');
-    const testDriveLink = document.getElementById('testDriveLink');
-    const subscriptionBanner = document.getElementById('subscriptionBanner');
-    const mainActionBtn = document.getElementById('mainActionBtn');
-    const mainActionHint = document.getElementById('mainActionHint');
-    
-    if (!userMenu || !userNameDisplay || !loginBtn || !testDriveLink) return;
-    
-    if (currentUser) {
-        userMenu.style.display = 'flex';
-        userNameDisplay.textContent = currentUser.login;
-        loginBtn.style.display = 'none';
-        
-        testDriveLink.textContent = 'Нейросеть';
-        testDriveLink.href = 'profile.html';
-        
-        if (subscriptionBanner) subscriptionBanner.style.display = 'block';
-        
-        if (mainActionBtn) {
-            mainActionBtn.textContent = 'Перейти в нейросеть →';
-            mainActionBtn.href = 'profile.html';
-        }
-        if (mainActionHint) mainActionHint.textContent = 'У вас активная подписка';
-        
-        if (window.location.pathname.includes('profile.html')) {
-            loadUserChatHistory();
-        }
-    } else {
-        userMenu.style.display = 'none';
-        loginBtn.style.display = 'inline-block';
-        
-        testDriveLink.textContent = 'Тест-драйв';
-        testDriveLink.href = 'test.html';
-        
-        if (subscriptionBanner) subscriptionBanner.style.display = 'none';
-        
-        if (mainActionBtn) {
-            mainActionBtn.textContent = 'Попробовать нейросеть бесплатно →';
-            mainActionBtn.href = 'test.html';
-        }
-        if (mainActionHint) mainActionHint.textContent = 'Один запрос — в подарок';
-    }
-}
-
-function logout() {
-    localStorage.removeItem('industrai_current_user');
-    currentUser = null;
-    checkAuth();
-    showNotification('Вы вышли из системы');
-    window.location.href = 'index.html';
 }
 
 // ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
@@ -279,7 +81,7 @@ function loadUserChatHistory() {
             title: 'Новый диалог',
             messages: [{
                 sender: 'bot',
-                text: '🔍 База знаний загружена. Задайте вопрос по оборудованию!',
+                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение!',
                 timestamp: new Date().toISOString()
             }],
             createdAt: new Date().toISOString()
@@ -318,7 +120,7 @@ function createNewProfileChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 Задайте вопрос по оборудованию!',
+            text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение!',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -369,18 +171,52 @@ async function sendProfileMessage() {
     const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
     if (!chat) return;
     
-    chat.messages.push({ sender: 'user', text: msg, timestamp: new Date().toISOString() });
-    if (chat.messages.length === 2) chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
+    // Добавляем сообщение пользователя
+    chat.messages.push({ 
+        sender: 'user', 
+        text: msg, 
+        timestamp: new Date().toISOString() 
+    });
+    
+    if (chat.messages.length === 2) {
+        chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
+    }
     
     loadProfileChat(currentChatId);
     input.value = '';
     
-    chat.messages.push({ sender: 'bot', text: '🔍 Анализирую базу знаний...', timestamp: new Date().toISOString() });
+    // Индикатор загрузки
+    chat.messages.push({ 
+        sender: 'bot', 
+        text: '🤔 Думаю...', 
+        timestamp: new Date().toISOString() 
+    });
     loadProfileChat(currentChatId);
     
-    const reply = await getAIResponse(msg);
+    // Формируем историю для контекста
+    const messageHistory = [];
+    for (let i = Math.max(0, chat.messages.length - 10); i < chat.messages.length - 1; i++) {
+        const m = chat.messages[i];
+        if (m.sender === 'user') {
+            messageHistory.push({ role: 'user', content: m.text });
+        } else if (m.sender === 'bot' && m.text !== '🤔 Думаю...') {
+            messageHistory.push({ role: 'assistant', content: m.text });
+        }
+    }
+    
+    // Добавляем текущий вопрос
+    messageHistory.push({ role: 'user', content: msg });
+    
+    // Отправляем к DeepSeek
+    const reply = await callDeepSeekAPI(messageHistory);
+    
+    // Удаляем индикатор и добавляем ответ
     chat.messages.pop();
-    chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
+    chat.messages.push({ 
+        sender: 'bot', 
+        text: reply, 
+        timestamp: new Date().toISOString() 
+    });
     
     localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
     loadProfileChat(currentChatId);
@@ -402,7 +238,7 @@ function deleteChat(chatId, event) {
     }
 }
 
-// ========== ТЕСТ-ДРАЙВ ==========
+// ========== ТЕСТ-ДРАЙВ (аналогично профилю, но с лимитом) ==========
 
 let testQueriesLeft = 1;
 let testChatHistory = [];
@@ -487,13 +323,85 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    chat.messages.push({ sender: 'bot', text: '🔍 Анализирую базу знаний...', timestamp: new Date().toISOString() });
+    chat.messages.push({ sender: 'bot', text: '🤔 Думаю...', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
-    const reply = await getAIResponse(msg);
+    // Формируем историю
+    const messageHistory = [{ role: 'user', content: msg }];
+    const reply = await callDeepSeekAPI(messageHistory);
+    
     chat.messages.pop();
     chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
+}
+
+// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
+
+function checkAuth() {
+    const userMenu = document.getElementById('userMenu');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const loginBtn = document.getElementById('loginBtn');
+    const testDriveLink = document.getElementById('testDriveLink');
+    const subscriptionBanner = document.getElementById('subscriptionBanner');
+    const mainActionBtn = document.getElementById('mainActionBtn');
+    const mainActionHint = document.getElementById('mainActionHint');
+    
+    if (!userMenu || !userNameDisplay || !loginBtn || !testDriveLink) return;
+    
+    if (currentUser) {
+        userMenu.style.display = 'flex';
+        userNameDisplay.textContent = currentUser.login;
+        loginBtn.style.display = 'none';
+        
+        testDriveLink.textContent = 'Нейросеть';
+        testDriveLink.href = 'profile.html';
+        
+        if (subscriptionBanner) subscriptionBanner.style.display = 'block';
+        
+        if (mainActionBtn) {
+            mainActionBtn.textContent = 'Перейти в нейросеть →';
+            mainActionBtn.href = 'profile.html';
+        }
+        if (mainActionHint) mainActionHint.textContent = 'У вас активная подписка';
+        
+        if (window.location.pathname.includes('profile.html')) {
+            loadUserChatHistory();
+        }
+    } else {
+        userMenu.style.display = 'none';
+        loginBtn.style.display = 'inline-block';
+        
+        testDriveLink.textContent = 'Тест-драйв';
+        testDriveLink.href = 'test.html';
+        
+        if (subscriptionBanner) subscriptionBanner.style.display = 'none';
+        
+        if (mainActionBtn) {
+            mainActionBtn.textContent = 'Попробовать нейросеть бесплатно →';
+            mainActionBtn.href = 'test.html';
+        }
+        if (mainActionHint) mainActionHint.textContent = 'Один запрос — в подарок';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('industrai_current_user');
+    currentUser = null;
+    checkAuth();
+    showNotification('Вы вышли из системы');
+    window.location.href = 'index.html';
+}
+
+function showNotification(msg) {
+    const n = document.createElement('div');
+    n.className = 'notification';
+    n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 5000);
+}
+
+function toggleMobileMenu() {
+    document.getElementById('mobileMenu')?.classList.toggle('active');
 }
 
 // ========== БИРЖА ==========
@@ -533,11 +441,13 @@ function loadMarketplaceData() {
 }
 
 function switchMarketplaceTab(tab) {
+    const isAdmin = currentUser && currentUser.login === 'admin';
+    
     document.querySelectorAll('.tab-button').forEach((btn, i) => {
         btn.classList.toggle('active', 
             (i === 0 && tab === 'catalog') ||
             (i === 1 && tab === 'add') ||
-            (i === 2 && tab === 'cabinet')
+            (i === 2 && tab === 'cabinet' && isAdmin)
         );
     });
     
@@ -548,37 +458,226 @@ function switchMarketplaceTab(tab) {
             (i === 2 && tab === 'cabinet')
         );
     });
+    
+    if (tab === 'cabinet' && isAdmin) loadSellerItems();
+}
+
+function addNewItem() {
+    if (!currentUser || currentUser.login !== 'admin') {
+        alert('Только администратор может добавлять товары');
+        return;
+    }
+    
+    const name = document.getElementById('itemName').value;
+    const price = parseFloat(document.getElementById('sellerPrice').value);
+    if (!name || !price) { alert('Заполните название и цену'); return; }
+    
+    const newItem = {
+        id: equipmentData.length+1,
+        name, 
+        category: document.getElementById('itemCategory').value,
+        description: document.getElementById('itemDescription').value,
+        status: document.getElementById('itemStatus').value,
+        image: "📦", 
+        sellerPrice: price, 
+        finalPrice: Math.round(price*1.35), 
+        sellerName: "Василий"
+    };
+    equipmentData.push(newItem);
+    
+    sendEmailToAdmin('Новое объявление', 
+        `${name}\nЦена продавца: ${price} ₽\nЦена продажи: ${newItem.finalPrice} ₽\nСтатус: ${newItem.status}`
+    );
+    showNotification('Товар добавлен');
+    
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemDescription').value = '';
+    document.getElementById('sellerPrice').value = '';
+    
+    switchMarketplaceTab('catalog');
+    loadMarketplaceData();
+}
+
+function loadSellerItems() {
+    const container = document.getElementById('sellerItems');
+    if (!currentUser || currentUser.login !== 'admin') {
+        if (container) container.innerHTML = '<p>Доступ запрещён</p>';
+        return;
+    }
+    
+    const myItems = equipmentData.filter(i => i.sellerName === "Василий");
+    if (!myItems.length) { 
+        if (container) container.innerHTML = '<p>У вас пока нет товаров</p>'; 
+        return; 
+    }
+    
+    let html = '';
+    myItems.forEach(item => {
+        html += `<div class="seller-item">
+            <div class="seller-item-image">${item.image}</div>
+            <div style="flex:2">
+                <h4>${item.name}</h4>
+                <p style="color:#5A6B7A;">${item.description}</p>
+                <p style="color:#00B4A0; font-size:12px;">${item.status}</p>
+            </div>
+            <div style="text-align:right">
+                <div style="color:#5A6B7A;">Ваша: ${item.sellerPrice.toLocaleString()} ₽</div>
+                <div style="color:#00B4A0; font-weight:700;">Продажа: ${item.finalPrice.toLocaleString()} ₽</div>
+                <div style="color:#2B6FF0;">+${(item.finalPrice-item.sellerPrice).toLocaleString()} ₽</div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
 }
 
 let currentItemId = null;
 
-function openBuyModal(id) { currentItemId = id; document.getElementById('phoneModal')?.classList.add('active'); }
-function closeModal() { document.getElementById('phoneModal')?.classList.remove('active'); document.getElementById('buyerPhone').value = ''; }
+function openBuyModal(id) { 
+    currentItemId = id; 
+    const modal = document.getElementById('phoneModal');
+    if (modal) modal.classList.add('active'); 
+}
+
+function closeModal() { 
+    const modal = document.getElementById('phoneModal');
+    const input = document.getElementById('buyerPhone');
+    if (modal) modal.classList.remove('active'); 
+    if (input) input.value = ''; 
+}
 
 function submitPhone() {
     const phone = document.getElementById('buyerPhone').value;
     if (!phone) { alert('Введите телефон'); return; }
+    const item = equipmentData.find(i => i.id === currentItemId) || { name: "Запрос по ошибке" };
+    sendEmailToAdmin('Новый покупатель', `${item.name}\nТелефон: ${phone}\nСтатус: ${item.status || 'не указан'}`);
     showNotification('Спасибо! Мы свяжемся с вами');
     closeModal();
 }
 
-function showNotification(msg) {
-    const n = document.createElement('div');
-    n.className = 'notification';
-    n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
-    document.body.appendChild(n);
-    setTimeout(() => n.remove(), 5000);
+function sendEmailToAdmin(subject, body) {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `mailto:iris.salnikov@yandex.ru?subject=${encodeURIComponent('[IndustrAI] ' + subject)}&body=${encodeURIComponent(body)}`;
+    document.body.appendChild(iframe);
+    setTimeout(() => document.body.removeChild(iframe), 1000);
 }
 
-function toggleMobileMenu() {
-    document.getElementById('mobileMenu')?.classList.toggle('active');
+function attachFile(context) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.png,.xls,.xlsx';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            showNotification(`Файл "${file.name}" прикреплён`);
+            
+            if (context === 'profile' && currentUser && currentChatId) {
+                const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
+                if (chat) {
+                    chat.messages.push({
+                        sender: 'user',
+                        text: `[Прикреплён файл: ${file.name}]`,
+                        attachment: { name: file.name },
+                        timestamp: new Date().toISOString()
+                    });
+                    loadProfileChat(currentChatId);
+                }
+            } else if (context === 'test' && testCurrentChatId) {
+                const chat = testChatHistory.find(c => c.id === testCurrentChatId);
+                if (chat) {
+                    chat.messages.push({
+                        sender: 'user',
+                        text: `[Прикреплён файл: ${file.name}]`,
+                        attachment: { name: file.name },
+                        timestamp: new Date().toISOString()
+                    });
+                    loadTestChat(testCurrentChatId);
+                }
+            }
+        }
+    };
+    input.click();
+}
+
+function requestSupport() {
+    if (!currentUser) {
+        alert('Для запроса поддержки необходимо авторизоваться');
+        window.location.href = 'login.html';
+        return;
+    }
+    showNotification('Запрос отправлен. Инженер свяжется с вами');
+}
+
+// ========== СИСТЕМА ОПЛАТЫ ==========
+
+let currentPayment = null;
+
+function showConfirm(type, name, price) {
+    if (currentUser) {
+        alert('Вы уже авторизованы. Для покупки нового тарифа обратитесь в поддержку.');
+        return;
+    }
+    
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmText = document.getElementById('confirmText');
+    
+    if (!confirmModal || !confirmTitle || !confirmText) return;
+    
+    confirmTitle.textContent = `Тариф "${name}"`;
+    confirmText.textContent = `Сумма к оплате: ${price.toLocaleString()} ₽. После оплаты вы получите логин и пароль на email.`;
+    confirmModal.classList.add('active');
+    
+    currentPayment = { type, name, price };
+}
+
+function closeConfirmModal() {
+    const confirmModal = document.getElementById('confirmModal');
+    if (confirmModal) confirmModal.classList.remove('active');
+    currentPayment = null;
+}
+
+function processPayment() {
+    if (!currentPayment) return;
+    
+    const email = prompt('Введите ваш email для получения доступа:');
+    if (!email || !email.includes('@')) {
+        alert('Введите корректный email');
+        return;
+    }
+    
+    showNotification('Обработка платежа...');
+    
+    fetch('http://9570510274.hosting.myjino.ru/register.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: email,
+            plan: currentPayment.type
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${data.login}\nПароль был отправлен на ${email}`);
+            window.location.href = 'login.html';
+        } else {
+            alert('Ошибка при регистрации: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    })
+    .catch(error => {
+        alert('Ошибка соединения с сервером. Проверьте консоль (F12)');
+        console.error('Fetch Error:', error);
+    })
+    .finally(() => {
+        closeConfirmModal();
+    });
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    loadKnowledgeBase();
     
     const path = window.location.pathname;
     if (path.includes('test.html')) {
