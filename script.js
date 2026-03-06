@@ -22,7 +22,7 @@ let isBaseLoaded = false;
 
 // ========== КОНФИГУРАЦИЯ OPENROUTER ==========
 const AI_CONFIG = {
-    apiKey: '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', // ЗАМЕНИТЕ НА СВОЙ КЛЮЧ!
+    apiKey: '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',
     apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
     model: 'deepseek/deepseek-chat',
     siteUrl: window.location.origin,
@@ -197,17 +197,25 @@ async function askAI(prompt) {
             })
         });
         
+        // Логируем статус для отладки
+        console.log('📡 Статус ответа OpenRouter:', response.status);
+        
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Ошибка OpenRouter:', response.status, errorText);
+            console.error('❌ Ошибка OpenRouter:', response.status, errorText);
+            
+            // Показываем ошибку пользователю
+            showNotification(`Ошибка API: ${response.status}. Использую локальную базу.`);
             return null;
         }
         
         const data = await response.json();
+        console.log('✅ Ответ получен от OpenRouter');
         return data.choices[0].message.content;
         
     } catch (error) {
-        console.error('Ошибка:', error);
+        console.error('❌ Ошибка сети:', error);
+        showNotification('Ошибка сети. Использую локальную базу.');
         return null;
     }
 }
@@ -221,16 +229,68 @@ async function getAIResponse(query) {
     
     if (answer) return answer;
     
-    // Резервный ответ, если AI не сработал
+    // Умный резервный ответ на основе базы
     if (results.length > 0) {
-        const item = results[0].item;
-        if (item.solution && item.solution.length > 50) {
-            return `🔍 На основе базы знаний:\n\n${item.solution.substring(0, 1000)}`;
-        }
-        return `🔍 Найдена информация по теме: ${item.topic_title || 'без названия'}`;
+        let combinedAnswer = "🔍 **На основе базы знаний нашёл несколько сообщений по вашей теме:**\n\n";
+        
+        results.slice(0, 3).forEach((result, i) => {
+            const item = result.item;
+            combinedAnswer += `📌 **Вариант ${i+1}**\n`;
+            if (item.solution && item.solution.length > 50) {
+                combinedAnswer += item.solution.substring(0, 300) + "...\n\n";
+            } else if (item.content && item.content.length > 50) {
+                combinedAnswer += item.content.substring(0, 300) + "...\n\n";
+            }
+        });
+        
+        combinedAnswer += "---\n_Попробуйте уточнить запрос или задать вопрос иначе._";
+        return combinedAnswer;
     }
     
-    return `❌ По запросу "${query}" ничего не найдено. Уточните запрос.`;
+    return `❌ По запросу "${query}" ничего не найдено в базе знаний. Попробуйте изменить запрос.`;
+}
+
+// ========== ТЕСТОВАЯ ФУНКЦИЯ ==========
+async function testOpenRouter() {
+    console.log('🔍 Тестирование OpenRouter API...');
+    
+    try {
+        const response = await fetch(AI_CONFIG.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
+                'HTTP-Referer': AI_CONFIG.siteUrl,
+                'X-Title': AI_CONFIG.siteName
+            },
+            body: JSON.stringify({
+                model: AI_CONFIG.model,
+                messages: [
+                    { role: 'user', content: 'Say "OK" if you are working' }
+                ],
+                max_tokens: 10
+            })
+        });
+        
+        console.log('📡 Статус теста:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Тест не пройден:', errorText);
+            showNotification(`⚠️ OpenRouter API не отвечает (${response.status}). Используется локальный режим.`);
+            return false;
+        }
+        
+        const data = await response.json();
+        console.log('✅ OpenRouter работает:', data.choices[0].message.content);
+        showNotification('✅ Подключение к нейросети установлено!');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Ошибка теста:', error);
+        showNotification('⚠️ Нет подключения к нейросети. Используется локальный режим.');
+        return false;
+    }
 }
 
 // ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
@@ -603,6 +663,7 @@ function toggleMobileMenu() {
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     loadKnowledgeBase();
+    testOpenRouter(); // Тестируем подключение
     
     const path = window.location.pathname;
     if (path.includes('test.html')) {
