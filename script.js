@@ -441,6 +441,8 @@ function loadProfileChat(chatId) {
     renderProfileHistory();
     
     const messagesContainer = document.getElementById('profileChatMessages');
+    if (!messagesContainer) return;
+    
     let html = '';
     chat.messages.forEach(msg => {
         let formattedText = msg.text.replace(/\n/g, '<br>');
@@ -475,18 +477,29 @@ function loadProfileChat(chatId) {
 }
 
 async function sendProfileMessage() {
+    console.log('sendProfileMessage вызвана');
+    
     if (!currentUser) {
         alert('Необходимо авторизоваться');
         return;
     }
     
     const input = document.getElementById('profileChatInput');
+    if (!input) {
+        console.error('profileChatInput не найден');
+        return;
+    }
+    
     const msg = input.value.trim();
     if (!msg) return;
     
     const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
-    if (!chat) return;
+    if (!chat) {
+        console.error('Чат не найден');
+        return;
+    }
     
+    // Добавляем сообщение пользователя
     chat.messages.push({
         sender: 'user',
         text: msg,
@@ -500,7 +513,7 @@ async function sendProfileMessage() {
     loadProfileChat(currentChatId);
     input.value = '';
     
-    // Индикатор загрузки
+    // Добавляем индикатор загрузки
     chat.messages.push({
         sender: 'bot',
         text: '🔍 Ищу в базе знаний...',
@@ -509,10 +522,11 @@ async function sendProfileMessage() {
     loadProfileChat(currentChatId);
     
     // Получаем ответ
-    setTimeout(async () => {
-        chat.messages.pop();
-        
+    try {
         const reply = await getAIResponse(msg);
+        
+        // Удаляем индикатор загрузки
+        chat.messages.pop();
         
         chat.messages.push({
             sender: 'bot',
@@ -522,7 +536,20 @@ async function sendProfileMessage() {
         
         localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
         loadProfileChat(currentChatId);
-    }, 500);
+    } catch (error) {
+        console.error('Ошибка при получении ответа:', error);
+        
+        // Удаляем индикатор загрузки
+        chat.messages.pop();
+        
+        chat.messages.push({
+            sender: 'bot',
+            text: '❌ Произошла ошибка при поиске. Пожалуйста, попробуйте ещё раз.',
+            timestamp: new Date().toISOString()
+        });
+        
+        loadProfileChat(currentChatId);
+    }
 }
 
 function deleteChat(chatId, event) {
@@ -593,6 +620,8 @@ function loadTestChat(chatId) {
     renderTestHistory();
     
     const messagesContainer = document.getElementById('testChatMessages');
+    if (!messagesContainer) return;
+    
     let html = '';
     chat.messages.forEach(msg => {
         let formattedText = msg.text.replace(/\n/g, '<br>');
@@ -608,7 +637,14 @@ function loadTestChat(chatId) {
 }
 
 async function sendTestMessage() {
+    console.log('sendTestMessage вызвана');
+    
     const input = document.getElementById('testChatInput');
+    if (!input) {
+        console.error('testChatInput не найден');
+        return;
+    }
+    
     const msg = input.value.trim();
     if (!msg) return;
     
@@ -622,8 +658,12 @@ async function sendTestMessage() {
     if (counter) counter.innerText = testQueriesLeft + ' запрос';
     
     const chat = testChatHistory.find(c => c.id === testCurrentChatId);
-    if (!chat) return;
+    if (!chat) {
+        console.error('Чат не найден');
+        return;
+    }
     
+    // Добавляем сообщение пользователя
     chat.messages.push({
         sender: 'user',
         text: msg,
@@ -637,7 +677,7 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    // Индикатор загрузки
+    // Добавляем индикатор загрузки
     chat.messages.push({
         sender: 'bot',
         text: '🔍 Ищу в базе знаний...',
@@ -646,10 +686,11 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     
     // Получаем ответ
-    setTimeout(async () => {
-        chat.messages.pop();
-        
+    try {
         const reply = await getAIResponse(msg);
+        
+        // Удаляем индикатор загрузки
+        chat.messages.pop();
         
         chat.messages.push({
             sender: 'bot',
@@ -658,7 +699,20 @@ async function sendTestMessage() {
         });
         
         loadTestChat(testCurrentChatId);
-    }, 500);
+    } catch (error) {
+        console.error('Ошибка при получении ответа:', error);
+        
+        // Удаляем индикатор загрузки
+        chat.messages.pop();
+        
+        chat.messages.push({
+            sender: 'bot',
+            text: '❌ Произошла ошибка при поиске. Пожалуйста, попробуйте ещё раз.',
+            timestamp: new Date().toISOString()
+        });
+        
+        loadTestChat(testCurrentChatId);
+    }
 }
 
 // ========== СИСТЕМА ОПЛАТЫ ==========
@@ -725,6 +779,15 @@ function processPayment() {
     .finally(() => {
         closeConfirmModal();
     });
+}
+
+function requestSupport() {
+    if (!currentUser) {
+        alert('Для запроса поддержки необходимо авторизоваться');
+        window.location.href = 'login.html';
+        return;
+    }
+    showNotification('Запрос отправлен. Инженер свяжется с вами');
 }
 
 // ========== БИРЖА ==========
@@ -1002,9 +1065,11 @@ function closeMobileMenu() {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Страница загружена, инициализация...');
+    
     checkAuth();
     
-    // Загружаем базу знаний в фоне (не блокируя интерфейс)
+    // Загружаем базу знаний в фоне
     loadKnowledgeBase();
     
     // Если мы на странице биржи, загружаем данные
@@ -1032,5 +1097,10 @@ document.addEventListener('DOMContentLoaded', function() {
         testCurrentChatId = testChatHistory[0].id;
         renderTestHistory();
         loadTestChat(testCurrentChatId);
+    }
+    
+    // Если мы на странице профиля, загружаем историю
+    if (window.location.pathname.includes('profile.html')) {
+        loadUserChatHistory();
     }
 });
