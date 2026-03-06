@@ -20,11 +20,11 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 let knowledgeBase = [];
 let isBaseLoaded = false;
 
-// ========== КОНФИГУРАЦИЯ OPENROUTER ==========
+// ========== КОНФИГУРАЦИЯ OPENROUTER (БЕСПЛАТНАЯ МОДЕЛЬ) ==========
 const AI_CONFIG = {
-    apiKey: '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',
+    apiKey: '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', // Ваш ключ
     apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
-    model: 'deepseek/deepseek-chat',
+    model: 'deepseek/deepseek-chat:free', // БЕСПЛАТНАЯ версия DeepSeek
     siteUrl: window.location.origin,
     siteName: 'IndustrAI'
 };
@@ -170,7 +170,7 @@ ${context}
 
 async function askAI(prompt) {
     try {
-        console.log('🤖 Отправка запроса к OpenRouter...');
+        console.log('🤖 Отправка запроса к OpenRouter (бесплатная модель)...');
         
         const response = await fetch(AI_CONFIG.apiUrl, {
             method: 'POST',
@@ -197,15 +197,19 @@ async function askAI(prompt) {
             })
         });
         
-        // Логируем статус для отладки
-        console.log('📡 Статус ответа OpenRouter:', response.status);
+        console.log('📡 Статус ответа:', response.status);
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('❌ Ошибка OpenRouter:', response.status, errorText);
+            console.error('❌ Ошибка API:', response.status, errorText);
             
-            // Показываем ошибку пользователю
-            showNotification(`Ошибка API: ${response.status}. Использую локальную базу.`);
+            if (response.status === 402) {
+                showNotification('⚠️ Бесплатные запросы DeepSeek закончились. Использую локальную базу.');
+            } else if (response.status === 401 || response.status === 403) {
+                showNotification('⚠️ Проблема с API-ключом. Использую локальную базу.');
+            } else {
+                showNotification(`⚠️ Ошибка API (${response.status}). Использую локальную базу.`);
+            }
             return null;
         }
         
@@ -215,7 +219,7 @@ async function askAI(prompt) {
         
     } catch (error) {
         console.error('❌ Ошибка сети:', error);
-        showNotification('Ошибка сети. Использую локальную базу.');
+        showNotification('⚠️ Ошибка сети. Использую локальную базу.');
         return null;
     }
 }
@@ -252,7 +256,7 @@ async function getAIResponse(query) {
 
 // ========== ТЕСТОВАЯ ФУНКЦИЯ ==========
 async function testOpenRouter() {
-    console.log('🔍 Тестирование OpenRouter API...');
+    console.log('🔍 Тестирование OpenRouter (бесплатная модель)...');
     
     try {
         const response = await fetch(AI_CONFIG.apiUrl, {
@@ -277,13 +281,13 @@ async function testOpenRouter() {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Тест не пройден:', errorText);
-            showNotification(`⚠️ OpenRouter API не отвечает (${response.status}). Используется локальный режим.`);
+            showNotification(`⚠️ OpenRouter: ${response.status}. Используется локальный режим.`);
             return false;
         }
         
         const data = await response.json();
         console.log('✅ OpenRouter работает:', data.choices[0].message.content);
-        showNotification('✅ Подключение к нейросети установлено!');
+        showNotification('✅ Бесплатная нейросеть DeepSeek подключена!');
         return true;
         
     } catch (error) {
@@ -663,7 +667,7 @@ function toggleMobileMenu() {
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     loadKnowledgeBase();
-    testOpenRouter(); // Тестируем подключение
+    testOpenRouter(); // Тестируем бесплатную модель
     
     const path = window.location.pathname;
     if (path.includes('test.html')) {
