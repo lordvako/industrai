@@ -20,6 +20,223 @@ let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || 
 // Хранилище истории чатов для каждого пользователя
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
+// ========== БАЗА ЗНАНИЙ ==========
+let knowledgeBase = [];
+let isBaseLoaded = false;
+
+// Загрузка базы знаний из сжатого .gz файла
+async function loadKnowledgeBase() {
+    if (isBaseLoaded) return true;
+    
+    try {
+        console.log('Загрузка базы знаний...');
+        
+        // Пытаемся загрузить сжатый файл
+        const response = await fetch('knowledge_base_clean.csv.gz');
+        if (!response.ok) throw new Error('Не удалось загрузить базу знаний');
+        
+        // Распаковываем gzip
+        const blob = await response.blob();
+        const decompressedStream = blob.stream().pipeThrough(
+            new DecompressionStream('gzip')
+        );
+        
+        const decompressedBlob = await new Response(decompressedStream).blob();
+        const csvText = await decompressedBlob.text();
+        
+        // Парсим CSV
+        knowledgeBase = parseCSV(csvText);
+        isBaseLoaded = true;
+        
+        console.log(`✅ База знаний загружена: ${knowledgeBase.length} записей`);
+        return true;
+        
+    } catch (error) {
+        console.error('Ошибка загрузки базы знаний:', error);
+        return false;
+    }
+}
+
+// Парсинг CSV в массив объектов
+function parseCSV(csvText) {
+    const lines = csvText.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const result = [];
+    
+    // Ограничиваем для производительности (первые 5000 записей)
+    const maxLines = Math.min(lines.length, 5000);
+    
+    for (let i = 1; i < maxLines; i++) {
+        if (!lines[i].trim()) continue;
+        
+        // Простой парсинг (для CSV с кавычками внутри может быть сложнее)
+        const values = lines[i].split(',');
+        const obj = {};
+        
+        headers.forEach((header, index) => {
+            obj[header] = values[index] ? values[index].trim() : '';
+        });
+        
+        result.push(obj);
+    }
+    
+    return result;
+}
+
+// Поиск в базе знаний
+function searchKnowledgeBase(query) {
+    const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
+    const results = [];
+    
+    for (const item of knowledgeBase) {
+        let relevance = 0;
+        let matchedTerms = [];
+        
+        // Ищем в заголовке
+        if (item.topic_title) {
+            const title = item.topic_title.toLowerCase();
+            for (const term of searchTerms) {
+                if (title.includes(term)) {
+                    relevance += 5;
+                    matchedTerms.push(term);
+                }
+            }
+        }
+        
+        // Ищем в вопросе (content)
+        if (item.content) {
+            const content = item.content.toLowerCase();
+            for (const term of searchTerms) {
+                if (content.includes(term)) {
+                    relevance += 3;
+                    matchedTerms.push(term);
+                }
+            }
+        }
+        
+        // Ищем в ответе (solution)
+        if (item.solution) {
+            const solution = item.solution.toLowerCase();
+            for (const term of searchTerms) {
+                if (solution.includes(term)) {
+                    relevance += 3;
+                    matchedTerms.push(term);
+                }
+            }
+        }
+        
+        // Ищем в производителе
+        if (item.manufacturer) {
+            const manufacturer = item.manufacturer.toLowerCase();
+            for (const term of searchTerms) {
+                if (manufacturer.includes(term)) {
+                    relevance += 2;
+                    matchedTerms.push(term);
+                }
+            }
+        }
+        
+        // Ищем в разделе форума
+        if (item.forum) {
+            const forum = item.forum.toLowerCase();
+            for (const term of searchTerms) {
+                if (forum.includes(term)) {
+                    relevance += 2;
+                    matchedTerms.push(term);
+                }
+            }
+        }
+        
+        if (relevance > 0) {
+            results.push({
+                item: item,
+                relevance: relevance,
+                matchedTerms: [...new Set(matchedTerms)]
+            });
+        }
+    }
+    
+    // Сортируем по релевантности и убираем дубликаты
+    results.sort((a, b) => b.relevance - a.relevance);
+    
+    // Убираем слишком похожие результаты
+    const uniqueResults = [];
+    const seenTitles = new Set();
+    
+    for (const result of results) {
+        const title = result.item.topic_title || '';
+        if (!seenTitles.has(title) && uniqueResults.length < 5) {
+            seenTitles.add(title);
+            uniqueResults.push(result);
+        }
+    }
+    
+    return uniqueResults;
+}
+
+// Формирование ответа на основе найденных записей
+function formatKnowledgeResponse(results, query) {
+    if (results.length === 0) {
+        return `❌ В базе знаний не найдено точных совпадений по запросу "${query}".
+
+Попробуйте:
+• Уточнить запрос (например, "SEW F04", "Siemens SF")
+• Использовать другие ключевые слова
+• Проверить правильность написания кода ошибки
+
+Или задайте вопрос иначе, и я поищу снова.`;
+    }
+    
+    let response = `🔍 **Найдено в базе знаний (${results.length} записей):**\n\n`;
+    
+    results.forEach((result, index) => {
+        const item = result.item;
+        response += `📌 **Результат ${index + 1}**\n`;
+        
+        if (item.topic_title) {
+            response += `**Тема:** ${item.topic_title}\n`;
+        }
+        
+        if (item.manufacturer && item.manufacturer !== 'other') {
+            response += `🏭 **Производитель:** ${item.manufacturer}\n`;
+        }
+        
+        if (item.forum) {
+            response += `📂 **Раздел:** ${item.forum}\n`;
+        }
+        
+        response += `\n💬 **Вопрос:**\n${item.content || 'нет описания'}\n\n`;
+        
+        if (item.solution) {
+            response += `✅ **Решение:**\n${item.solution}\n\n`;
+        }
+        
+        if (result.matchedTerms.length > 0) {
+            response += `🔑 *Найдено по словам: ${result.matchedTerms.join(', ')}*\n`;
+        }
+        
+        response += `---\n\n`;
+    });
+    
+    response += `\n*Ответ сформирован на основе базы знаний из открытых источников*`;
+    
+    return response;
+}
+
+// ========== ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ОТВЕТА ==========
+async function getAIResponse(query) {
+    // Ждем загрузки базы знаний, если еще не загружена
+    if (!isBaseLoaded) {
+        await loadKnowledgeBase();
+    }
+    
+    // Ищем в базе знаний
+    const results = searchKnowledgeBase(query);
+    
+    // Формируем ответ
+    return formatKnowledgeResponse(results, query);
+}
+
 // Функция для создания нового пользователя при покупке
 function createUser(email, plan) {
     const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
@@ -251,7 +468,7 @@ function loadProfileChat(chatId) {
     }
 }
 
-function sendProfileMessage() {
+async function sendProfileMessage() {
     if (!currentUser) {
         alert('Необходимо авторизоваться');
         return;
@@ -277,397 +494,21 @@ function sendProfileMessage() {
     loadProfileChat(currentChatId);
     input.value = '';
     
-    setTimeout(() => {
-        let reply = '';
-        const q = msg.toLowerCase();
-
-        // ========== SIEMENS S7 ==========
-        if ((q.includes('s7') || q.includes('simatic') || q.includes('siemens')) && 
-            (q.includes('314') || q.includes('315') || q.includes('300'))) {
-            
-            if (q.includes('sf')) {
-                reply = `S7-300 SF - системная ошибка / аппаратная неисправность
-Проверка:
-1. Индикаторы на модулях (SF горит, возможно BF, DC)
-2. Ошибки в диагностическом буфере (HW Config / Step7)
-3. Питание 24В на всех модулях
-4. Конфигурация оборудования (несоответствие проекта)
-Типовые причины: отказ модуля, потеря конфигурации, ошибка на шине
-Вероятность: 85%`;
-            } 
-            else if (q.includes('bf')) {
-                reply = `S7-300 BF - ошибка шины PROFIBUS
-Проверка:
-1. Терминаторы на концах шины
-2. Кабель (обрывы, экран, длина линии)
-3. Скорость передачи (одинакова у всех)
-4. Адреса станций (конфликты)
-5. Повторители при большой длине
-Вероятность: 92%`;
-            }
-            else if (q.includes('dc')) {
-                reply = `S7-300 DC - ошибка питания / низкое напряжение
-Проверка:
-1. Напряжение на блоке питания (24В ±10%)
-2. Потребляемый ток (не превышает макс.)
-3. Контакты и соединения
-4. Импульсные помехи в сети
-Вероятность: 88%`;
-            }
-            else if (q.includes('5v') || q.includes('5в')) {
-                reply = `S7-300 5V - ошибка внутреннего питания
-Проверка:
-1. Блок питания (замена, если неисправен)
-2. Перегрузка по току 5В (много модулей)
-3. Короткое замыкание в модулях
-Вероятность: 78%`;
-            }
-            else {
-                reply = `S7-300 - диагностика по индикаторам:
-SF (красный) - системная ошибка
-BF (красный) - ошибка шины
-DC (желтый) - питание в норме
-5V (зеленый) - внутреннее питание
-
-Уточните код ошибки из диагностического буфера Step7.`;
-            }
-        }
-        // ========== S7-1200 / 1500 ==========
-        else if ((q.includes('s7') || q.includes('simatic')) && (q.includes('1200') || q.includes('1500'))) {
-            reply = `S7-${q.includes('1200') ? '1200' : '1500'} - диагностика через TIA Portal:
-1. Подключиться к контроллеру
-2. Открыть онлайн-представление
-3. Проверить диагностический буфер
-4. Проверить индикаторы ERROR, MAINT
-
-Возможные причины:
-- Ошибка программы (деление на ноль, таймаут)
-- Неисправность модуля ввода-вывода
-- Ошибка связи с периферией
-
-Вероятность: 87%`;
-        }
-        // ========== SEW ==========
-        else if (q.includes('sew') || q.includes('movitrac') || q.includes('movimot')) {
-            if (q.includes('f01')) {
-                reply = `SEW F01 - перегрузка по току / короткое замыкание
-Проверка:
-1. Обмотки двигателя (межвитковое замыкание)
-2. Кабель мотора (обрыв, замыкание)
-3. Изоляция (пробой на корпус)
-4. Параметры двигателя в приводе (Р700-Р705)
-Вероятность: 82%`;
-            }
-            else if (q.includes('f02')) {
-                reply = `SEW F02 - превышение напряжения в промежуточном контуре
-Проверка:
-1. Напряжение сети (слишком высокое)
-2. Тормозной резистор (обрыв, сопротивление)
-3. Время разгона/торможения (слишком малое)
-4. Рекуперация энергии (частые пуски/торможения)
-Вероятность: 78%`;
-            }
-            else if (q.includes('f03')) {
-                reply = `SEW F03 - перегрев инвертора
-Проверка:
-1. Вентилятор охлаждения (работает)
-2. Засорение радиатора (пыль, грязь)
-3. Температура окружающей среды (выше 40°C)
-4. Нагрузка (превышение номинала)
-Вероятность: 88%`;
-            }
-            else if (q.includes('f04')) {
-                reply = `SEW F04 - перегрузка по току / тормозной резистор
-Проверка:
-1. Сопротивление резистора (15-100 Ом)
-2. Обрывы цепи торможения
-3. Частота торможений (слишком частая)
-4. Параметры Р700-Р705 (ток двигателя)
-Вероятность: 94%`;
-            }
-            else if (q.includes('f05')) {
-                reply = `SEW F05 - перегрузка инвертора / перегрев
-Проверка:
-1. Ток двигателя (не превышает номинал)
-2. Вентилятор охлаждения (работает)
-3. Загрузка механизма (заклинивание)
-4. Механика редуктора, подшипники
-При токе в норме: проверять механику.
-Вероятность: 76%`;
-            }
-            else if (q.includes('f07')) {
-                reply = `SEW F07 - обрыв фазы на выходе
-Проверка:
-1. Кабель двигателя (целостность)
-2. Контакты в клеммнике
-3. Обмотки двигателя (обрыв)
-4. Выходные транзисторы инвертора
-Вероятность: 89%`;
-            }
-            else if (q.includes('f08')) {
-                reply = `SEW F08 - превышение частоты вращения
-Проверка:
-1. Задание частоты (слишком высокое)
-2. Энкодер (неисправность, обрыв)
-3. Параметры ограничения частоты
-4. Механика (потеря нагрузки, разнос)
-Вероятность: 83%`;
-            }
-            else {
-                reply = `SEW - диагностика по коду ошибки:
-F01 - перегрузка/КЗ
-F02 - превышение напряжения
-F03 - перегрев
-F04 - перегрузка/тормозной резистор
-F05 - перегрузка инвертора
-F07 - обрыв фазы
-F08 - превышение частоты
-
-Уточните код ошибки.`;
-            }
-        }
-        // ========== SINUMERIK ==========
-        else if (q.includes('sinumerik') || q.includes('840d') || q.includes('810d')) {
-            if (q.includes('3000')) {
-                reply = `Sinumerik 3000 - концевой выключатель оси X
-Проверка:
-1. Концевик оси X (сработал, неисправен)
-2. Кабель энкодера (обрыв, экран)
-3. Настройки софт-эндшвиттов (параметры)
-4. Референтные точки (потеря референцирования)
-Вероятность: 96%`;
-            }
-            else if (q.includes('25000')) {
-                reply = `Sinumerik 25000 - ошибка энкодера / датчика
-Проверка:
-1. Энкодер (замена, проверка)
-2. Кабель энкодера (обрыв, помехи)
-3. Интерфейсный модуль (SMC, SME)
-4. Настройки параметров (тип энкодера)
-Вероятность: 91%`;
-            }
-            else {
-                reply = `Sinumerik - общая диагностика:
-1. Проверить журнал ошибок NCK
-2. Проверить питание 24В
-3. Проверить энкодеры и концевики
-4. Перезагрузить управление (NCK reset)
-5. Проверить связь с приводом (Profibus/Profinet)
-
-Уточните номер ALARM.`;
-            }
-        }
-        // ========== DELTA ==========
-        else if (q.includes('delta') && (q.includes('as') || q.includes('dop'))) {
-            if (q.includes('as300')) {
-                reply = `Delta AS300 - диагностика:
-1. Индикаторы RUN/ERROR
-2. Питание 24В (наличие)
-3. Связь с панелью (кабель, настройки)
-4. Программа (ошибка, зависание)
-Типовые проблемы: потеря связи, перегрузка выхода.
-Вероятность: 84%`;
-            }
-            else if (q.includes('dop')) {
-                reply = `Delta DOP-100 - диагностика панели:
-1. Питание 24В
-2. Подсветка (проверить яркость)
-3. Связь с контроллером (кабель, протокол)
-4. Проект (ошибка компиляции)
-5. Сенсорный экран (калибровка)
-Вероятность: 81%`;
-            }
-        }
-        // ========== WIELAND ==========
-        else if (q.includes('wieland') || q.includes('sp-cop2') || q.includes('sp-sdio')) {
-            if (q.includes('sp-cop2')) {
-                reply = `Wieland SP-COP2 - диагностика контроллера:
-1. Питание 24В
-2. Индикаторы PWR, RUN, ERR
-3. Связь по Ethernet (IP-адрес, пинг)
-4. Конфигурация (соответствие проекту)
-Вероятность: 86%`;
-            }
-            else if (q.includes('sp-sdio')) {
-                reply = `Wieland SP-SDIO84 - модуль ввода-вывода:
-1. Питание 24В
-2. Индикаторы каналов
-3. Подключение датчиков (NP/NPN)
-4. Связь с контроллером по шине
-Вероятность: 83%`;
-            }
-        }
-        // ========== OMRON ==========
-        else if (q.includes('omron') || q.includes('3g3') || q.includes('v7') || q.includes('e7')) {
-            if (q.includes('oc') || q.includes('overcurrent')) {
-                reply = `Omron OC - перегрузка по току (>240% номинала)
-Проверка:
-1. Обмотки двигателя (межвитковое замыкание)
-2. Кабель мотора (обрыв, замыкание)
-3. Время разгона/торможения (слишком малое)
-4. Нагрузка на валу (заклинивание)
-Вероятность: 85%`;
-            }
-            else if (q.includes('ov') || q.includes('overvoltage')) {
-                reply = `Omron OV - перенапряжение в звене DC
-Проверка:
-1. Напряжение сети (выше нормы)
-2. Тормозной резистор (обрыв)
-3. Время торможения (слишком короткое)
-4. Рекуперация (частые пуски/торможения)
-200V: >410V DC, 400V: >820V DC
-Вероятность: 78%`;
-            }
-            else if (q.includes('oh') || q.includes('overheat')) {
-                reply = `Omron OH - перегрев радиатора (>90°C)
-Проверка:
-1. Вентилятор охлаждения (работает)
-2. Засорение радиатора (пыль, грязь)
-3. Температура в шкафу (выше 40°C)
-4. Нагрузка (превышение номинала)
-Вероятность: 88%`;
-            }
-            else if (q.includes('cpf00')) {
-                reply = `Omron CPF00 - нет связи с пультом при включении
-Проверка:
-1. Пульт закреплён (посадочное место)
-2. Выключить/включить питание
-3. Заменить пульт или инвертор (если не помогает)
-Вероятность: 76%`;
-            }
-            else if (q.includes('cpf01')) {
-                reply = `Omron CPF01 - потеря связи с пультом
-Проверка:
-1. Пульт закреплён
-2. Выключить/включить питание
-3. Заменить пульт или инвертор
-Вероятность: 72%`;
-            }
-            else if (q.includes('ef') || q.includes('external fault')) {
-                reply = `Omron EF - внешняя ошибка
-Проверка:
-1. Внешние клеммы (NO/NC контакт)
-2. Сигнал от PLC (не приходит)
-3. Проводка (обрыв, КЗ)
-Вероятность: 84%`;
-            }
-            else if (q.includes('gf') || q.includes('ground fault')) {
-                reply = `Omron GF - замыкание на землю
-Проверка:
-1. Изоляция двигателя (пробой на корпус)
-2. Кабель мотора (повреждение изоляции)
-3. Выходные транзисторы (пробой)
-Вероятность: 81%`;
-            }
-            else {
-                reply = `Omron - частые ошибки:
-OC (перегрузка по току)
-OV (перенапряжение)
-OH (перегрев)
-GF (замыкание на землю)
-EF (внешняя ошибка)
-CPF00/CPF01 (связь с пультом)
-Уточните код ошибки.`;
-            }
-        }
-        // ========== MITSUBISHI ==========
-        else if (q.includes('mitsubishi') || q.includes('melservo') || q.includes('mr-j') || q.includes('fr-d') || q.includes('fr-e')) {
-            if (q.includes('al 16') || q.includes('al16')) {
-                reply = `Mitsubishi AL 16 - ошибка энкодера
-Проверка:
-1. Кабель энкодера (обрыв, экран)
-2. Энкодер (замена, проверка)
-3. Разъёмы (контакт)
-4. Помехи (экранирование)
-Вероятность: 87%`;
-            }
-            else if (q.includes('al 24') || q.includes('al24')) {
-                reply = `Mitsubishi AL 24 - ошибка связи
-Проверка:
-1. Кабель связи (обрыв)
-2. Терминаторы (на концах)
-3. Скорость передачи (совпадение)
-4. Адреса станций (конфликты)
-Вероятность: 83%`;
-            }
-            else if (q.includes('al 37') || q.includes('al37')) {
-                reply = `Mitsubishi AL 37 - перегрузка сервопривода
-Проверка:
-1. Нагрузка на валу (заклинивание)
-2. Механика (редуктор, подшипники)
-3. Параметры момента
-4. Тормоз (расторможен)
-Вероятность: 88%`;
-            }
-            else if (q.includes('al 45') || q.includes('al45')) {
-                reply = `Mitsubishi AL 45 - ошибка питания
-Проверка:
-1. Напряжение питания (24В)
-2. Блок питания (неисправен)
-3. Перегрузка по току
-4. Короткое замыкание
-Вероятность: 79%`;
-            }
-            else {
-                reply = `Mitsubishi - диагностика:
-AL 16 (энкодер)
-AL 24 (связь)
-AL 37 (перегрузка)
-AL 45 (питание)
-Уточните код ошибки.`;
-            }
-        }
-        // ========== КИТАЙСКИЕ ЧАСТОТНИКИ ==========
-        else if (q.includes('китай') || q.includes('chinese') || q.includes('9000') || q.includes('vesper') || q.includes('hyundai') || q.includes('веспер')) {
-            if (q.includes('oc') || q.includes('перегрузка') || q.includes('overcurrent')) {
-                reply = `Китайский частотник OC - перегрузка по току
-Проверка:
-1. Некачественные силовые транзисторы (частая причина выхода)
-2. Драйверы (проверить осциллографом)
-3. Резисторы в цепи тока (3мОм, целостность)
-4. Защита по току (параметр F035, часто 200%)
-Внимание: китайские частотники часто выходят из строя при реальной перегрузке из-за слабой элементной базы.
-Вероятность: 74%`;
-            }
-            else if (q.includes('oh') || q.includes('перегрев')) {
-                reply = `Китайский частотник OH - перегрев
-Проверка:
-1. Вентилятор охлаждения (слабый, шумный)
-2. Радиатор (забит пылью)
-3. Температура окружающей среды
-4. Нагрузка (реальная vs номинал)
-Вероятность: 71%`;
-            }
-            else if (q.includes('f000') || q.includes('f001')) {
-                reply = `Китайский частотник Fxxx - общая ошибка
-Смотрите инструкцию (в палец толщиной).
-Параметры:
-F000-F099 - настройки
-F035 - точка перегрузки по току (10-200%)
-F051 - время теплового реле
-Часто проблема: защита не срабатывает, горят транзисторы.
-Вероятность: 65%`;
-            }
-            else {
-                reply = `Китайские частотники (общее):
-OC (перегрузка, часто горит)
-OH (перегрев)
-Fxxx (смотреть инструкцию)
-Качество защиты часто ниже заявленного. Рекомендуется запас по току 30-50%.`;
-            }
-        }
-        // ========== ОБЩИЙ СЛУЧАЙ ==========
-        else {
-            reply = `Для точной диагностики укажите:
-Производитель (Siemens, SEW, Omron, Mitsubishi, Delta, Wieland, китайский)
-Модель (S7-300, Movitrac, 3G3JZ, MR-J5)
-Код ошибки (F04, 3000, SF, OC, AL 16)
-
-Примеры:
-• "Omron 3G3JZ ошибка OC"
-• "Mitsubishi серво AL 37"
-• "Китайский частотник 9000 перегрузка"`;
-        }
+    // Добавляем индикатор загрузки
+    chat.messages.push({
+        sender: 'bot',
+        text: '🔍 Ищу в базе знаний...',
+        timestamp: new Date().toISOString()
+    });
+    loadProfileChat(currentChatId);
+    
+    // Получаем ответ от базы знаний
+    setTimeout(async () => {
+        // Удаляем индикатор загрузки
+        chat.messages.pop();
+        
+        // Получаем ответ
+        const reply = await getAIResponse(msg);
         
         chat.messages.push({
             sender: 'bot',
@@ -761,7 +602,7 @@ function loadTestChat(chatId) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function sendTestMessage() {
+async function sendTestMessage() {
     const input = document.getElementById('testChatInput');
     const msg = input.value.trim();
     if (!msg) return;
@@ -791,19 +632,21 @@ function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    setTimeout(() => {
-        let reply = '';
-        const q = msg.toLowerCase();
+    // Добавляем индикатор загрузки
+    chat.messages.push({
+        sender: 'bot',
+        text: '🔍 Ищу в базе знаний...',
+        timestamp: new Date().toISOString()
+    });
+    loadTestChat(testCurrentChatId);
+    
+    // Получаем ответ от базы знаний
+    setTimeout(async () => {
+        // Удаляем индикатор загрузки
+        chat.messages.pop();
         
-        if (q.includes('sew') && q.includes('f01')) {
-            reply = 'SEW F01 - проверьте обмотки двигателя и кабель';
-        } else if (q.includes('sew') && q.includes('f04')) {
-            reply = 'SEW F04 - проверьте тормозной резистор';
-        } else if (q.includes('sinumerik')) {
-            reply = 'Sinumerik 3000 - проверьте концевик оси X';
-        } else {
-            reply = 'Уточните модель оборудования и код ошибки';
-        }
+        // Получаем ответ
+        const reply = await getAIResponse(msg);
         
         chat.messages.push({
             sender: 'bot',
@@ -1157,6 +1000,9 @@ function closeMobileMenu() {
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
+    
+    // Загружаем базу знаний в фоне
+    loadKnowledgeBase();
     
     // Если мы на странице биржи, загружаем данные
     if (window.location.pathname.includes('marketplace.html')) {
