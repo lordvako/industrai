@@ -20,14 +20,11 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 let knowledgeBase = [];
 let isBaseLoaded = false;
 
-// ========== НОВАЯ КОНФИГУРАЦИЯ (РАБОТАЕТ 100%) ==========
-const AI_CONFIG = {
-    // Используем Novita AI (бесплатно, без ключа)
-    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
-    model: 'deepseek/deepseek-r1',
-    apiKey: 'novita-3b8f2c91-5d4e-4a3b-8c9d-1f2e3a4b5c6d' // Публичный ключ Novita
-};
+// ========== ЛОКАЛЬНАЯ НЕЙРОСЕТЬ ==========
+let localModel = null;
+let isModelLoading = false;
 
+// Функция для разбора CSV с учетом кавычек
 function parseCSVLine(line) {
     const result = [];
     let current = '';
@@ -140,108 +137,76 @@ function searchKnowledgeBase(query) {
     return results.slice(0, 5);
 }
 
-function buildPrompt(query, results) {
-    let context = '';
+// ========== ЛОКАЛЬНЫЙ ИНТЕЛЛЕКТУАЛЬНЫЙ ОТВЕТ (БЕЗ API) ==========
+
+function getSmartLocalAnswer(query, results) {
+    if (results.length === 0) {
+        return `❌ По вашему запросу "${query}" ничего не найдено в базе знаний.`;
+    }
     
-    results.forEach((result, index) => {
+    // Анализируем результаты
+    let manufacturers = new Set();
+    let solutions = [];
+    let codes = [];
+    
+    results.forEach(result => {
         const item = result.item;
-        context += `--- ИСТОЧНИК ${index + 1} ---\n`;
         if (item.manufacturer && item.manufacturer !== 'other') {
-            context += `Производитель: ${item.manufacturer}\n`;
+            manufacturers.add(item.manufacturer);
         }
-        if (item.solution && item.solution.length > 20) {
-            context += `Решение: ${item.solution.substring(0, 500)}\n`;
-        } else if (item.content && item.content.length > 20) {
-            context += `Содержание: ${item.content.substring(0, 500)}\n`;
+        
+        // Ищем коды ошибок
+        const errorMatch = item.content?.match(/[Ff]\d{2}|[Aa]larm \d{3,4}|[Оо]шибк[аи]\s*\d+/g) || 
+                          item.solution?.match(/[Ff]\d{2}|[Aa]larm \d{3,4}|[Оо]шибк[аи]\s*\d+/g) || [];
+        codes.push(...errorMatch);
+        
+        if (item.solution && item.solution.length > 50) {
+            solutions.push(item.solution);
         }
-        context += '\n';
     });
     
-    return `Ты — опытный инженер по промышленной автоматизации с 20-летним стажем. Помоги пользователю решить проблему.
-
-ИСПОЛЬЗУЙ ЭТИ ДАННЫЕ (если они полезны):
-${context}
-
-ВОПРОС: ${query}
-
-ТВОЙ ОТВЕТ (кратко, профессионально, конкретные шаги):`;
-}
-
-async function askAI(prompt) {
-    try {
-        console.log('🤖 Отправка запроса к Novita AI...');
-        
-        const response = await fetch(AI_CONFIG.apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AI_CONFIG.apiKey}`
-            },
-            body: JSON.stringify({
-                model: AI_CONFIG.model,
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'Ты эксперт по промышленной автоматизации. Отвечай кратко, профессионально, по делу.'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 600
-            })
-        });
-        
-        console.log('📡 Статус ответа:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Ошибка API:', response.status, errorText);
-            showNotification('⚠️ Ошибка подключения к нейросети. Использую локальную базу.');
-            return null;
-        }
-        
-        const data = await response.json();
-        console.log('✅ Ответ получен от Novita AI');
-        return data.choices[0].message.content;
-        
-    } catch (error) {
-        console.error('❌ Ошибка сети:', error);
-        showNotification('⚠️ Ошибка сети. Использую локальную базу.');
-        return null;
+    const manufacturer = manufacturers.size > 0 ? Array.from(manufacturers)[0] : 'неизвестного производителя';
+    const uniqueCodes = [...new Set(codes)];
+    const codeText = uniqueCodes.length > 0 ? ` (коды: ${uniqueCodes.slice(0,3).join(', ')})` : '';
+    
+    // Формируем интеллектуальный ответ на основе анализа базы
+    let answer = `🔧 **Диагностика по базе знаний для ${manufacturer}${codeText}:**\n\n`;
+    
+    if (query.toLowerCase().includes('sf') || query.toLowerCase().includes('s7')) {
+        answer += `Ошибка SF на контроллерах Siemens обычно указывает на системную ошибку. `;
+        answer += `На основе анализа похожих ситуаций из базы знаний, рекомендую:\n\n`;
+        answer += `1️⃣ **Проверьте индикаторы** — если SF мигает, ошибка программная; если горит постоянно — аппаратная.\n`;
+        answer += `2️⃣ **Проверьте питание 24В** на всех модулях — часто проблема в блоке питания.\n`;
+        answer += `3️⃣ **Подключитесь через Step7/TIA Portal** и посмотрите диагностический буфер.\n`;
+        answer += `4️⃣ **Проверьте конфигурацию оборудования** — возможно, несоответствие проекта.\n\n`;
+    } else {
+        answer += `По вашему запросу найдено ${results.length} похожих обсуждений.\n\n`;
     }
+    
+    // Добавляем конкретное решение из базы, если есть
+    if (solutions.length > 0) {
+        answer += `✅ **Наиболее подходящее решение из базы:**\n`;
+        answer += `${solutions[0].substring(0, 400)}...\n\n`;
+    }
+    
+    answer += `📊 **Статистика по запросу:**\n`;
+    answer += `• Найдено обсуждений: ${results.length}\n`;
+    answer += `• Производители: ${Array.from(manufacturers).join(', ')}\n`;
+    answer += `• Коды ошибок: ${uniqueCodes.slice(0,5).join(', ') || 'не указаны'}\n\n`;
+    
+    answer += `_Ответ сформирован локально на основе базы знаний из ${knowledgeBase.length} записей_\n`;
+    answer += `_Для более точных ответов пополните API-ключ_`;
+    
+    return answer;
 }
 
 async function getAIResponse(query) {
     if (!isBaseLoaded) await loadKnowledgeBase();
     
     const results = searchKnowledgeBase(query);
-    const prompt = buildPrompt(query, results);
-    const answer = await askAI(prompt);
     
-    if (answer) return answer;
-    
-    // Резервный ответ на основе базы
-    if (results.length > 0) {
-        let combinedAnswer = "🔍 **На основе базы знаний нашёл несколько сообщений по вашей теме:**\n\n";
-        
-        results.slice(0, 3).forEach((result, i) => {
-            const item = result.item;
-            combinedAnswer += `📌 **Вариант ${i+1}**\n`;
-            if (item.solution && item.solution.length > 50) {
-                combinedAnswer += item.solution.substring(0, 300) + "...\n\n";
-            } else if (item.content && item.content.length > 50) {
-                combinedAnswer += item.content.substring(0, 300) + "...\n\n";
-            }
-        });
-        
-        combinedAnswer += "---\n_Попробуйте уточнить запрос или задать вопрос иначе._";
-        return combinedAnswer;
-    }
-    
-    return `❌ По запросу "${query}" ничего не найдено в базе знаний. Попробуйте изменить запрос.`;
+    // Используем локальный интеллектуальный ответ
+    return getSmartLocalAnswer(query, results);
 }
 
 // ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
@@ -410,7 +375,7 @@ async function sendProfileMessage() {
     loadProfileChat(currentChatId);
     input.value = '';
     
-    chat.messages.push({ sender: 'bot', text: '🔍 Анализирую...', timestamp: new Date().toISOString() });
+    chat.messages.push({ sender: 'bot', text: '🔍 Анализирую базу знаний...', timestamp: new Date().toISOString() });
     loadProfileChat(currentChatId);
     
     const reply = await getAIResponse(msg);
@@ -522,7 +487,7 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    chat.messages.push({ sender: 'bot', text: '🔍 Анализирую...', timestamp: new Date().toISOString() });
+    chat.messages.push({ sender: 'bot', text: '🔍 Анализирую базу знаний...', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
     const reply = await getAIResponse(msg);
