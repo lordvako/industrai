@@ -55,7 +55,7 @@ async function loadKnowledgeBase() {
         console.log('📚 Загрузка базы знаний...');
         
         // Пытаемся загрузить сжатый файл с GitHub
-        const response = await fetch('https://raw.githubusercontent.com/ваш-логин/ваш-репозиторий/main/knowledge_base_clean.csv.gz');
+        const response = await fetch('https://raw.githubusercontent.com/lordvako/industrai/main/knowledge_base_clean.csv.gz');
         
         if (!response.ok) {
             console.log('⚠️ Файл не найден на GitHub, пробуем локально...');
