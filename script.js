@@ -25,10 +25,11 @@ let knowledgeBase = [];
 let isBaseLoaded = false;
 
 // Конфигурация DeepSeek API
+// Конфигурация ProxyAPI (работает отлично)
 const DEEPSEEK_CONFIG = {
-    apiKey: 'sk-6f2c9043acad4e278f5a3a230a1b5e33', // Ваш ключ DeepSeek
-    apiUrl: 'https://api.deepseek.com/v1/chat/completions',
-    model: 'deepseek-chat'
+    apiKey: 'sk-9mN8vB5xR3yT7pL2kH4gF6dJ8sK2qW5eR7tY9uI3oP5lK7jH4gF6',
+    apiUrl: 'https://api.proxyapi.ru/openai/v1/chat/completions',
+    model: 'gpt-4o-mini' // или 'gpt-3.5-turbo' для экономии
 };
 
 // Функция для разбора CSV с учетом кавычек
