@@ -20,11 +20,11 @@ let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || 
 // Хранилище истории чатов для каждого пользователя
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== БАЗА ЗНАНИЙ (обновлённая версия) ==========
+// ========== БАЗА ЗНАНИЙ ==========
 let knowledgeBase = [];
 let isBaseLoaded = false;
 
-// Функция для разбора CSV с учетом кавычек и запятых внутри
+// Функция для разбора CSV с учетом кавычек
 function parseCSVLine(line) {
     const result = [];
     let current = '';
@@ -42,24 +42,23 @@ function parseCSVLine(line) {
             current += char;
         }
     }
-    result.push(current.trim()); // последнее поле
+    result.push(current.trim());
     
     return result;
 }
 
-// Загрузка базы знаний из сжатого .gz файла
+// Загрузка базы знаний
 async function loadKnowledgeBase() {
     if (isBaseLoaded) return true;
     
     try {
         console.log('📚 Загрузка базы знаний...');
         
-        // Пытаемся загрузить сжатый файл с GitHub
+        // Пробуем загрузить с GitHub (замените на вашу ссылку)
         const response = await fetch('https://raw.githubusercontent.com/lordvako/industrai/main/knowledge_base_clean.csv.gz');
         
         if (!response.ok) {
-            console.log('⚠️ Файл не найден на GitHub, пробуем локально...');
-            // Пробуем локально
+            // Если не получилось, пробуем локально
             const localResponse = await fetch('knowledge_base_clean.csv.gz');
             if (!localResponse.ok) throw new Error('Не удалось загрузить базу знаний');
             var finalResponse = localResponse;
@@ -76,16 +75,14 @@ async function loadKnowledgeBase() {
         const decompressedBlob = await new Response(decompressedStream).blob();
         const csvText = await decompressedBlob.text();
         
-        // Парсим CSV построчно
+        // Парсим CSV
         const lines = csvText.split('\n');
         const headers = parseCSVLine(lines[0]);
         
-        console.log('📋 Заголовки CSV:', headers);
-        
         knowledgeBase = [];
         
-        // Ограничиваем для производительности (первые 3000 записей)
-        const maxLines = Math.min(lines.length, 3000);
+        // Загружаем максимум 2000 записей для производительности
+        const maxLines = Math.min(lines.length, 2000);
         
         for (let i = 1; i < maxLines; i++) {
             if (!lines[i].trim()) continue;
@@ -94,14 +91,12 @@ async function loadKnowledgeBase() {
             const obj = {};
             
             headers.forEach((header, index) => {
-                // Очищаем значения от кавычек
                 let value = values[index] || '';
-                value = value.replace(/^"|"$/g, ''); // убираем внешние кавычки
+                value = value.replace(/^"|"$/g, '');
                 obj[header] = value;
             });
             
-            // Проверяем, есть ли полезное содержание
-            if (obj.content && obj.content.length > 50) {
+            if (obj.content && obj.content.length > 30) {
                 knowledgeBase.push(obj);
             }
         }
@@ -116,11 +111,11 @@ async function loadKnowledgeBase() {
     }
 }
 
-// Улучшенный поиск в базе знаний
+// Поиск в базе знаний
 function searchKnowledgeBase(query) {
     const searchTerms = query.toLowerCase().split(' ')
         .filter(term => term.length > 2)
-        .map(term => term.replace(/[^\wа-яё]/gi, '')); // убираем спецсимволы
+        .map(term => term.replace(/[^\wа-яё]/gi, ''));
     
     if (searchTerms.length === 0) return [];
     
@@ -130,9 +125,7 @@ function searchKnowledgeBase(query) {
     for (const item of knowledgeBase) {
         let relevance = 0;
         let matchedTerms = [];
-        let matchedText = '';
         
-        // Объединяем все текстовые поля для поиска
         const searchableText = [
             item.topic_title || '',
             item.content || '',
@@ -144,9 +137,7 @@ function searchKnowledgeBase(query) {
         for (const term of searchTerms) {
             if (term.length < 2) continue;
             
-            // Точное совпадение термина
             if (searchableText.includes(term)) {
-                // Увеличиваем релевантность в зависимости от того, где найдено
                 if (item.topic_title?.toLowerCase().includes(term)) relevance += 10;
                 else if (item.solution?.toLowerCase().includes(term)) relevance += 8;
                 else if (item.content?.toLowerCase().includes(term)) relevance += 5;
@@ -154,40 +145,34 @@ function searchKnowledgeBase(query) {
                 else relevance += 3;
                 
                 matchedTerms.push(term);
-                matchedText += term + ' ';
             }
             
-            // Поиск по кодам ошибок (F01, F04, ALARM, и т.д.)
+            // Поиск кодов ошибок
             if (/f\d{2}|alarm|error|ошибк/i.test(term)) {
                 const errorPattern = new RegExp(term, 'i');
                 if (errorPattern.test(searchableText)) {
-                    relevance += 15; // Очень высокий приоритет для кодов ошибок
-                    matchedTerms.push(term + '(код ошибки)');
+                    relevance += 15;
+                    if (!matchedTerms.includes(term)) matchedTerms.push(term + '(код)');
                 }
             }
         }
         
-        // Убираем дубликаты по содержанию
         const contentKey = (item.content || '').substring(0, 100);
         if (relevance > 5 && !seenContents.has(contentKey)) {
             seenContents.add(contentKey);
             results.push({
                 item: item,
                 relevance: relevance,
-                matchedTerms: [...new Set(matchedTerms)],
-                matchedText: matchedText.trim()
+                matchedTerms: [...new Set(matchedTerms)]
             });
         }
     }
     
-    // Сортируем по релевантности
     results.sort((a, b) => b.relevance - a.relevance);
-    
-    // Возвращаем топ-5 результатов
     return results.slice(0, 5);
 }
 
-// Формирование красивого ответа
+// Формирование ответа
 function formatKnowledgeResponse(results, query) {
     if (results.length === 0) {
         return `❌ **Ничего не найдено по запросу "${query}"**
@@ -205,7 +190,6 @@ function formatKnowledgeResponse(results, query) {
     results.forEach((result, index) => {
         const item = result.item;
         
-        // Заголовок с производителем
         let manufacturer = item.manufacturer || 'другое';
         if (manufacturer === 'other') manufacturer = 'общее';
         
@@ -213,35 +197,30 @@ function formatKnowledgeResponse(results, query) {
         if (manufacturer) response += `[${manufacturer.toUpperCase()}]`;
         response += `\n`;
         
-        // Тема
         if (item.topic_title) {
             let title = item.topic_title;
             if (title.length > 80) title = title.substring(0, 80) + '...';
             response += `📋 **Тема:** ${title}\n`;
         }
         
-        // Раздел форума
         if (item.forum && item.forum !== 'undefined') {
             response += `📂 **Раздел:** ${item.forum}\n`;
         }
         
         response += `\n`;
         
-        // Описание проблемы (сокращаем)
         if (item.content && item.content.length > 10) {
             let content = item.content;
             if (content.length > 300) content = content.substring(0, 300) + '...';
             response += `💬 **Вопрос:**\n${content}\n\n`;
         }
         
-        // Решение (самое важное)
         if (item.solution && item.solution.length > 10 && item.solution !== item.content) {
             let solution = item.solution;
             if (solution.length > 400) solution = solution.substring(0, 400) + '...';
             response += `✅ **Решение:**\n${solution}\n\n`;
         }
         
-        // Ключевые слова
         if (result.matchedTerms.length > 0) {
             response += `🔑 *Найдено по: ${result.matchedTerms.join(', ')}*\n`;
         }
@@ -254,21 +233,126 @@ function formatKnowledgeResponse(results, query) {
     return response;
 }
 
-// ========== ОСНОВНАЯ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ОТВЕТА ==========
+// Функция для получения ответа (используется и в тест-драйве, и в профиле)
 async function getAIResponse(query) {
-    // Ждем загрузки базы знаний
     if (!isBaseLoaded) {
         await loadKnowledgeBase();
     }
     
-    // Ищем в базе знаний
     const results = searchKnowledgeBase(query);
-    
-    // Формируем ответ
     return formatKnowledgeResponse(results, query);
 }
 
-// ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
+// Функция для создания нового пользователя при покупке
+function createUser(email, plan) {
+    const login = email.substring(0, 6) + Math.floor(Math.random() * 1000);
+    const password = Math.random().toString(36).substring(2, 10) + Math.floor(Math.random() * 100);
+    
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30);
+    
+    users[login] = {
+        password: btoa(password),
+        email: email,
+        plan: plan,
+        created: new Date().toISOString(),
+        expiry: expiryDate.toISOString()
+    };
+    
+    localStorage.setItem('industrai_users', JSON.stringify(users));
+    
+    if (!chatHistory[login]) {
+        chatHistory[login] = [];
+    }
+    localStorage.setItem('industrai_chat_history', JSON.stringify(chatHistory));
+    
+    return { login, password };
+}
+
+// Проверка авторизации
+function checkAuth() {
+    const userMenu = document.getElementById('userMenu');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const loginBtn = document.getElementById('loginBtn');
+    const testDriveLink = document.getElementById('testDriveLink');
+    const subscriptionBanner = document.getElementById('subscriptionBanner');
+    const mainActionBtn = document.getElementById('mainActionBtn');
+    const mainActionHint = document.getElementById('mainActionHint');
+    const cabinetTabButton = document.getElementById('cabinetTabButton');
+    
+    if (!userMenu || !userNameDisplay || !loginBtn || !testDriveLink) return;
+    
+    if (currentUser) {
+        userMenu.style.display = 'flex';
+        userNameDisplay.textContent = currentUser.login;
+        loginBtn.style.display = 'none';
+        
+        testDriveLink.textContent = 'Нейросеть';
+        testDriveLink.href = 'profile.html';
+        
+        if (subscriptionBanner) {
+            subscriptionBanner.style.display = 'block';
+        }
+        
+        const userData = users[currentUser.login];
+        if (userData) {
+            const planName = userData.plan === 'basic' ? 'Базовый' : 
+                            (userData.plan === 'pro' ? 'Профессиональный' : 'Корпоративный');
+            
+            const subTitle = document.getElementById('subscriptionTitle');
+            const subText = document.getElementById('subscriptionText');
+            const subExpiry = document.getElementById('subscriptionExpiry');
+            
+            if (subTitle) subTitle.textContent = `✓ Подписка "${planName}" активна`;
+            if (subText) subText.textContent = 'Спасибо за приобретение подписки! Теперь у вас есть неограниченный доступ к технической нейросети.';
+            
+            if (userData.expiry && subExpiry) {
+                const expiryDate = new Date(userData.expiry);
+                subExpiry.textContent = `Срок действия: до ${expiryDate.toLocaleDateString('ru-RU')}`;
+            }
+        }
+        
+        if (mainActionBtn) {
+            mainActionBtn.textContent = 'Перейти в нейросеть →';
+            mainActionBtn.href = 'profile.html';
+        }
+        if (mainActionHint) mainActionHint.textContent = 'У вас активная подписка';
+        
+        if (currentUser.login === 'admin' && cabinetTabButton) {
+            cabinetTabButton.style.display = 'inline-block';
+        }
+        
+        if (window.location.pathname.includes('profile.html')) {
+            loadUserChatHistory();
+        }
+    } else {
+        userMenu.style.display = 'none';
+        loginBtn.style.display = 'inline-block';
+        
+        testDriveLink.textContent = 'Тест-драйв';
+        testDriveLink.href = 'test.html';
+        
+        if (subscriptionBanner) {
+            subscriptionBanner.style.display = 'none';
+        }
+        
+        if (mainActionBtn) {
+            mainActionBtn.textContent = 'Попробовать нейросеть бесплатно →';
+            mainActionBtn.href = 'test.html';
+        }
+        if (mainActionHint) mainActionHint.textContent = 'Один запрос — в подарок';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('industrai_current_user');
+    currentUser = null;
+    checkAuth();
+    showNotification('Вы вышли из системы');
+    window.location.href = 'index.html';
+}
+
+// ========== ИСТОРИЯ ЧАТОВ (ПРОФИЛЬ) ==========
 
 function loadUserChatHistory() {
     if (!currentUser) return;
@@ -359,7 +443,6 @@ function loadProfileChat(chatId) {
     const messagesContainer = document.getElementById('profileChatMessages');
     let html = '';
     chat.messages.forEach(msg => {
-        // Форматируем текст сообщения (заменяем переносы строк на <br>)
         let formattedText = msg.text.replace(/\n/g, '<br>');
         
         html += `
@@ -380,7 +463,6 @@ function loadProfileChat(chatId) {
     messagesContainer.innerHTML = html;
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     
-    // Обновляем название плана
     const profilePlanName = document.getElementById('profilePlanName');
     if (profilePlanName && currentUser) {
         const userData = users[currentUser.login];
@@ -418,20 +500,18 @@ async function sendProfileMessage() {
     loadProfileChat(currentChatId);
     input.value = '';
     
-    // Добавляем индикатор загрузки
+    // Индикатор загрузки
     chat.messages.push({
         sender: 'bot',
-        text: '🔍 Ищу в базе знаний форума АСУТП...',
+        text: '🔍 Ищу в базе знаний...',
         timestamp: new Date().toISOString()
     });
     loadProfileChat(currentChatId);
     
-    // Получаем ответ от базы знаний
+    // Получаем ответ
     setTimeout(async () => {
-        // Удаляем индикатор загрузки
         chat.messages.pop();
         
-        // Получаем ответ
         const reply = await getAIResponse(msg);
         
         chat.messages.push({
@@ -462,7 +542,7 @@ function deleteChat(chatId, event) {
     }
 }
 
-// ========== ТЕСТ-ДРАЙВ ==========
+// ========== ТЕСТ-ДРАЙВ (1 бесплатный запрос) ==========
 
 let testQueriesLeft = 1;
 let testChatHistory = [];
@@ -475,7 +555,7 @@ function createNewTestChat() {
         messages: [
             {
                 sender: 'bot',
-                text: '🔍 Задайте вопрос. Я поищу в базе знаний АСУТП!',
+                text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос, я поищу в базе знаний!',
                 timestamp: new Date().toISOString()
             }
         ],
@@ -557,7 +637,7 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    // Добавляем индикатор загрузки
+    // Индикатор загрузки
     chat.messages.push({
         sender: 'bot',
         text: '🔍 Ищу в базе знаний...',
@@ -565,12 +645,10 @@ async function sendTestMessage() {
     });
     loadTestChat(testCurrentChatId);
     
-    // Получаем ответ от базы знаний
+    // Получаем ответ
     setTimeout(async () => {
-        // Удаляем индикатор загрузки
         chat.messages.pop();
         
-        // Получаем ответ
         const reply = await getAIResponse(msg);
         
         chat.messages.push({
@@ -583,7 +661,376 @@ async function sendTestMessage() {
     }, 500);
 }
 
-// ========== ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений) ==========
-// showConfirm, processPayment, loadMarketplaceData, и т.д. 
-// остаются такими же, как в вашем исходном коде
-// [вставьте сюда остальные функции из вашего файла]
+// ========== СИСТЕМА ОПЛАТЫ ==========
+
+let currentPayment = null;
+
+function showConfirm(type, name, price) {
+    if (currentUser) {
+        alert('Вы уже авторизованы. Для покупки нового тарифа обратитесь в поддержку.');
+        return;
+    }
+    
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmText = document.getElementById('confirmText');
+    
+    if (!confirmModal || !confirmTitle || !confirmText) return;
+    
+    confirmTitle.textContent = `Тариф "${name}"`;
+    confirmText.textContent = `Сумма к оплате: ${price.toLocaleString()} ₽. После оплаты вы получите логин и пароль на email.`;
+    confirmModal.classList.add('active');
+    
+    currentPayment = { type, name, price };
+}
+
+function closeConfirmModal() {
+    const confirmModal = document.getElementById('confirmModal');
+    if (confirmModal) confirmModal.classList.remove('active');
+    currentPayment = null;
+}
+
+function processPayment() {
+    if (!currentPayment) return;
+    
+    const email = prompt('Введите ваш email для получения доступа:');
+    if (!email || !email.includes('@')) {
+        alert('Введите корректный email');
+        return;
+    }
+    
+    showNotification('Обработка платежа...');
+    
+    fetch('http://9570510274.hosting.myjino.ru/register.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: email,
+            plan: currentPayment.type
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${data.login}\nПароль был отправлен на ${email}`);
+            window.location.href = 'login.html';
+        } else {
+            alert('Ошибка при регистрации: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    })
+    .catch(error => {
+        alert('Ошибка соединения с сервером. Проверьте консоль (F12)');
+        console.error('Fetch Error:', error);
+    })
+    .finally(() => {
+        closeConfirmModal();
+    });
+}
+
+// ========== БИРЖА ==========
+
+const equipmentData = [
+    { 
+        id:1, 
+        name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", 
+        category:"Контроллеры", 
+        description:"НОВОЕ, В НАЛИЧИИ", 
+        image:"⚙️", 
+        sellerPrice:320000, 
+        finalPrice:432000,
+        status:"НОВОЕ, В НАЛИЧИИ",
+        sellerName:"Василий" 
+    },
+    { 
+        id:2, 
+        name:"Модуль вывода siemens 6ES7331-1KF02-0AB0", 
+        category:"Модули", 
+        description:"НОВОЕ, В НАЛИЧИИ", 
+        image:"🔌", 
+        sellerPrice:56000, 
+        finalPrice:75600,
+        status:"НОВОЕ, В НАЛИЧИИ",
+        sellerName:"Василий" 
+    },
+    { 
+        id:3, 
+        name:"Модуль ввода siemens 6ES7322-1BL00-0AA0", 
+        category:"Модули", 
+        description:"НОВОЕ, В НАЛИЧИИ", 
+        image:"🔌", 
+        sellerPrice:56000, 
+        finalPrice:75600,
+        status:"НОВОЕ, В НАЛИЧИИ",
+        sellerName:"Василий" 
+    },
+    { 
+        id:4, 
+        name:"Интерфейсный модуль siemens 6ES7153-2BA10-0XB0", 
+        category:"Интерфейсные модули", 
+        description:"НОВОЕ, В НАЛИЧИИ", 
+        image:"📡", 
+        sellerPrice:75000, 
+        finalPrice:101250,
+        status:"НОВОЕ, В НАЛИЧИИ",
+        sellerName:"Василий" 
+    },
+    { 
+        id:5, 
+        name:"Модуль вх/вых SP-sdio84-P1-K-A Wieland", 
+        category:"Модули", 
+        description:"НОВОЕ, В НАЛИЧИИ", 
+        image:"🔌", 
+        sellerPrice:110000, 
+        finalPrice:148500,
+        status:"НОВОЕ, В НАЛИЧИИ",
+        sellerName:"Василий" 
+    },
+    { 
+        id:6, 
+        name:"Модуль вывода siemens 6ES7332-5HF00-0AB0", 
+        category:"Модули", 
+        description:"НОВОЕ, В НАЛИЧИИ", 
+        image:"🔌", 
+        sellerPrice:56000, 
+        finalPrice:75600,
+        status:"НОВОЕ, В НАЛИЧИИ",
+        sellerName:"Василий" 
+    }
+];
+
+function loadMarketplaceData() {
+    const grid = document.getElementById('itemsGrid');
+    if (!grid) return;
+    
+    let html = '';
+    equipmentData.forEach(item => {
+        html += `
+            <div class="item-card" onclick="openBuyModal(${item.id})">
+                <div class="item-badge">${item.status}</div>
+                <div class="item-image">${item.image}</div>
+                <div class="item-details">
+                    <div class="item-category">${item.category}</div>
+                    <div class="item-title">${item.name}</div>
+                    <div class="item-status">${item.description}</div>
+                    <div class="item-price-block">
+                        <span class="item-price">${item.finalPrice.toLocaleString()} ₽</span>
+                        <button class="item-buy">Купить</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
+}
+
+function switchMarketplaceTab(tab) {
+    const isAdmin = currentUser && currentUser.login === 'admin';
+    
+    document.querySelectorAll('.tab-button').forEach((btn, i) => {
+        btn.classList.toggle('active', 
+            (i === 0 && tab === 'catalog') ||
+            (i === 1 && tab === 'add') ||
+            (i === 2 && tab === 'cabinet' && isAdmin)
+        );
+    });
+    
+    document.querySelectorAll('.tab-content').forEach((content, i) => {
+        content.classList.toggle('active', 
+            (i === 0 && tab === 'catalog') ||
+            (i === 1 && tab === 'add') ||
+            (i === 2 && tab === 'cabinet')
+        );
+    });
+    
+    if (tab === 'cabinet' && isAdmin) loadSellerItems();
+}
+
+function addNewItem() {
+    if (!currentUser || currentUser.login !== 'admin') {
+        alert('Только администратор может добавлять товары');
+        return;
+    }
+    
+    const name = document.getElementById('itemName').value;
+    const price = parseFloat(document.getElementById('sellerPrice').value);
+    if (!name || !price) { alert('Заполните название и цену'); return; }
+    
+    const newItem = {
+        id: equipmentData.length+1,
+        name, 
+        category: document.getElementById('itemCategory').value,
+        description: document.getElementById('itemDescription').value,
+        status: document.getElementById('itemStatus').value,
+        image: "📦", 
+        sellerPrice: price, 
+        finalPrice: Math.round(price*1.35), 
+        sellerName: "Василий"
+    };
+    equipmentData.push(newItem);
+    
+    sendEmailToAdmin('Новое объявление', 
+        `${name}\nЦена продавца: ${price} ₽\nЦена продажи: ${newItem.finalPrice} ₽\nСтатус: ${newItem.status}`
+    );
+    showNotification('Товар добавлен');
+    
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemDescription').value = '';
+    document.getElementById('sellerPrice').value = '';
+    
+    switchMarketplaceTab('catalog');
+    loadMarketplaceData();
+}
+
+function loadSellerItems() {
+    const container = document.getElementById('sellerItems');
+    if (!currentUser || currentUser.login !== 'admin') {
+        if (container) container.innerHTML = '<p>Доступ запрещён</p>';
+        return;
+    }
+    
+    const myItems = equipmentData.filter(i => i.sellerName === "Василий");
+    if (!myItems.length) { 
+        if (container) container.innerHTML = '<p>У вас пока нет товаров</p>'; 
+        return; 
+    }
+    
+    let html = '';
+    myItems.forEach(item => {
+        html += `<div class="seller-item">
+            <div class="seller-item-image">${item.image}</div>
+            <div style="flex:2">
+                <h4>${item.name}</h4>
+                <p style="color:#5A6B7A;">${item.description}</p>
+                <p style="color:#00B4A0; font-size:12px;">${item.status}</p>
+            </div>
+            <div style="text-align:right">
+                <div style="color:#5A6B7A;">Ваша: ${item.sellerPrice.toLocaleString()} ₽</div>
+                <div style="color:#00B4A0; font-weight:700;">Продажа: ${item.finalPrice.toLocaleString()} ₽</div>
+                <div style="color:#2B6FF0;">+${(item.finalPrice-item.sellerPrice).toLocaleString()} ₽</div>
+            </div>
+        </div>`;
+    });
+    if (container) container.innerHTML = html;
+}
+
+let currentItemId = null;
+
+function openBuyModal(id) { 
+    currentItemId = id; 
+    const modal = document.getElementById('phoneModal');
+    if (modal) modal.classList.add('active'); 
+}
+
+function closeModal() { 
+    const modal = document.getElementById('phoneModal');
+    const input = document.getElementById('buyerPhone');
+    if (modal) modal.classList.remove('active'); 
+    if (input) input.value = ''; 
+}
+
+function submitPhone() {
+    const phone = document.getElementById('buyerPhone').value;
+    if (!phone) { alert('Введите телефон'); return; }
+    const item = equipmentData.find(i => i.id === currentItemId) || { name: "Запрос по ошибке" };
+    sendEmailToAdmin('Новый покупатель', `${item.name}\nТелефон: ${phone}\nСтатус: ${item.status || 'не указан'}`);
+    showNotification('Спасибо! Мы свяжемся с вами');
+    closeModal();
+}
+
+function attachFile(context) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.png,.xls,.xlsx';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            showNotification(`Файл "${file.name}" прикреплён`);
+            
+            if (context === 'profile' && currentUser && currentChatId) {
+                const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
+                if (chat) {
+                    chat.messages.push({
+                        sender: 'user',
+                        text: `[Прикреплён файл: ${file.name}]`,
+                        attachment: { name: file.name },
+                        timestamp: new Date().toISOString()
+                    });
+                    loadProfileChat(currentChatId);
+                }
+            } else if (context === 'test' && testCurrentChatId) {
+                const chat = testChatHistory.find(c => c.id === testCurrentChatId);
+                if (chat) {
+                    chat.messages.push({
+                        sender: 'user',
+                        text: `[Прикреплён файл: ${file.name}]`,
+                        attachment: { name: file.name },
+                        timestamp: new Date().toISOString()
+                    });
+                    loadTestChat(testCurrentChatId);
+                }
+            }
+        }
+    };
+    input.click();
+}
+
+function sendEmailToAdmin(subject, body) {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `mailto:iris.salnikov@yandex.ru?subject=${encodeURIComponent('[IndustrAI] ' + subject)}&body=${encodeURIComponent(body)}`;
+    document.body.appendChild(iframe);
+    setTimeout(() => document.body.removeChild(iframe), 1000);
+}
+
+function showNotification(msg) {
+    const n = document.createElement('div');
+    n.className = 'notification';
+    n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 5000);
+}
+
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    if (menu) menu.classList.toggle('active');
+}
+
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    if (menu) menu.classList.remove('active');
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuth();
+    
+    // Загружаем базу знаний в фоне (не блокируя интерфейс)
+    loadKnowledgeBase();
+    
+    // Если мы на странице биржи, загружаем данные
+    if (window.location.pathname.includes('marketplace.html')) {
+        loadMarketplaceData();
+    }
+    
+    // Если мы на странице тест-драйва, инициализируем чат
+    if (window.location.pathname.includes('test.html')) {
+        testQueriesLeft = 1;
+        const counter = document.getElementById('testQueryCounter');
+        if (counter) counter.innerText = '1 запрос';
+        testChatHistory = [{
+            id: Date.now(),
+            title: 'Новый диалог',
+            messages: [
+                {
+                    sender: 'bot',
+                    text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос, я поищу в базе знаний!',
+                    timestamp: new Date().toISOString()
+                }
+            ],
+            createdAt: new Date().toISOString()
+        }];
+        testCurrentChatId = testChatHistory[0].id;
+        renderTestHistory();
+        loadTestChat(testCurrentChatId);
+    }
+});
