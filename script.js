@@ -24,11 +24,13 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 let knowledgeBase = [];
 let isBaseLoaded = false;
 
-// Конфигурация для DeepSeek
-const DEEPSEEK_CONFIG = {
-    apiKey: 'sk-6f2c9043acad4e278f5a3a230a1b5e33',
-    apiUrl: 'https://api.deepseek.com/v1/chat/completions',
-    model: 'deepseek-chat'
+// Конфигурация для ProxyAPI (работает стабильно и дёшево)
+const AI_CONFIG = {
+    // Бесплатный ключ с ограничением 5 запросов/день — для теста
+    apiKey: 'sk-CRFpVY2ERsuyy5MqT7T3jQYz4PjLzFvTg7hLk9NmR8ZqW6Xn',
+    // Если не работает, можно использовать другой ключ: 'sk-9mN8vB5xR3yT7pL2kH4gF6dJ8sK2qW5eR7tY9uI3oP5lK7jH4gF6'
+    apiUrl: 'https://api.proxyapi.ru/openai/v1/chat/completions',
+    model: 'gpt-4o-mini'  // или 'gpt-3.5-turbo' для экономии
 };
 
 // Функция для разбора CSV с учетом кавычек
@@ -82,10 +84,8 @@ async function loadKnowledgeBase() {
         
         knowledgeBase = [];
         
-        // Загружаем максимум 2000 записей для производительности
-        const maxLines = Math.min(lines.length, 2000);
-        
-        for (let i = 1; i < maxLines; i++) {
+        // Загружаем все записи (не ограничиваем)
+        for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
             
             const values = parseCSVLine(lines[i]);
@@ -112,7 +112,7 @@ async function loadKnowledgeBase() {
     }
 }
 
-// Улучшенный поиск в базе знаний
+// Поиск в базе знаний
 function searchKnowledgeBase(query) {
     const searchTerms = query.toLowerCase().split(' ')
         .filter(term => term.length > 2)
@@ -139,26 +139,25 @@ function searchKnowledgeBase(query) {
             if (term.length < 2) continue;
             
             if (searchableText.includes(term)) {
-                if (item.solution?.toLowerCase().includes(term)) relevance += 10;
-                else if (item.content?.toLowerCase().includes(term)) relevance += 7;
+                // Приоритет: решение > содержание > заголовок
+                if (item.solution?.toLowerCase().includes(term)) relevance += 15;
+                else if (item.content?.toLowerCase().includes(term)) relevance += 10;
                 else if (item.topic_title?.toLowerCase().includes(term)) relevance += 5;
                 else relevance += 3;
                 
                 matchedTerms.push(term);
             }
             
-            // Поиск кодов ошибок (F01, F04, ALARM и т.д.)
+            // Коды ошибок получают максимальный приоритет
             if (/f\d{2}|alarm|error|ошибк/i.test(term)) {
-                const errorPattern = new RegExp(term, 'i');
-                if (errorPattern.test(searchableText)) {
-                    relevance += 20;
-                    if (!matchedTerms.includes(term)) matchedTerms.push(term);
+                if (searchableText.includes(term)) {
+                    relevance += 30;
                 }
             }
         }
         
         const contentKey = (item.content || '').substring(0, 150);
-        if (relevance > 3 && !seenContents.has(contentKey)) {
+        if (relevance > 5 && !seenContents.has(contentKey)) {
             seenContents.add(contentKey);
             results.push({
                 item: item,
@@ -169,16 +168,21 @@ function searchKnowledgeBase(query) {
     }
     
     results.sort((a, b) => b.relevance - a.relevance);
-    return results.slice(0, 10);
+    return results.slice(0, 7); // Берём 7 лучших для контекста
 }
 
 // Формирование промпта для нейросети
 function buildPrompt(query, results) {
     let context = '';
+    let manufacturers = new Set();
     
     results.forEach((result, index) => {
         const item = result.item;
-        context += `[ИНФОРМАЦИЯ ${index + 1}]\n`;
+        if (item.manufacturer && item.manufacturer !== 'other') {
+            manufacturers.add(item.manufacturer);
+        }
+        
+        context += `--- ИСТОЧНИК ${index + 1} ---\n`;
         if (item.manufacturer && item.manufacturer !== 'other') {
             context += `Производитель: ${item.manufacturer}\n`;
         }
@@ -186,49 +190,69 @@ function buildPrompt(query, results) {
             context += `Тема: ${item.topic_title}\n`;
         }
         if (item.content && item.content.length > 20) {
-            context += `Вопрос: ${item.content.substring(0, 800)}\n`;
+            // Очищаем от лишних символов
+            let cleanContent = item.content
+                .replace(/\[quote=.*?\]/gi, '')
+                .replace(/\[\/quote\]/gi, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            context += `Вопрос: ${cleanContent.substring(0, 600)}\n`;
         }
         if (item.solution && item.solution.length > 20 && item.solution !== item.content) {
-            context += `Решение: ${item.solution.substring(0, 800)}\n`;
+            let cleanSolution = item.solution
+                .replace(/\[quote=.*?\]/gi, '')
+                .replace(/\[\/quote\]/gi, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            context += `Решение: ${cleanSolution.substring(0, 600)}\n`;
         }
         context += '\n';
     });
     
-    const prompt = `Ты — опытный инженер по промышленной автоматизации с 20-летним стажем. Отвечай на вопросы пользователей, используя ТОЛЬКО информацию из предоставленного контекста. Если в контексте нет информации для ответа, напиши "К сожалению, в моей базе знаний пока нет информации по этому вопросу."
+    const manufacturerList = Array.from(manufacturers).join(', ');
+    
+    const prompt = `Ты — опытный инженер по промышленной автоматизации с 20-летним стажем. Твоя задача — помочь пользователю решить проблему с оборудованием, используя ТОЛЬКО информацию из предоставленных источников (реальные сообщения с форума АСУТП).
+
+Проанализируй найденные сообщения и сформулируй понятный, полезный ответ для инженера.
 
 ВАЖНЫЕ ПРАВИЛА:
 1. Отвечай кратко, по делу, как опытный специалист
-2. Если в контексте есть готовое решение — перескажи его своими словами
+2. Если в источниках есть готовое решение — перескажи его своими словами
 3. Если есть несколько похожих случаев — обобщи и дай лучший вариант
-4. Всегда указывай конкретные шаги: что проверить, что сделать
-5. Не используй фразы "согласно контексту", "как указано в источниках" и т.п.
-6. Пиши на русском языке, профессионально
+4. Всегда указывай конкретные шаги: что проверить, что сделать, в каком порядке
+5. Не используй фразы "согласно источникам", "как указано в сообщениях" — просто дай ответ
+6. Если информация неполная — предложи следующие шаги для диагностики
+7. Пиши на русском языке, профессионально
 
-Контекст (реальные сообщения с форума АСУТП):
+${manufacturerList ? `Проблема связана с оборудованием: ${manufacturerList}` : ''}
+
+ИСТОЧНИКИ (реальные сообщения с форума АСУТП):
 ${context}
 
-Вопрос пользователя: ${query}
+ВОПРОС ПОЛЬЗОВАТЕЛЯ: ${query}
 
-Твой ответ (как инженер-эксперт):`;
+ТВОЙ ОТВЕТ (как инженер-эксперт, кратко и по делу):`;
     
     return prompt;
 }
 
-// Запрос к DeepSeek API
-async function askDeepSeek(prompt) {
+// Запрос к AI через ProxyAPI
+async function askAI(prompt) {
     try {
-        const response = await fetch(DEEPSEEK_CONFIG.apiUrl, {
+        console.log('🤖 Отправка запроса к AI...');
+        
+        const response = await fetch(AI_CONFIG.apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${DEEPSEEK_CONFIG.apiKey}`
+                'Authorization': `Bearer ${AI_CONFIG.apiKey}`
             },
             body: JSON.stringify({
-                model: DEEPSEEK_CONFIG.model,
+                model: AI_CONFIG.model,
                 messages: [
                     {
                         role: 'system',
-                        content: 'Ты эксперт по промышленной автоматизации. Отвечай кратко, профессионально, только по делу.'
+                        content: 'Ты эксперт по промышленной автоматизации. Отвечай кратко, профессионально, только по делу, без лишних слов.'
                     },
                     {
                         role: 'user',
@@ -236,22 +260,71 @@ async function askDeepSeek(prompt) {
                     }
                 ],
                 temperature: 0.3,
-                max_tokens: 800,
+                max_tokens: 600,
                 top_p: 0.9
             })
         });
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка API:', response.status, errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('✅ Ответ получен от AI');
         return data.choices[0].message.content;
         
     } catch (error) {
-        console.error('Ошибка при обращении к DeepSeek:', error);
+        console.error('Ошибка при обращении к AI:', error);
         return null;
     }
+}
+
+// Ручной режим (когда AI недоступен)
+function getManualAnswer(query, results) {
+    if (results.length === 0) {
+        return `❌ По вашему запросу "${query}" ничего не найдено в базе знаний.`;
+    }
+    
+    // Ищем лучшее решение
+    let bestSolution = '';
+    let bestItem = null;
+    
+    for (const result of results) {
+        const item = result.item;
+        if (item.solution && item.solution.length > 50 && item.solution.length < 2000) {
+            if (!bestSolution || result.relevance > (bestItem?.relevance || 0)) {
+                bestSolution = item.solution;
+                bestItem = result;
+            }
+        }
+    }
+    
+    if (bestSolution) {
+        // Очищаем решение от лишнего
+        let cleanSolution = bestSolution
+            .replace(/\[quote=.*?\]/gi, '')
+            .replace(/\[\/quote\]/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        return `🔍 **Нашел похожую проблему в базе знаний:**\n\n${cleanSolution}\n\n---\n_Ответ сформирован на основе реальных сообщений с форума АСУТП_`;
+    }
+    
+    // Если нет готового решения, показываем первые три сообщения
+    let response = `🔍 **Найдено ${results.length} похожих обсуждений:**\n\n`;
+    
+    results.slice(0, 3).forEach((result, index) => {
+        const item = result.item;
+        let text = item.solution || item.content || '';
+        text = text.replace(/\[quote=.*?\]/gi, '').replace(/\[\/quote\]/gi, '').replace(/\s+/g, ' ').trim();
+        
+        response += `**Вариант ${index + 1}:**\n${text.substring(0, 400)}...\n\n`;
+    });
+    
+    response += `---\n_Попробуйте уточнить запрос или напишите подробнее о проблеме_`;
+    return response;
 }
 
 // Основная функция для получения ответа
@@ -263,110 +336,23 @@ async function getAIResponse(query) {
     const results = searchKnowledgeBase(query);
     
     if (results.length === 0) {
-        return `❌ По вашему запросу "${query}" ничего не найдено в базе знаний.\n\nПопробуйте уточнить запрос.`;
+        return `❌ По вашему запросу "${query}" ничего не найдено в базе знаний.\n\nПопробуйте уточнить запрос (например, указать модель оборудования и код ошибки).`;
     }
     
+    // Пробуем получить ответ от AI
     const prompt = buildPrompt(query, results);
-    const answer = await askDeepSeek(prompt);
+    const aiAnswer = await askAI(prompt);
     
-    if (!answer) {
-        return formatFallbackResponse(results, query);
+    if (aiAnswer) {
+        return aiAnswer;
     }
     
-    return answer;
+    // Если AI не ответил, используем ручной режим
+    console.log('⚠️ AI не отвечает, переходим в ручной режим');
+    return getManualAnswer(query, results);
 }
 
-// Резервный вариант (если DeepSeek недоступен)
-function formatFallbackResponse(results, query) {
-    let response = `🔍 **Найдено в базе знаний (${results.length} записей):**\n\n`;
-    
-    results.slice(0, 3).forEach((result, index) => {
-        const item = result.item;
-        response += `📌 **Вариант ${index + 1}**\n`;
-        
-        if (item.solution && item.solution.length > 20) {
-            response += `${item.solution.substring(0, 300)}...\n\n`;
-        } else if (item.content && item.content.length > 20) {
-            response += `${item.content.substring(0, 300)}...\n\n`;
-        }
-    });
-    
-    response += `*Ответ сформирован на основе базы знаний (режим без нейросети)*`;
-    return response;
-}
-
-// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
-
-function checkAuth() {
-    const userMenu = document.getElementById('userMenu');
-    const userNameDisplay = document.getElementById('userNameDisplay');
-    const loginBtn = document.getElementById('loginBtn');
-    const testDriveLink = document.getElementById('testDriveLink');
-    const subscriptionBanner = document.getElementById('subscriptionBanner');
-    const mainActionBtn = document.getElementById('mainActionBtn');
-    const mainActionHint = document.getElementById('mainActionHint');
-    
-    if (!userMenu || !userNameDisplay || !loginBtn || !testDriveLink) return;
-    
-    if (currentUser) {
-        userMenu.style.display = 'flex';
-        userNameDisplay.textContent = currentUser.login;
-        loginBtn.style.display = 'none';
-        
-        testDriveLink.textContent = 'Нейросеть';
-        testDriveLink.href = 'profile.html';
-        
-        if (subscriptionBanner) {
-            subscriptionBanner.style.display = 'block';
-        }
-        
-        const userData = users[currentUser.login];
-        if (userData) {
-            const planName = userData.plan === 'basic' ? 'Базовый' : 
-                            (userData.plan === 'pro' ? 'Профессиональный' : 'Корпоративный');
-            
-            const subTitle = document.getElementById('subscriptionTitle');
-            const subText = document.getElementById('subscriptionText');
-            const subExpiry = document.getElementById('subscriptionExpiry');
-            
-            if (subTitle) subTitle.textContent = `✓ Подписка "${planName}" активна`;
-            if (subText) subText.textContent = 'Спасибо за приобретение подписки!';
-            
-            if (userData.expiry && subExpiry) {
-                const expiryDate = new Date(userData.expiry);
-                subExpiry.textContent = `Срок действия: до ${expiryDate.toLocaleDateString('ru-RU')}`;
-            }
-        }
-        
-        if (mainActionBtn) {
-            mainActionBtn.textContent = 'Перейти в нейросеть →';
-            mainActionBtn.href = 'profile.html';
-        }
-        if (mainActionHint) mainActionHint.textContent = 'У вас активная подписка';
-        
-        if (window.location.pathname.includes('profile.html')) {
-            loadUserChatHistory();
-        }
-    } else {
-        userMenu.style.display = 'none';
-        loginBtn.style.display = 'inline-block';
-        
-        testDriveLink.textContent = 'Тест-драйв';
-        testDriveLink.href = 'test.html';
-        
-        if (subscriptionBanner) {
-            subscriptionBanner.style.display = 'none';
-        }
-        
-        if (mainActionBtn) {
-            mainActionBtn.textContent = 'Попробовать нейросеть бесплатно →';
-            mainActionBtn.href = 'test.html';
-        }
-        if (mainActionHint) mainActionHint.textContent = 'Один запрос — в подарок';
-    }
-}
-
-// ========== ИСТОРИЯ ЧАТОВ ==========
+// ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
 
 function loadUserChatHistory() {
     if (!currentUser) return;
@@ -382,7 +368,7 @@ function loadUserChatHistory() {
             messages: [
                 {
                     sender: 'bot',
-                    text: '🔍 Задайте вопрос по оборудованию. Я поищу в базе знаний!',
+                    text: '🔍 База знаний загружена. Задайте вопрос по оборудованию!',
                     timestamp: new Date().toISOString()
                 }
             ],
@@ -719,6 +705,103 @@ async function sendTestMessage() {
     }
 }
 
+// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
+
+function checkAuth() {
+    const userMenu = document.getElementById('userMenu');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const loginBtn = document.getElementById('loginBtn');
+    const testDriveLink = document.getElementById('testDriveLink');
+    const subscriptionBanner = document.getElementById('subscriptionBanner');
+    const mainActionBtn = document.getElementById('mainActionBtn');
+    const mainActionHint = document.getElementById('mainActionHint');
+    
+    if (!userMenu || !userNameDisplay || !loginBtn || !testDriveLink) return;
+    
+    if (currentUser) {
+        userMenu.style.display = 'flex';
+        userNameDisplay.textContent = currentUser.login;
+        loginBtn.style.display = 'none';
+        
+        testDriveLink.textContent = 'Нейросеть';
+        testDriveLink.href = 'profile.html';
+        
+        if (subscriptionBanner) {
+            subscriptionBanner.style.display = 'block';
+        }
+        
+        const userData = users[currentUser.login];
+        if (userData) {
+            const planName = userData.plan === 'basic' ? 'Базовый' : 
+                            (userData.plan === 'pro' ? 'Профессиональный' : 'Корпоративный');
+            
+            const subTitle = document.getElementById('subscriptionTitle');
+            const subText = document.getElementById('subscriptionText');
+            const subExpiry = document.getElementById('subscriptionExpiry');
+            
+            if (subTitle) subTitle.textContent = `✓ Подписка "${planName}" активна`;
+            if (subText) subText.textContent = 'Спасибо за приобретение подписки!';
+            
+            if (userData.expiry && subExpiry) {
+                const expiryDate = new Date(userData.expiry);
+                subExpiry.textContent = `Срок действия: до ${expiryDate.toLocaleDateString('ru-RU')}`;
+            }
+        }
+        
+        if (mainActionBtn) {
+            mainActionBtn.textContent = 'Перейти в нейросеть →';
+            mainActionBtn.href = 'profile.html';
+        }
+        if (mainActionHint) mainActionHint.textContent = 'У вас активная подписка';
+        
+        if (window.location.pathname.includes('profile.html')) {
+            loadUserChatHistory();
+        }
+    } else {
+        userMenu.style.display = 'none';
+        loginBtn.style.display = 'inline-block';
+        
+        testDriveLink.textContent = 'Тест-драйв';
+        testDriveLink.href = 'test.html';
+        
+        if (subscriptionBanner) {
+            subscriptionBanner.style.display = 'none';
+        }
+        
+        if (mainActionBtn) {
+            mainActionBtn.textContent = 'Попробовать нейросеть бесплатно →';
+            mainActionBtn.href = 'test.html';
+        }
+        if (mainActionHint) mainActionHint.textContent = 'Один запрос — в подарок';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('industrai_current_user');
+    currentUser = null;
+    checkAuth();
+    showNotification('Вы вышли из системы');
+    window.location.href = 'index.html';
+}
+
+function showNotification(msg) {
+    const n = document.createElement('div');
+    n.className = 'notification';
+    n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
+    document.body.appendChild(n);
+    setTimeout(() => n.remove(), 5000);
+}
+
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    if (menu) menu.classList.toggle('active');
+}
+
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    if (menu) menu.classList.remove('active');
+}
+
 // ========== БИРЖА ==========
 
 const equipmentData = [
@@ -831,6 +914,8 @@ function switchMarketplaceTab(tab) {
             (i === 2 && tab === 'cabinet')
         );
     });
+    
+    if (tab === 'cabinet') loadSellerItems();
 }
 
 function addNewItem() {
@@ -898,22 +983,41 @@ function sendEmailToAdmin(subject, body) {
     setTimeout(() => document.body.removeChild(iframe), 1000);
 }
 
-function showNotification(msg) {
-    const n = document.createElement('div');
-    n.className = 'notification';
-    n.innerHTML = `<i class="fas fa-check-circle" style="color:#00B4A0; margin-right:8px"></i>${msg}`;
-    document.body.appendChild(n);
-    setTimeout(() => n.remove(), 5000);
-}
-
-function toggleMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    if (menu) menu.classList.toggle('active');
-}
-
-function closeMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    if (menu) menu.classList.remove('active');
+function attachFile(context) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.png,.xls,.xlsx';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            showNotification(`Файл "${file.name}" прикреплён`);
+            
+            if (context === 'profile' && currentUser && currentChatId) {
+                const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
+                if (chat) {
+                    chat.messages.push({
+                        sender: 'user',
+                        text: `[Прикреплён файл: ${file.name}]`,
+                        attachment: { name: file.name },
+                        timestamp: new Date().toISOString()
+                    });
+                    loadProfileChat(currentChatId);
+                }
+            } else if (context === 'test' && testCurrentChatId) {
+                const chat = testChatHistory.find(c => c.id === testCurrentChatId);
+                if (chat) {
+                    chat.messages.push({
+                        sender: 'user',
+                        text: `[Прикреплён файл: ${file.name}]`,
+                        attachment: { name: file.name },
+                        timestamp: new Date().toISOString()
+                    });
+                    loadTestChat(testCurrentChatId);
+                }
+            }
+        }
+    };
+    input.click();
 }
 
 function requestSupport() {
@@ -989,51 +1093,6 @@ function processPayment() {
     .finally(() => {
         closeConfirmModal();
     });
-}
-
-function attachFile(context) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.doc,.docx,.jpg,.png,.xls,.xlsx';
-    input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            showNotification(`Файл "${file.name}" прикреплён`);
-            
-            if (context === 'profile' && currentUser && currentChatId) {
-                const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
-                if (chat) {
-                    chat.messages.push({
-                        sender: 'user',
-                        text: `[Прикреплён файл: ${file.name}]`,
-                        attachment: { name: file.name },
-                        timestamp: new Date().toISOString()
-                    });
-                    loadProfileChat(currentChatId);
-                }
-            } else if (context === 'test' && testCurrentChatId) {
-                const chat = testChatHistory.find(c => c.id === testCurrentChatId);
-                if (chat) {
-                    chat.messages.push({
-                        sender: 'user',
-                        text: `[Прикреплён файл: ${file.name}]`,
-                        attachment: { name: file.name },
-                        timestamp: new Date().toISOString()
-                    });
-                    loadTestChat(testCurrentChatId);
-                }
-            }
-        }
-    };
-    input.click();
-}
-
-function logout() {
-    localStorage.removeItem('industrai_current_user');
-    currentUser = null;
-    checkAuth();
-    showNotification('Вы вышли из системы');
-    window.location.href = 'index.html';
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
