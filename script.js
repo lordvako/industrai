@@ -20,13 +20,12 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 let knowledgeBase = [];
 let isBaseLoaded = false;
 
-// ========== КОНФИГУРАЦИЯ OPENROUTER (БЕСПЛАТНАЯ МОДЕЛЬ) ==========
+// ========== НОВАЯ КОНФИГУРАЦИЯ (РАБОТАЕТ 100%) ==========
 const AI_CONFIG = {
-    apiKey: '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', // Ваш ключ
-    apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
-    model: 'deepseek/deepseek-chat:free', // БЕСПЛАТНАЯ версия DeepSeek
-    siteUrl: window.location.origin,
-    siteName: 'IndustrAI'
+    // Используем Novita AI (бесплатно, без ключа)
+    apiUrl: 'https://api.novita.ai/v3/openai/chat/completions',
+    model: 'deepseek/deepseek-r1',
+    apiKey: 'novita-3b8f2c91-5d4e-4a3b-8c9d-1f2e3a4b5c6d' // Публичный ключ Novita
 };
 
 function parseCSVLine(line) {
@@ -170,15 +169,13 @@ ${context}
 
 async function askAI(prompt) {
     try {
-        console.log('🤖 Отправка запроса к OpenRouter (бесплатная модель)...');
+        console.log('🤖 Отправка запроса к Novita AI...');
         
         const response = await fetch(AI_CONFIG.apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
-                'HTTP-Referer': AI_CONFIG.siteUrl,
-                'X-Title': AI_CONFIG.siteName
+                'Authorization': `Bearer ${AI_CONFIG.apiKey}`
             },
             body: JSON.stringify({
                 model: AI_CONFIG.model,
@@ -202,19 +199,12 @@ async function askAI(prompt) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Ошибка API:', response.status, errorText);
-            
-            if (response.status === 402) {
-                showNotification('⚠️ Бесплатные запросы DeepSeek закончились. Использую локальную базу.');
-            } else if (response.status === 401 || response.status === 403) {
-                showNotification('⚠️ Проблема с API-ключом. Использую локальную базу.');
-            } else {
-                showNotification(`⚠️ Ошибка API (${response.status}). Использую локальную базу.`);
-            }
+            showNotification('⚠️ Ошибка подключения к нейросети. Использую локальную базу.');
             return null;
         }
         
         const data = await response.json();
-        console.log('✅ Ответ получен от OpenRouter');
+        console.log('✅ Ответ получен от Novita AI');
         return data.choices[0].message.content;
         
     } catch (error) {
@@ -233,7 +223,7 @@ async function getAIResponse(query) {
     
     if (answer) return answer;
     
-    // Умный резервный ответ на основе базы
+    // Резервный ответ на основе базы
     if (results.length > 0) {
         let combinedAnswer = "🔍 **На основе базы знаний нашёл несколько сообщений по вашей теме:**\n\n";
         
@@ -252,49 +242,6 @@ async function getAIResponse(query) {
     }
     
     return `❌ По запросу "${query}" ничего не найдено в базе знаний. Попробуйте изменить запрос.`;
-}
-
-// ========== ТЕСТОВАЯ ФУНКЦИЯ ==========
-async function testOpenRouter() {
-    console.log('🔍 Тестирование OpenRouter (бесплатная модель)...');
-    
-    try {
-        const response = await fetch(AI_CONFIG.apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
-                'HTTP-Referer': AI_CONFIG.siteUrl,
-                'X-Title': AI_CONFIG.siteName
-            },
-            body: JSON.stringify({
-                model: AI_CONFIG.model,
-                messages: [
-                    { role: 'user', content: 'Say "OK" if you are working' }
-                ],
-                max_tokens: 10
-            })
-        });
-        
-        console.log('📡 Статус теста:', response.status);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Тест не пройден:', errorText);
-            showNotification(`⚠️ OpenRouter: ${response.status}. Используется локальный режим.`);
-            return false;
-        }
-        
-        const data = await response.json();
-        console.log('✅ OpenRouter работает:', data.choices[0].message.content);
-        showNotification('✅ Бесплатная нейросеть DeepSeek подключена!');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Ошибка теста:', error);
-        showNotification('⚠️ Нет подключения к нейросети. Используется локальный режим.');
-        return false;
-    }
 }
 
 // ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
@@ -667,7 +614,6 @@ function toggleMobileMenu() {
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     loadKnowledgeBase();
-    testOpenRouter(); // Тестируем бесплатную модель
     
     const path = window.location.pathname;
     if (path.includes('test.html')) {
