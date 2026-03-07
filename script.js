@@ -16,46 +16,67 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== КОНФИГУРАЦИЯ (ЧЕРЕЗ ВАШ ПРОКСИ) ==========
+// ========== КОНФИГУРАЦИЯ ==========
 const AI_CONFIG = {
-    // Используем ваш собственный прокси на том же сервере
-    apiUrl: '/proxy.php', // или полный URL: 'http://9570510274.hosting.myjino.ru/proxy.php'
-    model: 'gpt-4o-mini' // используем модель OpenAI
+    apiUrl: '/proxy.php', // относительный путь к прокси
+    model: 'gpt-3.5-turbo', // более доступная модель
+    maxTokens: 1000
 };
 
 // ========== ФУНКЦИЯ ВЫЗОВА API ==========
 async function callAIAPI(messages) {
     try {
-        console.log('🤖 Отправка запроса через прокси...');
+        console.log('🤖 Отправка запроса...');
         
+        // Подготавливаем сообщения в формате OpenAI
+        const apiMessages = messages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+        }));
+
+        const requestBody = {
+            model: AI_CONFIG.model,
+            messages: apiMessages,
+            temperature: 0.7,
+            max_tokens: AI_CONFIG.maxTokens,
+            presence_penalty: 0,
+            frequency_penalty: 0
+        };
+
+        console.log('📤 Отправляемые данные:', JSON.stringify(requestBody, null, 2));
+
         const response = await fetch(AI_CONFIG.apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                model: AI_CONFIG.model,
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 2000
-            })
+            body: JSON.stringify(requestBody)
         });
 
+        console.log('📥 Статус ответа:', response.status);
+
         if (!response.ok) {
-            const errorData = await response.text();
-            console.error('❌ Ошибка API:', response.status, errorData);
+            const errorText = await response.text();
+            console.error('❌ Ошибка сервера:', response.status, errorText);
             
             if (response.status === 401 || response.status === 403) {
                 return "❌ Ошибка авторизации API. Проверьте OpenAI ключ в файле proxy.php.";
             } else if (response.status === 429) {
                 return "❌ Превышен лимит запросов или недостаточно средств на счету OpenAI.";
+            } else if (response.status === 405) {
+                return "❌ Ошибка метода запроса. Проверьте настройки сервера.";
             } else {
-                return `❌ Ошибка API (${response.status}). Пожалуйста, попробуйте позже.`;
+                return `❌ Ошибка сервера (${response.status}). Пожалуйста, попробуйте позже.`;
             }
         }
 
         const data = await response.json();
-        console.log('✅ Ответ получен');
+        console.log('✅ Ответ получен:', data);
+        
+        if (data.error) {
+            return `❌ Ошибка OpenAI: ${data.error.message || 'Неизвестная ошибка'}`;
+        }
+        
         return data.choices[0].message.content;
 
     } catch (error) {
