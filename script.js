@@ -16,87 +16,55 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== ЛОКАЛЬНАЯ НЕЙРОСЕТЬ (БЕСПЛАТНО) ==========
-let model = null;
-let isModelLoaded = false;
-let modelLoadProgress = 0;
+// ========== КОНФИГУРАЦИЯ OPENROUTER (БЕСПЛАТНО) ==========
+const AI_CONFIG = {
+    // Публичный ключ OpenRouter (работает для бесплатных моделей)
+    apiKey: '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',
+    apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    model: 'deepseek/deepseek-chat:free', // Бесплатная модель DeepSeek
+    siteUrl: window.location.origin,
+    siteName: 'IndustrAI'
+};
 
-// Загружаем WebLLM библиотеку
-async function loadWebLLM() {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/@mlc-ai/web-llm@0.2.46/lib/index.js';
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Не удалось загрузить WebLLM'));
-        document.head.appendChild(script);
-    });
-}
-
-// Инициализация модели
-async function initLocalModel() {
-    if (isModelLoaded) return true;
-    
+// ========== ФУНКЦИЯ ВЫЗОВА API ==========
+async function callAIAPI(messages) {
     try {
-        console.log('🤖 Загрузка локальной нейросети...');
+        console.log('🤖 Отправка запроса к OpenRouter...');
         
-        // Ждем загрузки библиотеки
-        await loadWebLLM();
-        
-        // Используем маленькую модель (50MB) - идеально для теста
-        const modelId = 'Phi-3-mini-4k-instruct-q4f16_1-MLC'; // 1.5B параметров
-        
-        // Настройки модели
-        const config = {
-            temperature: 0.7,
-            max_gen_len: 512,
-            repetition_penalty: 1.1,
-            top_p: 0.9
-        };
-        
-        // Создаем движок
-        const engine = await webllm.CreateMLCEngine(modelId, {
-            initProgressCallback: (progress) => {
-                modelLoadProgress = progress.progress;
-                console.log(`📥 Загрузка модели: ${Math.round(progress.progress * 100)}%`);
+        const response = await fetch(AI_CONFIG.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
+                'HTTP-Referer': AI_CONFIG.siteUrl,
+                'X-Title': AI_CONFIG.siteName
+            },
+            body: JSON.stringify({
+                model: AI_CONFIG.model,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 1000
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            console.error('❌ Ошибка API:', response.status, errorData);
+            
+            if (response.status === 429) {
+                return "❌ Слишком много запросов. Подождите немного и повторите.";
+            } else {
+                return "❌ Не удалось получить ответ. Пожалуйста, попробуйте ещё раз.";
             }
-        });
-        
-        model = engine;
-        isModelLoaded = true;
-        console.log('✅ Локальная нейросеть загружена!');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Ошибка загрузки модели:', error);
-        return false;
-    }
-}
+        }
 
-// Генерация ответа локальной моделью
-async function generateLocalResponse(prompt) {
-    if (!isModelLoaded) {
-        await initLocalModel();
-    }
-    
-    try {
-        console.log('🤔 Генерация ответа...');
-        
-        const messages = [
-            { role: 'system', content: 'Ты — опытный инженер по промышленной автоматизации с 20-летним стажем. Отвечай кратко, профессионально, по делу.' },
-            { role: 'user', content: prompt }
-        ];
-        
-        const reply = await model.chat.completions.create({
-            messages,
-            temperature: 0.7,
-            max_tokens: 500
-        });
-        
-        return reply.choices[0].message.content;
-        
+        const data = await response.json();
+        console.log('✅ Ответ получен');
+        return data.choices[0].message.content;
+
     } catch (error) {
-        console.error('❌ Ошибка генерации:', error);
-        return '❌ Не удалось получить ответ. Попробуйте ещё раз.';
+        console.error('❌ Ошибка сети:', error);
+        return "❌ Ошибка соединения. Проверьте подключение к интернету.";
     }
 }
 
@@ -113,7 +81,7 @@ function loadUserChatHistory() {
             title: 'Новый диалог',
             messages: [{
                 sender: 'bot',
-                text: '🔍 Я загружаю локальную нейросеть. Это займёт около 1 минуты. Задайте вопрос по оборудованию!',
+                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение!',
                 timestamp: new Date().toISOString()
             }],
             createdAt: new Date().toISOString()
@@ -125,9 +93,6 @@ function loadUserChatHistory() {
     if (chatHistory[currentUser.login].length > 0) {
         loadProfileChat(chatHistory[currentUser.login][0].id);
     }
-    
-    // Начинаем загрузку модели в фоне
-    initLocalModel();
 }
 
 function renderProfileHistory() {
@@ -226,10 +191,15 @@ async function sendProfileMessage() {
     });
     loadProfileChat(currentChatId);
     
-    // Формируем промпт
-    const prompt = `Вопрос по оборудованию: ${msg}\n\nДай краткий профессиональный ответ.`;
+    const messageHistory = [
+        { 
+            role: 'system', 
+            content: 'Ты — опытный инженер по промышленной автоматизации с 20-летним стажем. Отвечай кратко, профессионально, по делу. Используй техническую терминологию. Если речь идёт об ошибке, опиши возможные причины и шаги по устранению.'
+        },
+        { role: 'user', content: msg }
+    ];
     
-    const reply = await generateLocalResponse(prompt);
+    const reply = await callAIAPI(messageHistory);
     
     chat.messages.pop();
     chat.messages.push({ 
@@ -346,8 +316,12 @@ async function sendTestMessage() {
     chat.messages.push({ sender: 'bot', text: '🤔 Думаю...', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
-    const prompt = `Вопрос: ${msg}\n\nОтветь кратко.`;
-    const reply = await generateLocalResponse(prompt);
+    const messageHistory = [
+        { role: 'system', content: 'Ты инженер по автоматизации. Отвечай кратко.' },
+        { role: 'user', content: msg }
+    ];
+    
+    const reply = await callAIAPI(messageHistory);
     
     chat.messages.pop();
     chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
