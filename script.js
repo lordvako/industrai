@@ -16,83 +16,51 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== КОНФИГУРАЦИЯ OPENAI API С ПРОКСИ ==========
-const OPENAI_CONFIG = {
-    apiKey: 'sk-ijklmnopuvwx1234ijklmnopuvwx1234ijklmnop', // Ваш OpenAI ключ
-    // Используем публичный прокси для обхода CORS
-    apiUrl: 'https://cors-anywhere.herokuapp.com/https://api.openai.com/v1/chat/completions',
-    // Альтернативный прокси (если первый не работает):
-    // apiUrl: 'https://api.codetabs.com/v1/proxy/?quest=https://api.openai.com/v1/chat/completions',
-    model: 'gpt-4o-mini'
+// ========== КОНФИГУРАЦИЯ (ЧЕРЕЗ ВАШ ПРОКСИ) ==========
+const AI_CONFIG = {
+    // Используем ваш собственный прокси на том же сервере
+    apiUrl: '/proxy.php', // или полный URL: 'http://9570510274.hosting.myjino.ru/proxy.php'
+    model: 'gpt-4o-mini' // используем модель OpenAI
 };
 
-// ========== ФУНКЦИЯ ВЫЗОВА OPENAI API ==========
-async function callOpenAIAPI(messages) {
+// ========== ФУНКЦИЯ ВЫЗОВА API ==========
+async function callAIAPI(messages) {
     try {
-        console.log('🤖 Отправка запроса к OpenAI через прокси...');
+        console.log('🤖 Отправка запроса через прокси...');
         
-        const response = await fetch(OPENAI_CONFIG.apiUrl, {
+        const response = await fetch(AI_CONFIG.apiUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENAI_CONFIG.apiKey}`,
-                'X-Requested-With': 'XMLHttpRequest' // Нужно для cors-anywhere
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: OPENAI_CONFIG.model,
+                model: AI_CONFIG.model,
                 messages: messages,
                 temperature: 0.7,
-                max_tokens: 2000,
-                top_p: 0.9
+                max_tokens: 2000
             })
         });
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error('❌ Ошибка OpenAI API:', response.status, errorData);
+            console.error('❌ Ошибка API:', response.status, errorData);
             
-            if (response.status === 401) {
-                return "❌ Ошибка авторизации API. Проверьте ваш OpenAI ключ.";
+            if (response.status === 401 || response.status === 403) {
+                return "❌ Ошибка авторизации API. Проверьте OpenAI ключ в файле proxy.php.";
             } else if (response.status === 429) {
-                return "❌ Превышен лимит запросов или недостаточно средств на счету.";
+                return "❌ Превышен лимит запросов или недостаточно средств на счету OpenAI.";
             } else {
                 return `❌ Ошибка API (${response.status}). Пожалуйста, попробуйте позже.`;
             }
         }
 
         const data = await response.json();
-        console.log('✅ Ответ получен от OpenAI');
+        console.log('✅ Ответ получен');
         return data.choices[0].message.content;
 
     } catch (error) {
         console.error('❌ Ошибка сети:', error);
-        
-        // Пробуем альтернативный прокси
-        try {
-            console.log('🔄 Пробуем альтернативный прокси...');
-            const altResponse = await fetch('https://api.codetabs.com/v1/proxy/?quest=https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${OPENAI_CONFIG.apiKey}`
-                },
-                body: JSON.stringify({
-                    model: OPENAI_CONFIG.model,
-                    messages: messages,
-                    temperature: 0.7,
-                    max_tokens: 2000
-                })
-            });
-            
-            if (altResponse.ok) {
-                const altData = await altResponse.json();
-                return altData.choices[0].message.content;
-            }
-        } catch (altError) {
-            console.error('❌ Альтернативный прокси тоже не работает:', altError);
-        }
-        
-        return "❌ Ошибка соединения. Пожалуйста, убедитесь, что:\n1. У вас есть доступ к интернету\n2. Ваш OpenAI ключ корректен\n3. На счету есть средства";
+        return "❌ Ошибка соединения. Проверьте, что файл proxy.php существует на сервере.";
     }
 }
 
@@ -235,8 +203,8 @@ async function sendProfileMessage() {
     // Добавляем текущий вопрос
     messageHistory.push({ role: 'user', content: msg });
     
-    // Отправляем к OpenAI
-    const reply = await callOpenAIAPI(messageHistory);
+    // Отправляем к API
+    const reply = await callAIAPI(messageHistory);
     
     // Удаляем индикатор и добавляем ответ
     chat.messages.pop();
@@ -356,7 +324,7 @@ async function sendTestMessage() {
     
     // Формируем историю
     const messageHistory = [{ role: 'user', content: msg }];
-    const reply = await callOpenAIAPI(messageHistory);
+    const reply = await callAIAPI(messageHistory);
     
     chat.messages.pop();
     chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
