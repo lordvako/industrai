@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ВАШ РЕАЛЬНЫЙ OPENAI КЛЮЧ - ЗАМЕНИТЕ НА СВОЙ!
-$api_key = 'sk-1234abcd1234abcd1234abcd1234abcd1234abcd';
+$api_key = 'sk-ijklmnopuvwx1234ijklmnopuvwx1234ijklmnop';
 
 // Получаем данные от клиента
 $payload = file_get_contents('php://input');
