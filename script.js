@@ -18,7 +18,7 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 
 // ========== КОНФИГУРАЦИЯ OPENAI API С ПРОКСИ ==========
 const OPENAI_CONFIG = {
-    apiKey: 'sk-1234abcd1234abcd1234abcd1234abcd1234abcd', // Ваш OpenAI ключ
+    apiKey: 'sk-ijklmnopuvwx1234ijklmnopuvwx1234ijklmnop', // Ваш OpenAI ключ
     // Используем публичный прокси для обхода CORS
     apiUrl: 'https://cors-anywhere.herokuapp.com/https://api.openai.com/v1/chat/completions',
     // Альтернативный прокси (если первый не работает):
