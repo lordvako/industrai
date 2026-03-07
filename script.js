@@ -18,7 +18,7 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 
 // ========== КОНФИГУРАЦИЯ OPENAI API ==========
 const OPENAI_CONFIG = {
-    apiKey: 'sk-1234abcd1234abcd1234abcd1234abcd1234abcd', // Ваш OpenAI ключ
+    apiKey: 'sk-ijklmnopuvwx1234ijklmnopuvwx1234ijklmnop', // Ваш OpenAI ключ
     apiUrl: 'https://api.openai.com/v1/chat/completions',
     model: 'gpt-4o-mini' // Самая дешевая и быстрая модель
 };
