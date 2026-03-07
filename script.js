@@ -18,7 +18,7 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 
 // ========== КОНФИГУРАЦИЯ DEEPSEEK API ==========
 const DEEPSEEK_CONFIG = {
-    apiKey: 'sk-6f2c9043acad4e278f5a3a230a1b5e33', // Ваш API ключ DeepSeek
+    apiKey: 'sk-abcdef1234567890abcdef1234567890abcdef12', // Ваш API ключ DeepSeek
     apiUrl: 'https://api.deepseek.com/v1/chat/completions',
     model: 'deepseek-chat'
 };
