@@ -16,72 +16,57 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== КОНФИГУРАЦИЯ ==========
+// ========== КОНФИГУРАЦИЯ OPENROUTER ==========
 const AI_CONFIG = {
-    apiUrl: '/proxy.php', // относительный путь к прокси
-    model: 'gpt-3.5-turbo', // более доступная модель
-    maxTokens: 1000
+    apiKey: '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', // Публичный ключ OpenRouter
+    apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    model: 'deepseek/deepseek-chat:free', // Бесплатная модель DeepSeek
+    siteUrl: window.location.origin,
+    siteName: 'IndustrAI'
 };
 
 // ========== ФУНКЦИЯ ВЫЗОВА API ==========
 async function callAIAPI(messages) {
     try {
-        console.log('🤖 Отправка запроса...');
+        console.log('🤖 Отправка запроса к OpenRouter...');
         
-        // Подготавливаем сообщения в формате OpenAI
-        const apiMessages = messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-        }));
-
-        const requestBody = {
-            model: AI_CONFIG.model,
-            messages: apiMessages,
-            temperature: 0.7,
-            max_tokens: AI_CONFIG.maxTokens,
-            presence_penalty: 0,
-            frequency_penalty: 0
-        };
-
-        console.log('📤 Отправляемые данные:', JSON.stringify(requestBody, null, 2));
-
         const response = await fetch(AI_CONFIG.apiUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
+                'HTTP-Referer': AI_CONFIG.siteUrl,
+                'X-Title': AI_CONFIG.siteName
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                model: AI_CONFIG.model,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 1000,
+                top_p: 0.9
+            })
         });
 
-        console.log('📥 Статус ответа:', response.status);
-
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Ошибка сервера:', response.status, errorText);
+            const errorData = await response.text();
+            console.error('❌ Ошибка API:', response.status, errorData);
             
             if (response.status === 401 || response.status === 403) {
-                return "❌ Ошибка авторизации API. Проверьте OpenAI ключ в файле proxy.php.";
+                return "❌ Ошибка авторизации API. Пожалуйста, попробуйте позже.";
             } else if (response.status === 429) {
-                return "❌ Превышен лимит запросов или недостаточно средств на счету OpenAI.";
-            } else if (response.status === 405) {
-                return "❌ Ошибка метода запроса. Проверьте настройки сервера.";
+                return "❌ Слишком много запросов. Подождите немного.";
             } else {
-                return `❌ Ошибка сервера (${response.status}). Пожалуйста, попробуйте позже.`;
+                return `❌ Ошибка API (${response.status}). Пожалуйста, попробуйте позже.`;
             }
         }
 
         const data = await response.json();
-        console.log('✅ Ответ получен:', data);
-        
-        if (data.error) {
-            return `❌ Ошибка OpenAI: ${data.error.message || 'Неизвестная ошибка'}`;
-        }
-        
+        console.log('✅ Ответ получен');
         return data.choices[0].message.content;
 
     } catch (error) {
         console.error('❌ Ошибка сети:', error);
-        return "❌ Ошибка соединения. Проверьте, что файл proxy.php существует на сервере.";
+        return "❌ Ошибка соединения. Проверьте подключение к интернету.";
     }
 }
 
@@ -188,7 +173,6 @@ async function sendProfileMessage() {
     const chat = chatHistory[currentUser.login].find(c => c.id === currentChatId);
     if (!chat) return;
     
-    // Добавляем сообщение пользователя
     chat.messages.push({ 
         sender: 'user', 
         text: msg, 
@@ -202,7 +186,6 @@ async function sendProfileMessage() {
     loadProfileChat(currentChatId);
     input.value = '';
     
-    // Индикатор загрузки
     chat.messages.push({ 
         sender: 'bot', 
         text: '🤔 Думаю...', 
@@ -210,24 +193,9 @@ async function sendProfileMessage() {
     });
     loadProfileChat(currentChatId);
     
-    // Формируем историю для контекста
-    const messageHistory = [];
-    for (let i = Math.max(0, chat.messages.length - 10); i < chat.messages.length - 1; i++) {
-        const m = chat.messages[i];
-        if (m.sender === 'user') {
-            messageHistory.push({ role: 'user', content: m.text });
-        } else if (m.sender === 'bot' && m.text !== '🤔 Думаю...') {
-            messageHistory.push({ role: 'assistant', content: m.text });
-        }
-    }
-    
-    // Добавляем текущий вопрос
-    messageHistory.push({ role: 'user', content: msg });
-    
-    // Отправляем к API
+    const messageHistory = [{ role: 'user', content: msg }];
     const reply = await callAIAPI(messageHistory);
     
-    // Удаляем индикатор и добавляем ответ
     chat.messages.pop();
     chat.messages.push({ 
         sender: 'bot', 
@@ -343,7 +311,6 @@ async function sendTestMessage() {
     chat.messages.push({ sender: 'bot', text: '🤔 Думаю...', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
-    // Формируем историю
     const messageHistory = [{ role: 'user', content: msg }];
     const reply = await callAIAPI(messageHistory);
     
