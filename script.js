@@ -16,26 +16,26 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== КОНФИГУРАЦИЯ DEEPSEEK API ==========
-const DEEPSEEK_CONFIG = {
-    apiKey: 'sk-abcdef1234567890abcdef1234567890abcdef12', // Ваш API ключ DeepSeek
-    apiUrl: 'https://api.deepseek.com/v1/chat/completions',
-    model: 'deepseek-chat'
+// ========== КОНФИГУРАЦИЯ OPENAI API ==========
+const OPENAI_CONFIG = {
+    apiKey: 'sk-1234abcd1234abcd1234abcd1234abcd1234abcd', // Ваш OpenAI ключ
+    apiUrl: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-4o-mini' // Самая дешевая и быстрая модель
 };
 
-// ========== ФУНКЦИЯ ВЫЗОВА DEEPSEEK API ==========
-async function callDeepSeekAPI(messages) {
+// ========== ФУНКЦИЯ ВЫЗОВА OPENAI API ==========
+async function callOpenAIAPI(messages) {
     try {
-        console.log('🤖 Отправка запроса к DeepSeek...');
+        console.log('🤖 Отправка запроса к OpenAI...');
         
-        const response = await fetch(DEEPSEEK_CONFIG.apiUrl, {
+        const response = await fetch(OPENAI_CONFIG.apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${DEEPSEEK_CONFIG.apiKey}`
+                'Authorization': `Bearer ${OPENAI_CONFIG.apiKey}`
             },
             body: JSON.stringify({
-                model: DEEPSEEK_CONFIG.model,
+                model: OPENAI_CONFIG.model,
                 messages: messages,
                 temperature: 0.7,
                 max_tokens: 2000,
@@ -47,19 +47,21 @@ async function callDeepSeekAPI(messages) {
 
         if (!response.ok) {
             const errorData = await response.text();
-            console.error('❌ Ошибка DeepSeek API:', response.status, errorData);
+            console.error('❌ Ошибка OpenAI API:', response.status, errorData);
             
             if (response.status === 401) {
-                return "❌ Ошибка авторизации API. Проверьте ваш API ключ.";
+                return "❌ Ошибка авторизации API. Проверьте ваш OpenAI ключ.";
             } else if (response.status === 429) {
-                return "❌ Превышен лимит запросов. Попробуйте позже.";
+                return "❌ Превышен лимит запросов или недостаточно средств на счету. Пополните баланс OpenAI.";
+            } else if (response.status === 402) {
+                return "❌ Недостаточно средств на счету OpenAI. Пополните баланс.";
             } else {
                 return `❌ Ошибка API (${response.status}). Пожалуйста, попробуйте позже.`;
             }
         }
 
         const data = await response.json();
-        console.log('✅ Ответ получен от DeepSeek');
+        console.log('✅ Ответ получен от OpenAI');
         return data.choices[0].message.content;
 
     } catch (error) {
@@ -207,8 +209,8 @@ async function sendProfileMessage() {
     // Добавляем текущий вопрос
     messageHistory.push({ role: 'user', content: msg });
     
-    // Отправляем к DeepSeek
-    const reply = await callDeepSeekAPI(messageHistory);
+    // Отправляем к OpenAI
+    const reply = await callOpenAIAPI(messageHistory);
     
     // Удаляем индикатор и добавляем ответ
     chat.messages.pop();
@@ -238,7 +240,7 @@ function deleteChat(chatId, event) {
     }
 }
 
-// ========== ТЕСТ-ДРАЙВ (аналогично профилю, но с лимитом) ==========
+// ========== ТЕСТ-ДРАЙВ ==========
 
 let testQueriesLeft = 1;
 let testChatHistory = [];
@@ -328,7 +330,7 @@ async function sendTestMessage() {
     
     // Формируем историю
     const messageHistory = [{ role: 'user', content: msg }];
-    const reply = await callDeepSeekAPI(messageHistory);
+    const reply = await callOpenAIAPI(messageHistory);
     
     chat.messages.pop();
     chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
