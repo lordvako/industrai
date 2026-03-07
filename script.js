@@ -16,46 +16,35 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== КОНФИГУРАЦИЯ OPENROUTER (БЕСПЛАТНО) ==========
-const AI_CONFIG = {
-    // Публичный ключ OpenRouter (работает для бесплатных моделей)
-    apiKey: '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',
-    apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
-    model: 'deepseek/deepseek-chat:free', // Бесплатная модель DeepSeek
-    siteUrl: window.location.origin,
-    siteName: 'IndustrAI'
-};
-
-// ========== ФУНКЦИЯ ВЫЗОВА API ==========
-async function callAIAPI(messages) {
+// ========== БЕСПЛАТНОЕ API ЧЕРЕЗ ПРОКСИ ==========
+async function callFreeAIAPI(messages) {
     try {
-        console.log('🤖 Отправка запроса к OpenRouter...');
+        console.log('🤖 Отправка запроса к бесплатному API...');
         
-        const response = await fetch(AI_CONFIG.apiUrl, {
+        // Используем публичный прокси для обхода CORS
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const targetUrl = 'https://text.pollinations.ai/openai';
+        
+        const response = await fetch(proxyUrl + targetUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
-                'HTTP-Referer': AI_CONFIG.siteUrl,
-                'X-Title': AI_CONFIG.siteName
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({
-                model: AI_CONFIG.model,
+                model: 'openai',
                 messages: messages,
                 temperature: 0.7,
-                max_tokens: 1000
+                max_tokens: 500
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.text();
-            console.error('❌ Ошибка API:', response.status, errorData);
+            const errorText = await response.text();
+            console.error('❌ Ошибка API:', response.status, errorText);
             
-            if (response.status === 429) {
-                return "❌ Слишком много запросов. Подождите немного и повторите.";
-            } else {
-                return "❌ Не удалось получить ответ. Пожалуйста, попробуйте ещё раз.";
-            }
+            // Пробуем альтернативный бесплатный API
+            return await callAlternativeAPI(messages);
         }
 
         const data = await response.json();
@@ -64,8 +53,76 @@ async function callAIAPI(messages) {
 
     } catch (error) {
         console.error('❌ Ошибка сети:', error);
-        return "❌ Ошибка соединения. Проверьте подключение к интернету.";
+        return await callAlternativeAPI(messages);
     }
+}
+
+// ========== АЛЬТЕРНАТИВНОЕ БЕСПЛАТНОЕ API ==========
+async function callAlternativeAPI(messages) {
+    try {
+        console.log('🔄 Пробуем альтернативное API...');
+        
+        // Используем Ollama публичный сервер
+        const response = await fetch('https://ollama-public.vercel.app/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'tinyllama',
+                messages: messages,
+                stream: false
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('API не отвечает');
+        }
+
+        const data = await response.json();
+        return data.message.content;
+
+    } catch (error) {
+        console.error('❌ Все API недоступны');
+        
+        // Возвращаем заглушку для тестирования
+        return getTestResponse(messages);
+    }
+}
+
+// ========== ТЕСТОВЫЙ ОТВЕТ (ЗАГЛУШКА) ==========
+function getTestResponse(messages) {
+    const userMessage = messages[messages.length - 1].content.toLowerCase();
+    
+    if (userMessage.includes('s7-200') && userMessage.includes('sf')) {
+        return `🔧 **Диагностика ошибки SF на Siemens S7-200:**
+
+Индикатор SF (System Fault) на S7-200 может гореть по нескольким причинам:
+
+1️⃣ **Проверьте питание** — измерьте напряжение на блоке питания (должно быть 24В ±10%)
+
+2️⃣ **Проверьте диагностический буфер** — подключитесь через STEP 7 Micro/WIN и посмотрите сообщения об ошибках
+
+3️⃣ **Распространённые причины:**
+   • Неисправность модуля расширения
+   • Ошибка в программе (деление на ноль, таймаут)
+   • Проблемы с шиной связи
+
+4️⃣ **Что делать:**
+   • Перезагрузите контроллер (Power OFF → Power ON)
+   • Проверьте все подключения
+   • Если ошибка остаётся — замените модуль
+
+_Это тестовый ответ. Для полноценной работы требуется настроить API._`;
+    }
+    
+    return `❓ По вашему запросу "${userMessage}" пока нет готового ответа в тестовом режиме.
+
+Для полноценной работы необходимо:
+1. Пополнить баланс OpenAI ($5-10)
+2. Или использовать локальную нейросеть через WebLLM
+
+Выберите вариант, и я помогу с настройкой!`;
 }
 
 // ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
@@ -81,7 +138,7 @@ function loadUserChatHistory() {
             title: 'Новый диалог',
             messages: [{
                 sender: 'bot',
-                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение!',
+                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение! (тестовый режим)',
                 timestamp: new Date().toISOString()
             }],
             createdAt: new Date().toISOString()
@@ -120,7 +177,7 @@ function createNewProfileChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 Задайте вопрос по оборудованию!',
+            text: '🔍 Задайте вопрос по оборудованию! (тестовый режим)',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -194,12 +251,12 @@ async function sendProfileMessage() {
     const messageHistory = [
         { 
             role: 'system', 
-            content: 'Ты — опытный инженер по промышленной автоматизации с 20-летним стажем. Отвечай кратко, профессионально, по делу. Используй техническую терминологию. Если речь идёт об ошибке, опиши возможные причины и шаги по устранению.'
+            content: 'Ты — опытный инженер по промышленной автоматизации. Отвечай кратко, профессионально.'
         },
         { role: 'user', content: msg }
     ];
     
-    const reply = await callAIAPI(messageHistory);
+    const reply = await callFreeAIAPI(messageHistory);
     
     chat.messages.pop();
     chat.messages.push({ 
@@ -240,7 +297,7 @@ function createNewTestChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос по оборудованию!',
+            text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос по оборудованию! (тестовый режим)',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -321,7 +378,7 @@ async function sendTestMessage() {
         { role: 'user', content: msg }
     ];
     
-    const reply = await callAIAPI(messageHistory);
+    const reply = await callFreeAIAPI(messageHistory);
     
     chat.messages.pop();
     chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
