@@ -62,26 +62,86 @@ async function callFreeAIAPI(messages) {
 
 // Функция для красивого форматирования ответа нейросети
 function formatAIResponse(text) {
-    // Заменяем маркированные списки на красивые иконки
-    text = text.replace(/^(\d+)\)\s+(.+)$/gm, '<div class="ai-step"><span class="step-number">$1</span><span class="step-text">$2</span></div>');
-    text = text.replace(/^•\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-cog"></i><span>$1</span></div>');
-    text = text.replace(/^-\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
+    if (!text) return '⚠️ Нет ответа от нейросети';
     
-    // Заголовки разделов
-    text = text.replace(/^(\d+)\)\s*Краткая\s*диагностика/gi, '<div class="ai-section-header"><i class="fas fa-stethoscope"></i>📋 Диагностика</div>');
-    text = text.replace(/^(\d+)\)\s*Возможные\s*причины/gi, '<div class="ai-section-header"><i class="fas fa-search"></i>🔍 Возможные причины</div>');
-    text = text.replace(/^(\d+)\)\s*Пошаговые\s*действия/gi, '<div class="ai-section-header"><i class="fas fa-tools"></i>🛠️ Пошаговые действия</div>');
-    text = text.replace(/^(\d+)\)\s*Что\s*проверить/gi, '<div class="ai-section-header"><i class="fas fa-clipboard-list"></i>📝 Что проверить в первую очередь</div>');
+    let formatted = text;
     
-    // Выделение кода и важных терминов
-    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Обработка заголовков с цифрами (1. 2. 3. 4.)
+    const sectionTitles = {
+        '1': { icon: 'fa-stethoscope', title: '📋 Диагностика' },
+        '2': { icon: 'fa-search', title: '🔍 Возможные причины' },
+        '3': { icon: 'fa-tools', title: '🛠️ Пошаговые действия' },
+        '4': { icon: 'fa-clipboard-list', title: '📝 Что проверить в первую очередь' }
+    };
     
-    // Разделитель между блоками
-    text = text.replace(/\n\n/g, '<div class="ai-divider"></div>');
-    text = text.replace(/\n/g, '<br>');
+    formatted = formatted.replace(/^(\d+)[\.\)]\s*\*\*(.*?)\*\*/gm, (match, num, title) => {
+        const section = sectionTitles[num] || { icon: 'fa-info-circle', title: title };
+        return `<div class="ai-section-header"><i class="fas ${section.icon}"></i> ${section.title}</div>`;
+    });
     
-    return `<div class="ai-response">${text}</div>`;
+    formatted = formatted.replace(/^(\d+)[\.\)]\s*(.*?)(?:\n|$)/gm, (match, num, title) => {
+        if (title.length < 50 && !title.includes(' ') === false) {
+            const section = sectionTitles[num] || { icon: 'fa-info-circle', title: title };
+            return `<div class="ai-section-header"><i class="fas ${section.icon}"></i> ${section.title}</div>`;
+        }
+        return match;
+    });
+    
+    // Обработка жирного текста
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Обработка маркированных списков
+    formatted = formatted.replace(/^[-•*]\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
+    
+    // Обработка нумерованных шагов
+    formatted = formatted.replace(/^(\d+)[\.\)]\s+(.+)$/gm, (match, num, content) => {
+        if (!content.includes('<div')) {
+            return `<div class="ai-step"><span class="step-number">${num}</span><span class="step-text">${content}</span></div>`;
+        }
+        return match;
+    });
+    
+    // Выделение кода
+    formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Обработка специальных меток
+    formatted = formatted.replace(/Важно:/gi, '⚠️ <strong>Важно:</strong>');
+    formatted = formatted.replace(/Примечание:/gi, '📌 <strong>Примечание:</strong>');
+    formatted = formatted.replace(/Внимание:/gi, '🔔 <strong>Внимание:</strong>');
+    formatted = formatted.replace(/Совет:/gi, '💡 <strong>Совет:</strong>');
+    formatted = formatted.replace(/Рекомендация:/gi, '💡 <strong>Рекомендация:</strong>');
+    
+    // Замена переносов строк
+    const lines = formatted.split('\n');
+    let result = '';
+    let inTag = false;
+    
+    for (let line of lines) {
+        if (line.includes('<div') || line.includes('</div>') || line.includes('<strong') || line.includes('</strong>') || line.includes('<code') || line.includes('</code>')) {
+            result += line + '\n';
+        } else if (line.trim() === '') {
+            result += '<div class="ai-divider"></div>\n';
+        } else if (!line.includes('<div class="ai-section-header") && !line.includes('<div class="ai-bullet") && !line.includes('<div class="ai-step")) {
+            result += line + '<br>\n';
+        } else {
+            result += line + '\n';
+        }
+    }
+    
+    formatted = result;
+    
+    // Очистка от лишних тегов
+    formatted = formatted.replace(/<\/div><br>/g, '</div>');
+    formatted = formatted.replace(/<\/div><div class="ai-divider">/g, '</div><div class="ai-divider">');
+    formatted = formatted.replace(/<br><div class="ai-divider">/g, '<div class="ai-divider">');
+    
+    return `<div class="ai-response">${formatted}</div>`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
@@ -428,12 +488,6 @@ function showNotification(msg) {
 
 function toggleMobileMenu() {
     document.getElementById('mobileMenu')?.classList.toggle('active');
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 // ========== БИРЖА ==========
