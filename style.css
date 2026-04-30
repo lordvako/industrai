@@ -2073,4 +2073,147 @@ textarea.form-control {
     .ai-bullet i {
         font-size: 12px;
     }
+    /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ (ФИКС) ===== */
+
+@media (max-width: 768px) {
+    /* Общие отступы */
+    body {
+        padding-top: 60px;
+    }
+    
+    .container {
+        padding: 0 12px;
+    }
+    
+    /* Чат на телефоне */
+    .chat-container {
+        margin: 10px auto 20px;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Боковая панель */
+    .chat-sidebar {
+        height: auto;
+        max-height: 200px;
+        min-height: auto;
+        padding: 12px;
+    }
+    
+    /* Основная область чата */
+    .chat-main {
+        height: 55vh;
+        min-height: 450px;
+    }
+    
+    /* Сообщения */
+    .message-content {
+        max-width: 85%;
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+    
+    /* Область ввода (ВАЖНО!) */
+    .chat-input-area {
+        padding: 12px;
+        background: white;
+        border-top: 1px solid #E0E8F0;
+    }
+    
+    .chat-input-wrapper {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .chat-input {
+        flex: 1;
+        padding: 12px 16px;
+        font-size: 14px;
+        background: #F5F7FA;
+        border: 1px solid #E0E8F0;
+        border-radius: 30px;
+    }
+    
+    /* Кнопка отправки - гарантированно видна */
+    .chat-send {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+        border-radius: 50%;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .chat-send i {
+        font-size: 18px;
+    }
+    
+    /* Кнопка прикрепления файла */
+    .attach-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        background: #F0F4F8;
+        border-radius: 50%;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        color: #2B6FF0;
+        border: 1px solid #E0E8F0;
+        cursor: pointer;
+    }
+    
+    /* Заголовки */
+    .chat-header {
+        padding: 12px 15px;
+    }
+    
+    .chat-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .chat-title h3 {
+        font-size: 14px;
+    }
+    
+    .query-counter {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+    
+    /* Ответы AI */
+    .ai-section-header {
+        font-size: 11px;
+        padding: 5px 12px;
+    }
+    
+    .ai-step {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+    
+    .step-number {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+    
+    .ai-bullet {
+        gap: 8px;
+        padding: 5px 10px;
+    }
+    
+    .ai-bullet i {
+        font-size: 12px;
+    }
+}
 }
