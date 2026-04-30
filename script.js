@@ -42,13 +42,12 @@ async function callFreeAIAPI(messages) {
         const data = await response.json();
         console.log('✅ Получен ответ от Worker:', data);
 
-        // Проверяем структуру ответа от Groq
         if (data.error) {
             throw new Error(data.error);
         }
         
         if (data.choices && data.choices[0] && data.choices[0].message) {
-            return data.choices[0].message.content;
+            return formatAIResponse(data.choices[0].message.content);
         } else {
             console.error('⚠️ Неожиданный формат ответа:', data);
             throw new Error('Некорректный формат ответа от API');
@@ -59,6 +58,30 @@ async function callFreeAIAPI(messages) {
         return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
                'Техническая информация: ' + error.message;
     }
+}
+
+// Функция для красивого форматирования ответа нейросети
+function formatAIResponse(text) {
+    // Заменяем маркированные списки на красивые иконки
+    text = text.replace(/^(\d+)\)\s+(.+)$/gm, '<div class="ai-step"><span class="step-number">$1</span><span class="step-text">$2</span></div>');
+    text = text.replace(/^•\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-cog"></i><span>$1</span></div>');
+    text = text.replace(/^-\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
+    
+    // Заголовки разделов
+    text = text.replace(/^(\d+)\)\s*Краткая\s*диагностика/gi, '<div class="ai-section-header"><i class="fas fa-stethoscope"></i>📋 Диагностика</div>');
+    text = text.replace(/^(\d+)\)\s*Возможные\s*причины/gi, '<div class="ai-section-header"><i class="fas fa-search"></i>🔍 Возможные причины</div>');
+    text = text.replace(/^(\d+)\)\s*Пошаговые\s*действия/gi, '<div class="ai-section-header"><i class="fas fa-tools"></i>🛠️ Пошаговые действия</div>');
+    text = text.replace(/^(\d+)\)\s*Что\s*проверить/gi, '<div class="ai-section-header"><i class="fas fa-clipboard-list"></i>📝 Что проверить в первую очередь</div>');
+    
+    // Выделение кода и важных терминов
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Разделитель между блоками
+    text = text.replace(/\n\n/g, '<div class="ai-divider"></div>');
+    text = text.replace(/\n/g, '<br>');
+    
+    return `<div class="ai-response">${text}</div>`;
 }
 
 // ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
@@ -143,8 +166,8 @@ function loadProfileChat(chatId) {
     chat.messages.forEach(msg => {
         html += `
             <div class="message ${msg.sender}">
-                <div class="message-avatar">${msg.sender === 'user' ? 'Я' : 'AI'}</div>
-                <div class="message-content">${escapeHtml(msg.text).replace(/\n/g, '<br>')}</div>
+                <div class="message-avatar">${msg.sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>'}</div>
+                <div class="message-content">${msg.text}</div>
             </div>
         `;
     });
@@ -166,7 +189,7 @@ async function sendProfileMessage() {
     
     chat.messages.push({ 
         sender: 'user', 
-        text: msg, 
+        text: `<div class="user-message">${escapeHtml(msg)}</div>`, 
         timestamp: new Date().toISOString() 
     });
     
@@ -179,7 +202,7 @@ async function sendProfileMessage() {
     
     chat.messages.push({ 
         sender: 'bot', 
-        text: '🤔 Думаю...', 
+        text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Думаю...</div>', 
         timestamp: new Date().toISOString() 
     });
     loadProfileChat(currentChatId);
@@ -284,8 +307,8 @@ function loadTestChat(chatId) {
     chat.messages.forEach(msg => {
         html += `
             <div class="message ${msg.sender}">
-                <div class="message-avatar">${msg.sender === 'user' ? 'Я' : 'AI'}</div>
-                <div class="message-content">${escapeHtml(msg.text).replace(/\n/g, '<br>')}</div>
+                <div class="message-avatar">${msg.sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>'}</div>
+                <div class="message-content">${msg.text}</div>
             </div>
         `;
     });
@@ -312,13 +335,13 @@ async function sendTestMessage() {
     const chat = testChatHistory.find(c => c.id === testCurrentChatId);
     if (!chat) return;
     
-    chat.messages.push({ sender: 'user', text: msg, timestamp: new Date().toISOString() });
+    chat.messages.push({ sender: 'user', text: `<div class="user-message">${escapeHtml(msg)}</div>`, timestamp: new Date().toISOString() });
     if (chat.messages.length === 2) chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
     
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    chat.messages.push({ sender: 'bot', text: '🤔 Думаю...', timestamp: new Date().toISOString() });
+    chat.messages.push({ sender: 'bot', text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Думаю...</div>', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
     const messageHistory = [
@@ -585,7 +608,7 @@ function attachFile(context) {
                 if (chat) {
                     chat.messages.push({
                         sender: 'user',
-                        text: `[Прикреплён файл: ${file.name}]`,
+                        text: `<div class="user-message">📎 Прикреплён файл: ${file.name}</div>`,
                         attachment: { name: file.name },
                         timestamp: new Date().toISOString()
                     });
@@ -596,7 +619,7 @@ function attachFile(context) {
                 if (chat) {
                     chat.messages.push({
                         sender: 'user',
-                        text: `[Прикреплён файл: ${file.name}]`,
+                        text: `<div class="user-message">📎 Прикреплён файл: ${file.name}</div>`,
                         attachment: { name: file.name },
                         timestamp: new Date().toISOString()
                     });
