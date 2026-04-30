@@ -16,113 +16,46 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== БЕСПЛАТНОЕ API ЧЕРЕЗ ПРОКСИ ==========
+// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
+// ⚠️ ЗАМЕНИТЕ на ваш реальный URL после деплоя Cloudflare Worker!
+const WORKER_URL = 'https://industrai-api.ivanivanov.workers.dev';
+
 async function callFreeAIAPI(messages) {
     try {
-        console.log('🤖 Отправка запроса к бесплатному API...');
-        
-        // Используем публичный прокси для обхода CORS
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const targetUrl = 'https://text.pollinations.ai/openai';
-        
-        const response = await fetch(proxyUrl + targetUrl, {
+        const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({
-                model: 'openai',
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 500
-            })
+            body: JSON.stringify({ messages: messages })
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Ошибка API:', response.status, errorText);
-            
-            // Пробуем альтернативный бесплатный API
-            return await callAlternativeAPI(messages);
+            const err = await response.json();
+            throw new Error(err.error || 'Ошибка прокси: ' + response.status);
         }
 
         const data = await response.json();
-        console.log('✅ Ответ получен');
-        return data.choices[0].message.content;
 
-    } catch (error) {
-        console.error('❌ Ошибка сети:', error);
-        return await callAlternativeAPI(messages);
-    }
-}
-
-// ========== АЛЬТЕРНАТИВНОЕ БЕСПЛАТНОЕ API ==========
-async function callAlternativeAPI(messages) {
-    try {
-        console.log('🔄 Пробуем альтернативное API...');
-        
-        // Используем Ollama публичный сервер
-        const response = await fetch('https://ollama-public.vercel.app/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'tinyllama',
-                messages: messages,
-                stream: false
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('API не отвечает');
+        if (data.error) {
+            throw new Error(data.error.message || 'Ошибка API');
         }
 
-        const data = await response.json();
-        return data.message.content;
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            return data.choices[0].message.content;
+        } else {
+            throw new Error('Некорректный ответ от API');
+        }
 
     } catch (error) {
-        console.error('❌ Все API недоступны');
-        
-        // Возвращаем заглушку для тестирования
-        return getTestResponse(messages);
+        console.error('AI Error:', error);
+        return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
+               'Возможные причины:\n' +
+               '• Не настроен Cloudflare Worker (проверьте URL в script.js)\n' +
+               '• Истек trial-баланс в Groq\n' +
+               '• Проблемы с интернетом\n\n' +
+               'Техническая информация: ' + error.message;
     }
-}
-
-// ========== ТЕСТОВЫЙ ОТВЕТ (ЗАГЛУШКА) ==========
-function getTestResponse(messages) {
-    const userMessage = messages[messages.length - 1].content.toLowerCase();
-    
-    if (userMessage.includes('s7-200') && userMessage.includes('sf')) {
-        return `🔧 **Диагностика ошибки SF на Siemens S7-200:**
-
-Индикатор SF (System Fault) на S7-200 может гореть по нескольким причинам:
-
-1️⃣ **Проверьте питание** — измерьте напряжение на блоке питания (должно быть 24В ±10%)
-
-2️⃣ **Проверьте диагностический буфер** — подключитесь через STEP 7 Micro/WIN и посмотрите сообщения об ошибках
-
-3️⃣ **Распространённые причины:**
-   • Неисправность модуля расширения
-   • Ошибка в программе (деление на ноль, таймаут)
-   • Проблемы с шиной связи
-
-4️⃣ **Что делать:**
-   • Перезагрузите контроллер (Power OFF → Power ON)
-   • Проверьте все подключения
-   • Если ошибка остаётся — замените модуль
-
-_Это тестовый ответ. Для полноценной работы требуется настроить API._`;
-    }
-    
-    return `❓ По вашему запросу "${userMessage}" пока нет готового ответа в тестовом режиме.
-
-Для полноценной работы необходимо:
-1. Пополнить баланс OpenAI ($5-10)
-2. Или использовать локальную нейросеть через WebLLM
-
-Выберите вариант, и я помогу с настройкой!`;
 }
 
 // ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
@@ -251,7 +184,19 @@ async function sendProfileMessage() {
     const messageHistory = [
         { 
             role: 'system', 
-            content: 'Ты — опытный инженер по промышленной автоматизации. Отвечай кратко, профессионально.'
+            content: 'Ты — ведущий инженер-эксперт по АСУТП с 20-летним стажем. ' +
+                     'Ты специализируешься на промышленной автоматизации: ' +
+                     'частотные преобразователи SEW (Movitrack, Movimot), ' +
+                     'Siemens (S7-200, S7-300, S7-1200, S7-1500, ET200), ' +
+                     'ЧПУ Sinumerik, контроллеры Wieland, Delta, ' +
+                     'промышленные сети PROFIBUS/PROFINET. ' +
+                     'Твоя задача — помочь инженеру диагностировать и устранить ошибку. ' +
+                     'Отвечай строго по делу, структурируй ответ:\n' +
+                     '1) Краткая диагностика\n' +
+                     '2) Возможные причины (списком)\n' +
+                     '3) Пошаговые действия по устранению\n' +
+                     '4) Что проверить в первую очередь.\n' +
+                     'Если не хватает данных — задай уточняющий вопрос.'
         },
         { role: 'user', content: msg }
     ];
@@ -374,7 +319,12 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     
     const messageHistory = [
-        { role: 'system', content: 'Ты инженер по автоматизации. Отвечай кратко.' },
+        { 
+            role: 'system', 
+            content: 'Ты — опытный инженер АСУТП. Помогаешь диагностировать ошибки ' +
+                     'промышленного оборудования (SEW, Siemens, Delta, Wieland). ' +
+                     'Отвечай кратко, по пунктам, с рекомендациями по устранению.'
+        },
         { role: 'user', content: msg }
     ];
     
