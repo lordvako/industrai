@@ -66,34 +66,20 @@ function formatAIResponse(text) {
     
     let formatted = text;
     
-    // Обработка заголовков с цифрами (1. 2. 3. 4.)
-    const sectionTitles = {
-        '1': { icon: 'fa-stethoscope', title: '📋 Диагностика' },
-        '2': { icon: 'fa-search', title: '🔍 Возможные причины' },
-        '3': { icon: 'fa-tools', title: '🛠️ Пошаговые действия' },
-        '4': { icon: 'fa-clipboard-list', title: '📝 Что проверить в первую очередь' }
-    };
+    // Заголовки разделов
+    formatted = formatted.replace(/^1\)\s*Краткая\s*диагностика/gmi, '<div class="ai-section-header"><i class="fas fa-stethoscope"></i> 📋 Диагностика</div>');
+    formatted = formatted.replace(/^2\)\s*Возможные\s*причины/gmi, '<div class="ai-section-header"><i class="fas fa-search"></i> 🔍 Возможные причины</div>');
+    formatted = formatted.replace(/^3\)\s*Пошаговые\s*действия/gmi, '<div class="ai-section-header"><i class="fas fa-tools"></i> 🛠️ Пошаговые действия</div>');
+    formatted = formatted.replace(/^4\)\s*Что\s*проверить/gmi, '<div class="ai-section-header"><i class="fas fa-clipboard-list"></i> 📝 Что проверить в первую очередь</div>');
     
-    formatted = formatted.replace(/^(\d+)[\.\)]\s*\*\*(.*?)\*\*/gm, (match, num, title) => {
-        const section = sectionTitles[num] || { icon: 'fa-info-circle', title: title };
-        return `<div class="ai-section-header"><i class="fas ${section.icon}"></i> ${section.title}</div>`;
-    });
-    
-    formatted = formatted.replace(/^(\d+)[\.\)]\s*(.*?)(?:\n|$)/gm, (match, num, title) => {
-        if (title.length < 50 && !title.includes(' ') === false) {
-            const section = sectionTitles[num] || { icon: 'fa-info-circle', title: title };
-            return `<div class="ai-section-header"><i class="fas ${section.icon}"></i> ${section.title}</div>`;
-        }
-        return match;
-    });
-    
-    // Обработка жирного текста
+    // Жирный текст
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Обработка маркированных списков
-    formatted = formatted.replace(/^[-•*]\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
+    // Маркированные списки
+    formatted = formatted.replace(/^-\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
+    formatted = formatted.replace(/^•\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-cog"></i><span>$1</span></div>');
     
-    // Обработка нумерованных шагов
+    // Нумерованные шаги
     formatted = formatted.replace(/^(\d+)[\.\)]\s+(.+)$/gm, (match, num, content) => {
         if (!content.includes('<div')) {
             return `<div class="ai-step"><span class="step-number">${num}</span><span class="step-text">${content}</span></div>`;
@@ -101,38 +87,21 @@ function formatAIResponse(text) {
         return match;
     });
     
-    // Выделение кода
+    // Код
     formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
     
-    // Обработка специальных меток
+    // Важные метки
     formatted = formatted.replace(/Важно:/gi, '⚠️ <strong>Важно:</strong>');
     formatted = formatted.replace(/Примечание:/gi, '📌 <strong>Примечание:</strong>');
     formatted = formatted.replace(/Внимание:/gi, '🔔 <strong>Внимание:</strong>');
     formatted = formatted.replace(/Совет:/gi, '💡 <strong>Совет:</strong>');
-    formatted = formatted.replace(/Рекомендация:/gi, '💡 <strong>Рекомендация:</strong>');
     
-    // Замена переносов строк
-    const lines = formatted.split('\n');
-    let result = '';
-    let inTag = false;
+    // Разделители
+    formatted = formatted.replace(/\n\n/g, '<div class="ai-divider"></div>');
+    formatted = formatted.replace(/\n/g, '<br>');
     
-    for (let line of lines) {
-        if (line.includes('<div') || line.includes('</div>') || line.includes('<strong') || line.includes('</strong>') || line.includes('<code') || line.includes('</code>')) {
-            result += line + '\n';
-        } else if (line.trim() === '') {
-            result += '<div class="ai-divider"></div>\n';
-        } else if (!line.includes('<div class="ai-section-header") && !line.includes('<div class="ai-bullet") && !line.includes('<div class="ai-step")) {
-            result += line + '<br>\n';
-        } else {
-            result += line + '\n';
-        }
-    }
-    
-    formatted = result;
-    
-    // Очистка от лишних тегов
+    // Очистка
     formatted = formatted.replace(/<\/div><br>/g, '</div>');
-    formatted = formatted.replace(/<\/div><div class="ai-divider">/g, '</div><div class="ai-divider">');
     formatted = formatted.replace(/<br><div class="ai-divider">/g, '<div class="ai-divider">');
     
     return `<div class="ai-response">${formatted}</div>`;
