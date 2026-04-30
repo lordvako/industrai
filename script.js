@@ -17,11 +17,12 @@ let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || 
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
 // ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
-// ⚠️ ЗАМЕНИТЕ на ваш реальный URL после деплоя Cloudflare Worker!
 const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
 async function callFreeAIAPI(messages) {
     try {
+        console.log('📤 Отправка запроса к Worker...', messages);
+        
         const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: {
@@ -30,30 +31,32 @@ async function callFreeAIAPI(messages) {
             body: JSON.stringify({ messages: messages })
         });
 
+        console.log('📡 Статус ответа:', response.status);
+        
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || 'Ошибка прокси: ' + response.status);
+            const errText = await response.text();
+            console.error('❌ Ошибка HTTP:', response.status, errText);
+            throw new Error(`HTTP ${response.status}: ${errText}`);
         }
 
         const data = await response.json();
+        console.log('✅ Получен ответ от Worker:', data);
 
+        // Проверяем структуру ответа от Groq
         if (data.error) {
-            throw new Error(data.error.message || 'Ошибка API');
+            throw new Error(data.error);
         }
-
+        
         if (data.choices && data.choices[0] && data.choices[0].message) {
             return data.choices[0].message.content;
         } else {
-            throw new Error('Некорректный ответ от API');
+            console.error('⚠️ Неожиданный формат ответа:', data);
+            throw new Error('Некорректный формат ответа от API');
         }
 
     } catch (error) {
-        console.error('AI Error:', error);
+        console.error('❌ AI Error:', error);
         return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
-               'Возможные причины:\n' +
-               '• Не настроен Cloudflare Worker (проверьте URL в script.js)\n' +
-               '• Истек trial-баланс в Groq\n' +
-               '• Проблемы с интернетом\n\n' +
                'Техническая информация: ' + error.message;
     }
 }
@@ -71,7 +74,7 @@ function loadUserChatHistory() {
             title: 'Новый диалог',
             messages: [{
                 sender: 'bot',
-                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение! (тестовый режим)',
+                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение!',
                 timestamp: new Date().toISOString()
             }],
             createdAt: new Date().toISOString()
@@ -93,7 +96,7 @@ function renderProfileHistory() {
     chatHistory[currentUser.login].forEach(chat => {
         html += `
             <div class="history-item ${chat.id === currentChatId ? 'active' : ''}" onclick="loadProfileChat(${chat.id})">
-                <div class="history-item-title">${chat.title}</div>
+                <div class="history-item-title">${escapeHtml(chat.title)}</div>
                 <div class="history-item-date">${new Date(chat.createdAt).toLocaleDateString('ru-RU')}</div>
                 <button class="delete-history" onclick="deleteChat(${chat.id}, event)"><i class="fas fa-times"></i></button>
             </div>
@@ -110,7 +113,7 @@ function createNewProfileChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 Задайте вопрос по оборудованию! (тестовый режим)',
+            text: '🔍 Задайте вопрос по оборудованию!',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -141,7 +144,7 @@ function loadProfileChat(chatId) {
         html += `
             <div class="message ${msg.sender}">
                 <div class="message-avatar">${msg.sender === 'user' ? 'Я' : 'AI'}</div>
-                <div class="message-content">${msg.text.replace(/\n/g, '<br>')}</div>
+                <div class="message-content">${escapeHtml(msg.text).replace(/\n/g, '<br>')}</div>
             </div>
         `;
     });
@@ -242,7 +245,7 @@ function createNewTestChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос по оборудованию! (тестовый режим)',
+            text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос по оборудованию!',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -259,7 +262,7 @@ function renderTestHistory() {
     testChatHistory.forEach(chat => {
         html += `
             <div class="history-item ${chat.id === testCurrentChatId ? 'active' : ''}" onclick="loadTestChat(${chat.id})">
-                <div class="history-item-title">${chat.title}</div>
+                <div class="history-item-title">${escapeHtml(chat.title)}</div>
                 <div class="history-item-date">${new Date(chat.createdAt).toLocaleDateString('ru-RU')}</div>
             </div>
         `;
@@ -282,7 +285,7 @@ function loadTestChat(chatId) {
         html += `
             <div class="message ${msg.sender}">
                 <div class="message-avatar">${msg.sender === 'user' ? 'Я' : 'AI'}</div>
-                <div class="message-content">${msg.text.replace(/\n/g, '<br>')}</div>
+                <div class="message-content">${escapeHtml(msg.text).replace(/\n/g, '<br>')}</div>
             </div>
         `;
     });
@@ -404,6 +407,12 @@ function toggleMobileMenu() {
     document.getElementById('mobileMenu')?.classList.toggle('active');
 }
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // ========== БИРЖА ==========
 
 const equipmentData = [
@@ -427,7 +436,7 @@ function loadMarketplaceData() {
                 <div class="item-image">${item.image}</div>
                 <div class="item-details">
                     <div class="item-category">${item.category}</div>
-                    <div class="item-title">${item.name}</div>
+                    <div class="item-title">${escapeHtml(item.name)}</div>
                     <div class="item-status">${item.description}</div>
                     <div class="item-price-block">
                         <span class="item-price">${item.finalPrice.toLocaleString()} ₽</span>
@@ -516,7 +525,7 @@ function loadSellerItems() {
         html += `<div class="seller-item">
             <div class="seller-item-image">${item.image}</div>
             <div style="flex:2">
-                <h4>${item.name}</h4>
+                <h4>${escapeHtml(item.name)}</h4>
                 <p style="color:#5A6B7A;">${item.description}</p>
                 <p style="color:#00B4A0; font-size:12px;">${item.status}</p>
             </div>
@@ -682,7 +691,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const path = window.location.pathname;
     if (path.includes('test.html')) {
         testQueriesLeft = 1;
-        document.getElementById('testQueryCounter') && (document.getElementById('testQueryCounter').innerText = '1 запрос');
+        const counter = document.getElementById('testQueryCounter');
+        if (counter) counter.innerText = '1 запрос';
         createNewTestChat();
     }
     if (path.includes('profile.html')) loadUserChatHistory();
