@@ -18,7 +18,7 @@ let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || 
 
 // ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
 // ⚠️ ЗАМЕНИТЕ на ваш реальный URL после деплоя Cloudflare Worker!
-const WORKER_URL = 'https://industrai-api.ivanivanov.workers.dev';
+const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
 async function callFreeAIAPI(messages) {
     try {
