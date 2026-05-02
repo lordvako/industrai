@@ -16,7 +16,119 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
+// ========== ЛОКАЛЬНАЯ БАЗА ЗНАНИЙ (СПАРСЕНА С ФОРУМОВ) ==========
+// СЮДА ВЫ ДОБАВЛЯЕТЕ ВАШИ ДАННЫЕ С ФОРУМОВ
+// КЛЮЧ - ПОИСКОВЫЙ ЗАПРОС (БРЕНД, МОДЕЛЬ, ОШИБКА), ЗНАЧЕНИЕ - ТЕКСТ ОТВЕТА
+
+const localDatabase = {
+    // Примеры (замените на ваши реальные данные с форумов):
+    "inovance ошибка e001": "Inovance MD380: ошибка E001 — перегрузка по току инвертора. Решение с форума: проверить параметры ускорения/замедления (P0.07, P0.08).",
+    "kossi ошибка overcurrent": "KOSSI K1-4050: Overcurrent — частая проблема на форумах. Рекомендуют: заменить IGBT-модуль и проверить драйвер",
+    "mitsubishi ошибка e.oc1": "Mitsubishi D700: ошибка E.OC1 — превышение тока при разгоне. С форумов: увеличить время разгона (Pr.7), проверить механику",
+    "sew ошибка f01": "SEW MDX61B: ошибка F01 — перегрузка инвертора. Советы с форумов: измерить ток, проверить тормозной резистор",
+    "siemens ошибка f0001": "Siemens MM420: ошибка F0001 — перенапряжение. Решение: проверить тормозной резистор, увеличить время замедления",
+    "delta ошибка occ": "Delta VFD-M: OCC — превышение тока. С форумов: проверить настройки V/F, изолировать двигатель",
+    "wieland ошибка e.oc": "Wieland SP-COP2: E.OC — перегрузка. Совет: проверить кабели, измерить сопротивление изоляции"
+};
+
+// Функция поиска по локальной базе данных (с форумов)
+function searchInLocalDatabase(query) {
+    if (!query || !query.trim()) return null;
+    
+    const lowerQuery = query.toLowerCase();
+    let foundResults = [];
+    
+    // Поиск по ключевым словам
+    for (const [key, value] of Object.entries(localDatabase)) {
+        if (lowerQuery.includes(key.toLowerCase())) {
+            foundResults.push({ keyword: key, content: value });
+        }
+    }
+    
+    // Если не нашли по точному ключу, ищем по отдельным словам
+    if (foundResults.length === 0) {
+        const words = lowerQuery.split(/\s+/).filter(w => w.length > 3);
+        for (const word of words) {
+            for (const [key, value] of Object.entries(localDatabase)) {
+                if (key.toLowerCase().includes(word)) {
+                    foundResults.push({ keyword: key, content: value });
+                }
+            }
+        }
+        // Убираем дубликаты
+        foundResults = foundResults.filter((v, i, a) => a.findIndex(t => t.keyword === v.keyword) === i);
+    }
+    
+    if (foundResults.length === 0) return null;
+    
+    let resultHtml = '<div class="db-search-results forum-results">';
+    resultHtml += '<div class="db-header"><i class="fas fa-users"></i> 📚 Найдено на форумах (локальная база):</div>';
+    
+    foundResults.forEach(result => {
+        resultHtml += `
+            <div class="forum-item">
+                <div class="forum-question"><i class="fas fa-question-circle"></i> ${escapeHtml(result.keyword)}</div>
+                <div class="forum-answer"><i class="fas fa-comment-dots"></i> ${escapeHtml(result.content)}</div>
+            </div>
+        `;
+    });
+    resultHtml += '</div>';
+    
+    return resultHtml;
+}
+
+// Функция для поиска по оборудованию (биржа/магазин)
+function searchInMarketplace(query) {
+    if (!query || !query.trim()) return null;
+    
+    const lowerQuery = query.toLowerCase();
+    let foundItems = [];
+    
+    for (const item of equipmentData) {
+        const searchable = `${item.name} ${item.category} ${item.description} ${item.status}`.toLowerCase();
+        if (searchable.includes(lowerQuery)) {
+            foundItems.push(item);
+        }
+    }
+    
+    if (foundItems.length === 0) return null;
+    
+    let resultHtml = '<div class="db-search-results marketplace-results">';
+    resultHtml += '<div class="db-header"><i class="fas fa-store"></i> 🛒 Найдено в каталоге оборудования (в продаже):</div>';
+    
+    foundItems.forEach(item => {
+        resultHtml += `
+            <div class="marketplace-item" onclick="openBuyModal(${item.id})">
+                <div class="marketplace-icon">${item.image}</div>
+                <div class="marketplace-info">
+                    <div class="marketplace-name">${escapeHtml(item.name)}</div>
+                    <div class="marketplace-price">💰 ${item.finalPrice.toLocaleString()} ₽</div>
+                    <div class="marketplace-status">${item.status}</div>
+                </div>
+                <button class="marketplace-buy">Купить</button>
+            </div>
+        `;
+    });
+    resultHtml += '</div>';
+    
+    return resultHtml;
+}
+
+// ========== БАЗА ОБОРУДОВАНИЯ ДЛЯ МАРКЕТПЛЕЙСА ==========
+const equipmentData = [
+    { id:1, name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", category:"Контроллеры", description:"НОВОЕ, В НАЛИЧИИ", image:"⚙️", sellerPrice:320000, finalPrice:432000, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:2, name:"Модуль вывода siemens 6ES7331-1KF02-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:3, name:"Модуль ввода siemens 6ES7322-1BL00-0AA0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:4, name:"Интерфейсный модуль siemens 6ES7153-2BA10-0XB0", category:"Интерфейсные модули", description:"НОВОЕ, В НАЛИЧИИ", image:"📡", sellerPrice:75000, finalPrice:101250, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:5, name:"Модуль вх/вых SP-sdio84-P1-K-A Wieland", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:110000, finalPrice:148500, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:6, name:"Модуль вывода siemens 6ES7332-5HF00-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    // Добавьте инверторы Inovance, Kossi, Mitsubishi сюда же
+    { id:7, name:"Инвертор Inovance MD380 5.5kW", category:"Инверторы", description:"Б/У, РАБОЧИЙ", image:"⚡", sellerPrice:25000, finalPrice:33750, status:"Б/У, ГАРАНТИЯ 1 МЕС", sellerName:"Василий" },
+    { id:8, name:"Частотный преобразователь Kossi K1-4050 4kW", category:"Инверторы", description:"НОВЫЙ", image:"⚡", sellerPrice:18000, finalPrice:24300, status:"НОВЫЙ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:9, name:"Mitsubishi D700 0.75kW", category:"Инверторы", description:"НОВЫЙ", image:"⚡", sellerPrice:15000, finalPrice:20250, status:"ПОД ЗАКАЗ", sellerName:"Василий" }
+];
+
+// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER (СВОБОДНЫЙ ОТВЕТ) ==========
 const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
 async function callFreeAIAPI(messages) {
@@ -60,17 +172,14 @@ async function callFreeAIAPI(messages) {
     }
 }
 
-// Функция для красивого форматирования ответа нейросети
+// Функция для красивого форматирования ответа нейросети (СВОБОДНЫЙ СТИЛЬ)
 function formatAIResponse(text) {
     if (!text) return '⚠️ Нет ответа от нейросети';
     
     let formatted = text;
     
-    // Заголовки разделов
-    formatted = formatted.replace(/^1\)\s*Краткая\s*диагностика/gmi, '<div class="ai-section-header"><i class="fas fa-stethoscope"></i> 📋 Диагностика</div>');
-    formatted = formatted.replace(/^2\)\s*Возможные\s*причины/gmi, '<div class="ai-section-header"><i class="fas fa-search"></i> 🔍 Возможные причины</div>');
-    formatted = formatted.replace(/^3\)\s*Пошаговые\s*действия/gmi, '<div class="ai-section-header"><i class="fas fa-tools"></i> 🛠️ Пошаговые действия</div>');
-    formatted = formatted.replace(/^4\)\s*Что\s*проверить/gmi, '<div class="ai-section-header"><i class="fas fa-clipboard-list"></i> 📝 Что проверить в первую очередь</div>');
+    // Красивые заголовки (если нейросеть их использует)
+    formatted = formatted.replace(/##\s*(.+)/g, '<div class="ai-section-header"><i class="fas fa-info-circle"></i> $1</div>');
     
     // Жирный текст
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -78,16 +187,9 @@ function formatAIResponse(text) {
     // Маркированные списки
     formatted = formatted.replace(/^-\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
     formatted = formatted.replace(/^•\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-cog"></i><span>$1</span></div>');
+    formatted = formatted.replace(/^\d+\.\s+(.+)$/gm, '<div class="ai-step"><span class="step-number">→</span><span class="step-text">$1</span></div>');
     
-    // Нумерованные шаги
-    formatted = formatted.replace(/^(\d+)[\.\)]\s+(.+)$/gm, (match, num, content) => {
-        if (!content.includes('<div')) {
-            return `<div class="ai-step"><span class="step-number">${num}</span><span class="step-text">${content}</span></div>`;
-        }
-        return match;
-    });
-    
-    // Код
+    // Код и команды
     formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
     
     // Важные метки
@@ -95,22 +197,75 @@ function formatAIResponse(text) {
     formatted = formatted.replace(/Примечание:/gi, '📌 <strong>Примечание:</strong>');
     formatted = formatted.replace(/Внимание:/gi, '🔔 <strong>Внимание:</strong>');
     formatted = formatted.replace(/Совет:/gi, '💡 <strong>Совет:</strong>');
+    formatted = formatted.replace(/Рекомендация:/gi, '💡 <strong>Рекомендация:</strong>');
     
-    // Разделители
+    // Разделители абзацев
     formatted = formatted.replace(/\n\n/g, '<div class="ai-divider"></div>');
     formatted = formatted.replace(/\n/g, '<br>');
     
-    // Очистка
+    // Очистка лишних тегов
     formatted = formatted.replace(/<\/div><br>/g, '</div>');
     formatted = formatted.replace(/<br><div class="ai-divider">/g, '<div class="ai-divider">');
     
-    return `<div class="ai-response">${formatted}</div>`;
+    return `<div class="ai-response free-response">${formatted}</div>`;
 }
 
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ========== ГИБРИДНЫЙ ОТВЕТ (СВОБОДНАЯ НЕЙРОСЕТЬ + ПОИСК ПО ЛОКАЛЬНОЙ БАЗЕ) ==========
+async function getHybridResponse(userMessage, chat, isTestMode = false) {
+    
+    // 1. Ищем в локальной базе данных (спарсено с форумов)
+    const forumResult = searchInLocalDatabase(userMessage);
+    
+    // 2. Ищем в маркетплейсе (оборудование в продаже)
+    const marketplaceResult = searchInMarketplace(userMessage);
+    
+    // 3. Формируем запрос к нейросети (СВОБОДНЫЙ, БЕЗ ОГРАНИЧЕНИЙ)
+    const systemPrompt = `Ты — ведущий инженер-эксперт по промышленной автоматизации (АСУТП) с 20-летним стажем.
+Ты отвечаешь на любые технические вопросы пользователей по промышленному оборудованию: частотные преобразователи, PLC, приводы, инверторы, сенсоры, контроллеры.
+Твои знания включают все бренды: Siemens, SEW, Yaskawa, Mitsubishi, Inovance, Kossi, Delta, Wieland, Schneider, Omron, Rockwell, ABB и другие.
+
+ПРАВИЛА ОТВЕТА:
+1. Отвечай максимально подробно, профессионально и полезно.
+2. Используй структуру: сначала короткая диагностика, потом причины, потом пошаговые решения.
+3. Если не знаешь точного ответа — честно скажи и дай общие рекомендации.
+4. Используй жирный текст для важного, маркированные списки для наглядности.
+5. Будь дружелюбным и понятным для инженеров любого уровня.
+
+ВАЖНО: Ты можешь использовать свои знания, полученные при обучении. Ты НЕ ограничен никакой локальной базой. Отвечай свободно, как технический эксперт.`;
+    
+    const messageHistory = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+    ];
+    
+    // 4. Получаем СВОБОДНЫЙ ответ от нейросети
+    let aiReply = await callFreeAIAPI(messageHistory);
+    
+    // 5. Добавляем результаты из локальной базы форумов (если есть)
+    if (forumResult) {
+        aiReply += `<div class="ai-divider"></div>${forumResult}`;
+    } else {
+        // Если ничего не найдено в локальной базе — сообщаем об этом
+        aiReply += `<div class="ai-divider"></div>
+        <div class="no-results-message">
+            <i class="fas fa-database"></i> 
+            <strong>Из локальной базы данных совпадений не найдено</strong><br>
+            <span class="no-results-hint">Но вы можете задать уточняющий вопрос, или я отвечу на основе своих знаний.</span>
+        </div>`;
+    }
+    
+    // 6. Добавляем результаты из маркетплейса (если есть)
+    if (marketplaceResult) {
+        aiReply += `<div class="ai-divider"></div>${marketplaceResult}`;
+    }
+    
+    return aiReply;
 }
 
 // ========== ФУНКЦИИ ДЛЯ ЧАТА ==========
@@ -126,7 +281,7 @@ function loadUserChatHistory() {
             title: 'Новый диалог',
             messages: [{
                 sender: 'bot',
-                text: '🔍 Задайте вопрос по оборудованию. Я помогу найти решение!',
+                text: '🔍 Я — технический эксперт по промышленной автоматизации. Задавайте любые вопросы! А я также проверю нашу базу форумов и каталог оборудования.',
                 timestamp: new Date().toISOString()
             }],
             createdAt: new Date().toISOString()
@@ -165,7 +320,7 @@ function createNewProfileChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 Задайте вопрос по оборудованию!',
+            text: '🔍 Я — технический эксперт по промышленной автоматизации. Задавайте любые вопросы!',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -231,44 +386,13 @@ async function sendProfileMessage() {
     
     chat.messages.push({ 
         sender: 'bot', 
-        text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Думаю...</div>', 
+        text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Анализирую вопрос и проверяю базу...</div>', 
         timestamp: new Date().toISOString() 
     });
     loadProfileChat(currentChatId);
     
-   const messageHistory = [
-    { 
-        role: 'system', 
-        content: 'Ты — ведущий инженер-эксперт по промышленной автоматизации (АСУТП) с 20-летним стажем.\n\n' +
-                 'ТВОЯ БАЗА ЗНАНИЙ (используй только её!):\n' +
-                 '- SEW: ошибка F04 = перегрузка по току/тормозной резистор. Решение: проверить тормозной резистор (15-100 Ом), измерить ток двигателя.\n' +
-                 '- SEW: ошибка F01 = перегрузка инвертора. Решение: уменьшить нагрузку, проверить механику.\n' +
-                 '- SEW: ошибка F06 = пропадание фазы. Решение: проверить питание 3 фазы.\n' +
-                 '- Yaskawa: ошибка oPE01 = неверная настройка параметров. Решение: сбросить параметры в заводские (o2-04=1), заново настроить.\n' +
-                 '- Yaskawa: ошибка oPE10 = несоответствие V/f. Решение: проверить настройки двигателя (E1-xx).\n' +
-                 '- Yaskawa: ошибка oPr = обрыв провода. Решение: проверить соединения.\n' +
-                 '- Siemens: ошибка SF на S7-300 = системная ошибка. Решение: перезагрузить, проверить PROFIBUS.\n' +
-                 '- Siemens: ошибка 80F063 на Sinumerik = потеря связи. Решение: проверить экранирование кабелей.\n' +
-                 '- Delta: ошибка OCC = превышение тока. Решение: увеличить время разгона.\n' +
-                 '- Wieland: ошибка E.OC = перегрузка по току. Решение: проверить механику, кабели.\n\n' +
-                 'ПРАВИЛА ОТВЕТА:\n' +
-                 '1. Используй ТОЛЬКО базу знаний выше.\n' +
-                 '2. Если ошибки нет в базе — честно скажи: "Точной информации по этой ошибке нет в базе. Рекомендую: проверить документацию, измерить питание, проверить соединения, сбросить параметры."\n' +
-                 '3. Отвечай строго по структуре:\n' +
-                 '1) Краткая диагностика:\n' +
-                 '2) Возможные причины:\n' +
-                 '   - причина 1\n' +
-                 '   - причина 2\n' +
-                 '3) Пошаговые действия по устранению:\n' +
-                 '   - шаг 1\n' +
-                 '   - шаг 2\n' +
-                 '4) Что проверить в первую очередь:\n\n' +
-                 'Будь максимально конкретным и полезным!'
-    },
-    { role: 'user', content: msg }
-];
-    
-    const reply = await callFreeAIAPI(messageHistory);
+    // ГИБРИДНЫЙ ОТВЕТ (свободная нейросеть + локальная база)
+    const reply = await getHybridResponse(msg, chat, false);
     
     chat.messages.pop();
     chat.messages.push({ 
@@ -309,7 +433,7 @@ function createNewTestChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 У вас 1 бесплатный запрос. Задайте вопрос по оборудованию!',
+            text: '🔍 Бесплатный тест-драйв. Задайте любой технический вопрос! Я отвечу как эксперт и проверю локальную базу.',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -382,20 +506,11 @@ async function sendTestMessage() {
     loadTestChat(testCurrentChatId);
     input.value = '';
     
-    chat.messages.push({ sender: 'bot', text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Думаю...</div>', timestamp: new Date().toISOString() });
+    chat.messages.push({ sender: 'bot', text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Анализирую...</div>', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
-    const messageHistory = [
-        { 
-            role: 'system', 
-            content: 'Ты — опытный инженер АСУТП. Помогаешь диагностировать ошибки ' +
-                     'промышленного оборудования (SEW, Siemens, Delta, Wieland). ' +
-                     'Отвечай кратко, по пунктам, с рекомендациями по устранению.'
-        },
-        { role: 'user', content: msg }
-    ];
-    
-    const reply = await callFreeAIAPI(messageHistory);
+    // ГИБРИДНЫЙ ОТВЕТ ДЛЯ ТЕСТА
+    const reply = await getHybridResponse(msg, chat, true);
     
     chat.messages.pop();
     chat.messages.push({ sender: 'bot', text: reply, timestamp: new Date().toISOString() });
@@ -472,15 +587,6 @@ function toggleMobileMenu() {
 }
 
 // ========== БИРЖА ==========
-
-const equipmentData = [
-    { id:1, name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", category:"Контроллеры", description:"НОВОЕ, В НАЛИЧИИ", image:"⚙️", sellerPrice:320000, finalPrice:432000, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:2, name:"Модуль вывода siemens 6ES7331-1KF02-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:3, name:"Модуль ввода siemens 6ES7322-1BL00-0AA0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:4, name:"Интерфейсный модуль siemens 6ES7153-2BA10-0XB0", category:"Интерфейсные модули", description:"НОВОЕ, В НАЛИЧИИ", image:"📡", sellerPrice:75000, finalPrice:101250, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:5, name:"Модуль вх/вых SP-sdio84-P1-K-A Wieland", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:110000, finalPrice:148500, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:6, name:"Модуль вывода siemens 6ES7332-5HF00-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" }
-];
 
 function loadMarketplaceData() {
     const grid = document.getElementById('itemsGrid');
