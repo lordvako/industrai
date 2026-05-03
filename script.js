@@ -41,25 +41,39 @@ const WORKER_URL = '/groq_proxy.php';
 
 async function callFreeAIAPI(messages) {
     try {
-        console.log('📤 Отправка запроса к Worker...', messages);
+        console.log('📤 Отправка запроса к прокси...', messages);
         
-        const response = await fetch(WORKER_URL, {
+        const response = await fetch('/groq_proxy.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ messages: messages })
+            body: JSON.stringify({
+                model: 'mixtral-8x7b-32768',
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 2000
+            })
         });
-
+        
+        console.log('📡 Статус ответа:', response.status);
+        
         if (!response.ok) {
             const errText = await response.text();
             console.error('❌ Ошибка HTTP:', response.status, errText);
-            throw new Error(`HTTP ${response.status}: ${errText}`);
+            
+            let errorMessage = errText;
+            try {
+                const errJson = JSON.parse(errText);
+                errorMessage = errJson.error || errJson.message || errText;
+            } catch(e) {}
+            
+            throw new Error(`HTTP ${response.status}: ${errorMessage}`);
         }
-
+        
         const data = await response.json();
-        console.log('✅ Получен ответ от Worker:', data);
-
+        console.log('✅ Получен ответ от прокси:', data);
+        
         if (data.error) {
             throw new Error(data.error);
         }
@@ -67,13 +81,15 @@ async function callFreeAIAPI(messages) {
         if (data.choices && data.choices[0] && data.choices[0].message) {
             return formatAIResponse(data.choices[0].message.content);
         } else {
+            console.error('⚠️ Неожиданный формат ответа:', data);
             throw new Error('Некорректный формат ответа от API');
         }
-
+        
     } catch (error) {
         console.error('❌ AI Error:', error);
         return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
-               'Техническая информация: ' + error.message;
+               'Техническая информация: ' + error.message + '\n\n' +
+               'Пожалуйста, попробуйте позже или обратитесь в поддержку.';
     }
 }
 
