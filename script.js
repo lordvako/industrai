@@ -40,55 +40,52 @@ const equipmentData = [
 // ВАЖНО: ТОЛЬКО ОДИН URL! Удалите /groq_proxy.php
 const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
+// ========== DEEPSEEK API (БЕСПЛАТНО, РАБОТАЕТ В РОССИИ) ==========
+// 1. Зарегистрируйтесь на https://platform.deepseek.com/
+// 2. Получите API-ключ
+// 3. Вставьте его ниже
+const DEEPSEEK_API_KEY = 'sk-f6f70eaea0d849e7bf4d05d908672192';  // <-- ЗАМЕНИТЕ!
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
 async function callFreeAIAPI(messages) {
     try {
-        console.log('📤 Отправка запроса к Cloudflare Worker...', messages);
+        console.log('📤 Отправка запроса к DeepSeek API...', messages);
         
-        // ВАЖНО: URL вашего Cloudflare Worker
-        const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
-        
-        const response = await fetch(WORKER_URL, {
+        const response = await fetch(DEEPSEEK_API_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
             },
-            body: JSON.stringify({ messages: messages })
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 2000
+            })
         });
 
-        console.log('📡 Статус ответа от Worker:', response.status);
+        console.log('📡 Статус ответа от DeepSeek:', response.status);
         
         if (!response.ok) {
             const errText = await response.text();
-            console.error('❌ Ошибка HTTP:', response.status, errText);
-            
-            let errorMessage = errText;
-            try {
-                const errJson = JSON.parse(errText);
-                errorMessage = errJson.error || errJson.message || errText;
-            } catch(e) {}
-            
-            throw new Error(`HTTP ${response.status}: ${errorMessage}`);
+            console.error('❌ Ошибка DeepSeek:', response.status, errText);
+            throw new Error(`DeepSeek error: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('✅ Получен ответ от Worker:', data);
+        console.log('✅ Получен ответ от DeepSeek:', data);
 
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
         if (data.choices && data.choices[0] && data.choices[0].message) {
             return formatAIResponse(data.choices[0].message.content);
         } else {
-            console.error('⚠️ Неожиданный формат ответа:', data);
-            throw new Error('Некорректный формат ответа от API');
+            throw new Error('Некорректный формат ответа от DeepSeek');
         }
 
     } catch (error) {
         console.error('❌ AI Error:', error);
         return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
-               'Техническая информация: ' + error.message + '\n\n' +
-               'Пожалуйста, попробуйте позже или обратитесь в поддержку.';
+               'Техническая информация: ' + error.message;
     }
 }
 // Форматирование ответа нейросети
