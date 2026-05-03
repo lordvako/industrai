@@ -42,7 +42,10 @@ const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
 async function callFreeAIAPI(messages) {
     try {
-        console.log('📤 Отправка запроса к Worker...', messages);
+        console.log('📤 Отправка запроса к Cloudflare Worker...', messages);
+        
+        // ВАЖНО: URL вашего Cloudflare Worker
+        const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
         
         const response = await fetch(WORKER_URL, {
             method: 'POST',
@@ -84,10 +87,10 @@ async function callFreeAIAPI(messages) {
     } catch (error) {
         console.error('❌ AI Error:', error);
         return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
-               'Техническая информация: ' + error.message;
+               'Техническая информация: ' + error.message + '\n\n' +
+               'Пожалуйста, попробуйте позже или обратитесь в поддержку.';
     }
 }
-
 // Форматирование ответа нейросети
 function formatAIResponse(text) {
     if (!text) return '⚠️ Нет ответа от нейросети';
