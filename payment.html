@@ -42,15 +42,37 @@
             font-size: 16px;
             color: #5A6B7A;
         }
+        .plan-name {
+            background: #f0f7ff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2B6FF0;
+            margin-bottom: 16px;
+        }
         .plan-details {
             background: #f8fafc;
             border-radius: 16px;
             padding: 20px;
             margin: 20px 0;
         }
+        .plan-details ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
         .plan-details li {
-            margin: 10px 0;
+            margin: 12px 0;
             color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .plan-details li:before {
+            content: "✅";
+            color: #00B4A0;
         }
         .payment-methods {
             display: flex;
@@ -73,9 +95,9 @@
             border-color: #00B4A0;
             background: #f0fff8;
         }
-        .method img {
-            width: 40px;
-            height: 40px;
+        .method span {
+            font-size: 14px;
+            font-weight: 500;
         }
         .pay-button {
             background: #00B4A0;
@@ -101,54 +123,103 @@
             color: #5A6B7A;
             text-decoration: none;
         }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #5A6B7A;
+        }
     </style>
 </head>
 <body>
-    <div class="payment-card">
-        <h1>💎 IndustrAI Pro</h1>
-        <div class="subtitle">Полный доступ к нейросети и базе знаний</div>
-        
-        <div class="price">
-            ₽1 990 <small>/ месяц</small>
-        </div>
-        
-        <div class="plan-details">
-            <ul style="list-style: none; padding: 0;">
-                <li>✅ Неограниченные запросы к нейросети</li>
-                <li>✅ Доступ к базе знаний (форумы АСУТП)</li>
-                <li>✅ Приоритетная поддержка инженеров</li>
-                <li>✅ Отмена в любой момент</li>
-            </ul>
-        </div>
-        
-        <div class="payment-methods">
-            <div class="method selected" data-type="PC" onclick="selectMethod('PC')">
-                <span>💳 ЮMoney</span>
-            </div>
-            <div class="method" data-type="AC" onclick="selectMethod('AC')">
-                <span>💳 Банковская карта</span>
-            </div>
-        </div>
-        
-        <form id="paymentForm" method="POST" action="https://yoomoney.ru/quickpay/confirm" target="_blank">
-            <input type="hidden" name="receiver" value="410012513730399"> <!-- ЗАМЕНИТЕ НА ВАШ КОШЕЛЕК! -->
-            <input type="hidden" name="quickpay-form" value="button">
-            <input type="hidden" name="sum" value="1990">
-            <input type="hidden" name="paymentType" id="paymentType" value="PC">
-            <input type="hidden" name="label" id="orderId">
-            <input type="hidden" name="successURL" value="https://ваш-сайт.ru/success.html">
-            
-            <button type="submit" class="pay-button">Оплатить ₽1 990</button>
-        </form>
-        
-        <div class="back-link">
-            <a href="javascript:history.back()">← Вернуться назад</a>
-        </div>
+    <div class="payment-card" id="paymentCard">
+        <div class="loading">Загрузка...</div>
     </div>
     
     <script>
+        // Получаем параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const planType = urlParams.get('plan') || 'pro';
+        const planName = decodeURIComponent(urlParams.get('name') || 'Профессиональный');
+        const planPrice = parseInt(urlParams.get('price') || '1990');
+        
+        // Данные тарифов для отображения
+        const plansDetails = {
+            basic: {
+                features: [
+                    "50 запросов к нейросети в день",
+                    "Доступ к базе знаний (форумы)",
+                    "Базовая поддержка",
+                    "Обновления ПО"
+                ]
+            },
+            pro: {
+                features: [
+                    "Неограниченные запросы к нейросети",
+                    "Полный доступ к базе знаний",
+                    "Приоритетная поддержка",
+                    "Обновления ПО",
+                    "Экспорт диалогов"
+                ]
+            },
+            business: {
+                features: [
+                    "Всё что в PRO",
+                    "API доступ",
+                    "Интеграция с вашими системами",
+                    "VIP поддержка 24/7",
+                    "Персональный менеджер"
+                ]
+            }
+        };
+        
+        const features = plansDetails[planType]?.features || plansDetails.pro.features;
+        
+        // Формируем данные для ЮMoney
+        // !!! ЗАМЕНИТЕ НОМЕР КОШЕЛЬКА НА ВАШ !!!
+        const YOOMONEY_WALLET = "410011234567890";  // ЗАМЕНИТЕ НА ВАШ НОМЕР КОШЕЛЬКА
+        const SITE_URL = "https://ваш-сайт.ru";      // ЗАМЕНИТЕ НА ВАШ URL
+        
         // Генерируем уникальный ID заказа
-        document.getElementById('orderId').value = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+        const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+        
+        // Отображаем страницу оплаты
+        document.getElementById('paymentCard').innerHTML = `
+            <h1>💎 ${planName}</h1>
+            <div class="plan-name">${planType === 'basic' ? 'Базовый' : planType === 'pro' ? 'Профессиональный' : 'Бизнес'}</div>
+            <div class="price">
+                ₽${planPrice.toLocaleString()} <small>/ месяц</small>
+            </div>
+            
+            <div class="plan-details">
+                <ul>
+                    ${features.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+            </div>
+            
+            <div class="payment-methods">
+                <div class="method selected" data-type="PC" onclick="selectMethod('PC')">
+                    <span>💳 ЮMoney</span>
+                </div>
+                <div class="method" data-type="AC" onclick="selectMethod('AC')">
+                    <span>💳 Банковская карта</span>
+                </div>
+            </div>
+            
+            <form id="paymentForm" method="POST" action="https://yoomoney.ru/quickpay/confirm" target="_blank">
+                <input type="hidden" name="receiver" value="${YOOMONEY_WALLET}">
+                <input type="hidden" name="quickpay-form" value="button">
+                <input type="hidden" name="sum" value="${planPrice}">
+                <input type="hidden" name="paymentType" id="paymentType" value="PC">
+                <input type="hidden" name="label" value="${orderId}">
+                <input type="hidden" name="successURL" value="${SITE_URL}/success.html?plan=${planType}&order=${orderId}">
+                
+                <button type="submit" class="pay-button">Оплатить ₽${planPrice.toLocaleString()}</button>
+            </form>
+            
+            <div class="back-link">
+                <a href="javascript:history.back()">← Вернуться назад</a>
+            </div>
+        `;
         
         function selectMethod(type) {
             document.querySelectorAll('.method').forEach(el => el.classList.remove('selected'));
