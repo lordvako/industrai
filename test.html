@@ -14,166 +14,580 @@
     <link rel="stylesheet" href="style.css?v=5">
     
     <style>
-        /* ===== КРИТИЧЕСКИЕ МОБИЛЬНЫЕ СТИЛИ ДЛЯ ЧАТА ===== */
-        @media (max-width: 768px) {
-            /* Контейнер чата */
-            .chat-container {
+        /* ===== ОСНОВНЫЕ СТИЛИ ДЛЯ ЧАТА ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFE;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        /* ===== МОБИЛЬНОЕ МЕНЮ ИСТОРИИ (СЛАЙДЕР) ===== */
+        .history-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        
+        .history-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .history-slider {
+            position: fixed;
+            top: 0;
+            left: -85%;
+            width: 85%;
+            max-width: 320px;
+            height: 100%;
+            background: #0A1929;
+            z-index: 2001;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+        }
+        
+        .history-slider.active {
+            left: 0;
+        }
+        
+        .slider-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .slider-header h3 {
+            color: white;
+            font-size: 18px;
+        }
+        
+        .close-slider {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .slider-new-chat {
+            margin: 15px;
+            padding: 12px;
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            border: none;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .history-list-mobile {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 15px;
+        }
+        
+        .history-item-mobile {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .history-item-mobile.active {
+            background: rgba(43,111,240,0.3);
+            border-left: 3px solid #2B6FF0;
+        }
+        
+        .history-item-title-mobile {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .history-item-date-mobile {
+            color: rgba(255,255,255,0.5);
+            font-size: 11px;
+        }
+        
+        /* ===== КОНТЕЙНЕР ЧАТА ===== */
+        .chat-wrapper {
+            max-width: 1400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 140px);
+        }
+        
+        /* Десктопная версия - показываем боковую панель */
+        @media (min-width: 768px) {
+            .chat-wrapper {
+                flex-direction: row;
+                min-height: 70vh;
+            }
+            .chat-sidebar-desktop {
+                width: 280px;
+                background: #0A1929;
                 display: flex !important;
-                flex-direction: column !important;
-                margin: 10px 10px 20px 10px !important;
-                border-radius: 20px !important;
-                overflow: hidden !important;
+                flex-direction: column;
             }
-            
-            /* Боковая панель */
-            .chat-sidebar {
-                width: 100% !important;
-                height: auto !important;
-                max-height: 180px !important;
-                min-height: auto !important;
-                padding: 12px !important;
-                order: 1 !important;
+            .mobile-history-btn {
+                display: none !important;
             }
-            
-            /* Основная область чата */
-            .chat-main {
-                width: 100% !important;
-                height: 55vh !important;
-                min-height: 400px !important;
-                display: flex !important;
-                flex-direction: column !important;
-                order: 2 !important;
-            }
-            
-            /* Область сообщений */
-            .chat-messages {
-                flex: 1 !important;
-                padding: 15px !important;
-                overflow-y: auto !important;
-            }
-            
-            /* Сообщения */
-            .message-content {
-                max-width: 85% !important;
-                font-size: 13px !important;
-                padding: 10px 14px !important;
-            }
-            
-            /* ОБЛАСТЬ ВВОДА - САМОЕ ВАЖНОЕ */
-            .chat-input-area {
-                padding: 12px !important;
-                background: white !important;
-                border-top: 1px solid #E0E8F0 !important;
-                flex-shrink: 0 !important;
-            }
-            
-            .chat-input-wrapper {
-                display: flex !important;
-                gap: 8px !important;
-                align-items: center !important;
-                width: 100% !important;
-            }
-            
-            .chat-input {
-                flex: 1 !important;
-                padding: 12px 16px !important;
-                font-size: 14px !important;
-                background: #F5F7FA !important;
-                border: 1px solid #ddd !important;
-                border-radius: 30px !important;
-                outline: none !important;
-                -webkit-appearance: none !important;
-            }
-            
-            /* КНОПКА ПРИКРЕПЛЕНИЯ */
-            .attach-btn {
-                width: 46px !important;
-                height: 46px !important;
-                min-width: 46px !important;
-                background: #F0F4F8 !important;
-                border-radius: 50% !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                color: #2B6FF0 !important;
-                border: 1px solid #E0E8F0 !important;
-                cursor: pointer !important;
-                flex-shrink: 0 !important;
-            }
-            
-            .attach-btn i {
-                font-size: 18px !important;
-            }
-            
-            /* КНОПКА ОТПРАВКИ */
-            .chat-send {
-                width: 46px !important;
-                height: 46px !important;
-                min-width: 46px !important;
-                background: linear-gradient(135deg, #2B6FF0, #00B4A0) !important;
-                border-radius: 50% !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                color: white !important;
-                border: none !important;
-                cursor: pointer !important;
-                flex-shrink: 0 !important;
-            }
-            
-            .chat-send i {
-                font-size: 18px !important;
-            }
-            
-            /* Заголовок */
-            .chat-header {
-                padding: 10px 15px !important;
-            }
-            
-            .chat-avatar {
-                width: 36px !important;
-                height: 36px !important;
-            }
-            
-            .query-counter {
-                font-size: 10px !important;
-                padding: 4px 10px !important;
+            .history-overlay, .history-slider {
+                display: none;
             }
         }
         
-        /* ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ */
-        @media (max-width: 480px) {
-            .chat-main {
-                height: 50vh !important;
-                min-height: 350px !important;
+        /* Мобильная версия - скрываем десктопную панель, показываем кнопку */
+        @media (max-width: 767px) {
+            .chat-sidebar-desktop {
+                display: none !important;
+            }
+            .mobile-history-btn {
+                display: flex !important;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+            .chat-wrapper {
+                margin: 10px;
+                min-height: calc(100vh - 120px);
+            }
+        }
+        
+        /* Десктопная боковая панель */
+        .chat-sidebar-desktop {
+            background: #0A1929;
+            color: white;
+            padding: 20px;
+            height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .new-chat-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .history-list-desktop {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .history-item-desktop {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .history-item-desktop.active {
+            background: rgba(43,111,240,0.3);
+            border-left: 3px solid #2B6FF0;
+        }
+        
+        /* ===== ОСНОВНАЯ ОБЛАСТЬ ЧАТА ===== */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #F8FAFE;
+        }
+        
+        .chat-header {
+            background: #0A1929;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        .chat-title h3 {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+        
+        .chat-title p {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
+        .query-counter {
+            margin-left: auto;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+        }
+        
+        /* Область сообщений */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message.bot {
+            align-self: flex-start;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #E0E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #0A1929;
+            color: white;
+        }
+        
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+        }
+        
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .message.user .message-content {
+            background: #2B6FF0;
+            color: white;
+        }
+        
+        .message.bot .message-content {
+            background: white;
+            border-left: 3px solid #2B6FF0;
+        }
+        
+        /* ===== ОБЛАСТЬ ВВОДА - УВЕЛИЧЕННАЯ ===== */
+        .chat-input-area {
+            padding: 16px 20px;
+            background: white;
+            border-top: 1px solid #E0E8F0;
+            flex-shrink: 0;
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #E0E8F0;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            transition: 0.3s;
+            background: #FFFFFF;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #2B6FF0;
+        }
+        
+        .attach-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #F0F4F8;
+            border: 2px solid #E0E8F0;
+            color: #2B6FF0;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: 0.3s;
+        }
+        
+        .attach-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .chat-send {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(43,111,240,0.3);
+        }
+        
+        .chat-send:active {
+            transform: scale(0.95);
+        }
+        
+        /* Мобильные стили для области ввода */
+        @media (max-width: 768px) {
+            .chat-input-area {
+                padding: 12px 16px;
             }
             
-            .attach-btn, .chat-send {
-                width: 42px !important;
-                height: 42px !important;
-                min-width: 42px !important;
+            .chat-input-wrapper {
+                gap: 10px;
             }
             
             .chat-input {
-                padding: 10px 14px !important;
-                font-size: 13px !important;
+                padding: 12px 16px;
+                font-size: 15px;
             }
+            
+            .attach-btn, .chat-send {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .message-content {
+                font-size: 14px;
+                padding: 10px 14px;
+            }
+        }
+        
+        /* Навигация */
+        .navbar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            background: rgba(10, 25, 41, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            padding: 0 15px;
+        }
+        
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .logo span {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-menu {
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            .nav-menu {
+                display: flex;
+                gap: 25px;
+                align-items: center;
+            }
+        }
+        
+        .mobile-menu-button {
+            display: block;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+        }
+        
+        @media (min-width: 768px) {
+            .mobile-menu-button {
+                display: none;
+            }
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .nav-button {
+            background: linear-gradient(135deg, #2B6FF0, #00B4A0);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .test-hero {
+            background: linear-gradient(135deg, #0A1929, #1A2A3A);
+            padding: 30px 0;
+            text-align: center;
+            color: white;
+        }
+        
+        .test-hero h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .footer {
+            background: #0A1929;
+            padding: 30px 0 20px;
+            margin-top: 30px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+        }
+        
+        /* Мобильное меню навигации */
+        .mobile-nav-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background: #0A1929;
+            padding: 20px;
+            transform: translateY(-150%);
+            transition: transform 0.3s;
+            z-index: 999;
+        }
+        
+        .mobile-nav-menu.active {
+            transform: translateY(0);
+        }
+        
+        .mobile-nav-menu .nav-link {
+            display: block;
+            padding: 12px 0;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <!-- Мобильное меню -->
-    <div class="mobile-menu" id="mobileMenu">
+    <!-- Мобильное меню навигации -->
+    <div class="mobile-nav-menu" id="mobileNavMenu">
         <a href="index.html" class="nav-link">Главная</a>
         <a href="test.html" class="nav-link active">Тест-драйв</a>
         <a href="marketplace.html" class="nav-link">Биржа</a>
         <a href="about.html" class="nav-link">О нас</a>
-        <a href="login.html" class="nav-button" style="margin-top: 20px; text-align: center;">Войти</a>
+        <a href="login.html" class="nav-button" style="display: inline-block; margin-top: 15px;">Войти</a>
     </div>
 
     <!-- Навигация -->
     <nav class="navbar">
-        <div class="container nav-container">
+        <div class="nav-container">
             <a href="index.html" class="logo">INDUSTR<span>AI</span></a>
             <div class="nav-menu">
                 <a href="index.html" class="nav-link">Главная</a>
@@ -181,12 +595,12 @@
                 <a href="marketplace.html" class="nav-link">Биржа</a>
                 <a href="about.html" class="nav-link">О нас</a>
                 <div id="userMenu" style="display: none; align-items: center; gap: 15px;">
-                    <span class="user-name" id="userNameDisplay" onclick="window.location.href='profile.html'"></span>
-                    <span class="logout-btn" onclick="logout()">Выйти</span>
+                    <span class="user-name" id="userNameDisplay" onclick="window.location.href='profile.html'" style="color:white; cursor:pointer;"></span>
+                    <span class="logout-btn" onclick="logout()" style="color:white; cursor:pointer;">Выйти</span>
                 </div>
                 <a href="login.html" class="nav-button" id="loginBtn">Войти</a>
             </div>
-            <div class="mobile-menu-button" onclick="toggleMobileMenu()">
+            <div class="mobile-menu-button" onclick="toggleMobileNavMenu()">
                 <i class="fas fa-bars"></i>
             </div>
         </div>
@@ -196,61 +610,210 @@
     <section class="test-hero">
         <div class="container">
             <h1>Тест-драйв нейросети</h1>
-            <p>Один бесплатный запрос к нейросети, обученной на базе из 15 000+ решений</p>
+            <p>Один бесплатный запрос к нейросети</p>
         </div>
     </section>
 
-    <div class="container">
-        <div class="chat-container">
-            <div class="chat-sidebar">
-                <div class="sidebar-header">
-                    <h3>История запросов</h3>
-                    <button class="new-chat-btn" onclick="createNewTestChat()"><i class="fas fa-plus"></i></button>
+    <!-- СЛАЙДЕР ИСТОРИИ ДЛЯ МОБИЛЬНЫХ -->
+    <div class="history-overlay" id="historyOverlay" onclick="closeHistorySlider()"></div>
+    <div class="history-slider" id="historySlider">
+        <div class="slider-header">
+            <h3><i class="fas fa-history"></i> История</h3>
+            <button class="close-slider" onclick="closeHistorySlider()">×</button>
+        </div>
+        <button class="slider-new-chat" onclick="createNewTestChat(); closeHistorySlider();">
+            <i class="fas fa-plus"></i> Новый чат
+        </button>
+        <div class="history-list-mobile" id="historyListMobile">
+            <!-- Динамическая загрузка -->
+        </div>
+    </div>
+
+    <div class="chat-wrapper">
+        <!-- Десктопная боковая панель -->
+        <div class="chat-sidebar-desktop">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-history"></i> История</h3>
+                <button class="new-chat-btn" onclick="createNewTestChat()"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="history-list-desktop" id="historyListDesktop">
+                <!-- Динамическая загрузка -->
+            </div>
+        </div>
+
+        <!-- Основная область чата -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <button class="mobile-history-btn" id="mobileHistoryBtn" onclick="openHistorySlider()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="chat-avatar"><i class="fas fa-microchip"></i></div>
+                <div class="chat-title">
+                    <h3>Техническая нейросеть</h3>
+                    <p>тест-драйв (1 запрос)</p>
                 </div>
-                <div class="history-list" id="testHistoryList">
-                    <!-- Сюда будут добавляться элементы истории для тест-драйва -->
+                <div class="query-counter" id="testQueryCounter">1 запрос</div>
+            </div>
+
+            <div class="chat-messages" id="testChatMessages">
+                <div class="message bot">
+                    <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                    <div class="message-content">
+                        Введите запрос. Например: SEW F04, Sinumerik 3000, ошибка PLC
+                    </div>
                 </div>
             </div>
-            <div class="chat-main">
-                <div class="chat-header">
-                    <div class="chat-avatar">AI</div>
-                    <div class="chat-title">
-                        <h3>Техническая нейросеть</h3>
-                        <p>тест-драйв (1 запрос)</p>
-                    </div>
-                    <div class="query-counter" id="testQueryCounter">1 запрос</div>
-                </div>
 
-                <div class="chat-messages" id="testChatMessages">
-                    <div class="message bot">
-                        <div class="message-avatar">AI</div>
-                        <div class="message-content">
-                            Введите запрос. Например: SEW F04, Sinumerik 3000
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chat-input-area">
-                    <div class="chat-input-wrapper">
-                        <button class="attach-btn" onclick="attachFile('test')"><i class="fas fa-paperclip"></i></button>
-                        <input type="text" class="chat-input" id="testChatInput" placeholder="Опишите проблему...">
-                        <button class="chat-send" onclick="sendTestMessage()"><i class="fas fa-paper-plane"></i></button>
-                    </div>
+            <div class="chat-input-area">
+                <div class="chat-input-wrapper">
+                    <button class="attach-btn" onclick="attachFile('test')"><i class="fas fa-paperclip"></i></button>
+                    <input type="text" class="chat-input" id="testChatInput" placeholder="Напишите ваш вопрос..." onkeypress="handleTestKeyPress(event)">
+                    <button class="chat-send" onclick="sendTestMessage()"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Футер -->
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                © 2026 IndustrAI — База знаний из открытых источников + мощная нейросеть<br>
-                ИП Сальников Василий | Все права защищены
+                © 2026 IndustrAI — База знаний из открытых источников + мощная нейросеть
             </div>
         </div>
     </footer>
 
     <script src="script.js?v=5"></script>
+    
+    <script>
+        // Мобильное меню навигации
+        function toggleMobileNavMenu() {
+            const menu = document.getElementById('mobileNavMenu');
+            menu.classList.toggle('active');
+        }
+        
+        // Слайдер истории
+        function openHistorySlider() {
+            document.getElementById('historyOverlay').classList.add('active');
+            document.getElementById('historySlider').classList.add('active');
+            loadHistoryToSlider();
+        }
+        
+        function closeHistorySlider() {
+            document.getElementById('historyOverlay').classList.remove('active');
+            document.getElementById('historySlider').classList.remove('active');
+        }
+        
+        function loadHistoryToSlider() {
+            const container = document.getElementById('historyListMobile');
+            const chats = JSON.parse(localStorage.getItem('industrai_test_chats') || '{}');
+            const currentId = localStorage.getItem('industrai_test_current_chat');
+            
+            const chatIds = Object.keys(chats).sort((a,b) => parseInt(b) - parseInt(a));
+            
+            if (chatIds.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.5); padding:20px;">Нет диалогов</div>';
+                return;
+            }
+            
+            container.innerHTML = chatIds.map(chatId => {
+                const chat = chats[chatId];
+                const isActive = chatId === currentId;
+                return `
+                    <div class="history-item-mobile ${isActive ? 'active' : ''}" onclick="switchTestChat('${chatId}'); closeHistorySlider();">
+                        <div class="history-item-title-mobile">${escapeHtml(chat.title || 'Новый диалог')}</div>
+                        <div class="history-item-date-mobile">${chat.date || ''}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Заглушки функций (основной код в script.js)
+        function logout() { localStorage.clear(); window.location.reload(); }
+        function attachFile(type) { alert('Загрузка файлов доступна в платной версии'); }
+        function handleTestKeyPress(e) { if(e.key === 'Enter') sendTestMessage(); }
+        
+        function sendTestMessage() {
+            const input = document.getElementById('testChatInput');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            const messagesContainer = document.getElementById('testChatMessages');
+            messagesContainer.innerHTML += `
+                <div class="message user">
+                    <div class="message-avatar"><i class="fas fa-user"></i></div>
+                    <div class="message-content">${escapeHtml(text)}</div>
+                </div>
+            `;
+            input.value = '';
+            
+            setTimeout(() => {
+                messagesContainer.innerHTML += `
+                    <div class="message bot">
+                        <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                        <div class="message-content">
+                            <strong>Ответ нейросети:</strong><br>
+                            По вашему запросу "${escapeHtml(text.substring(0,50))}..." найдены следующие рекомендации:<br><br>
+                            • Проверьте документацию оборудования<br>
+                            • Для полного доступа к базе из 15 000+ решений оформите подписку<br>
+                            <br><a href="index.html#tariffs" style="color:#2B6FF0;">Перейти к тарифам →</a>
+                        </div>
+                    </div>
+                `;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                const counter = document.getElementById('testQueryCounter');
+                if(counter && counter.innerText.includes('1')) {
+                    counter.innerText = '0 запросов';
+                }
+            }, 500);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function createNewTestChat() {
+            localStorage.removeItem('industrai_test_current_chat');
+            location.reload();
+        }
+        
+        function switchTestChat(chatId) {
+            localStorage.setItem('industrai_test_current_chat', chatId);
+            location.reload();
+        }
+        
+        // Загрузка истории на десктоп
+        function loadDesktopHistory() {
+            const container = document.getElementById('historyListDesktop');
+            if(!container) return;
+            const chats = JSON.parse(localStorage.getItem('industrai_test_chats') || '{}');
+            const currentId = localStorage.getItem('industrai_test_current_chat');
+            const chatIds = Object.keys(chats).sort((a,b) => parseInt(b) - parseInt(a));
+            
+            if(chatIds.length === 0) {
+                container.innerHTML = '<div style="color:rgba(255,255,255,0.5); padding:20px; text-align:center;">Нет диалогов</div>';
+                return;
+            }
+            
+            container.innerHTML = chatIds.map(chatId => {
+                const chat = chats[chatId];
+                const isActive = chatId === currentId;
+                return `
+                    <div class="history-item-desktop ${isActive ? 'active' : ''}" onclick="switchTestChat('${chatId}')">
+                        <div class="history-item-title" style="color:white; font-size:14px;">${escapeHtml(chat.title || 'Новый диалог')}</div>
+                        <div class="history-item-date" style="color:rgba(255,255,255,0.5); font-size:11px;">${chat.date || ''}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDesktopHistory();
+        });
+    </script>
 </body>
 </html>
