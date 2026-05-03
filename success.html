@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Оплата成功 — IndustrAI</title>
+    <title>Оплата успешна — IndustrAI</title>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -47,6 +47,11 @@
             font-weight: 600;
             display: inline-block;
         }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1a2a3a;
+            margin-left: 12px;
+        }
     </style>
 </head>
 <body>
@@ -60,6 +65,20 @@
         <p>Ваш аккаунт активирован. На указанную почту отправлены данные для входа.<br><br>
         Если письмо не пришло в течение 5 минут — проверьте папку «Спам».</p>
         <a href="login.html" class="btn">Войти в личный кабинет →</a>
+        <a href="index.html" class="btn btn-secondary">На главную</a>
     </div>
+    
+    <script>
+        // Сохраняем информацию об успешной оплате в localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const planType = urlParams.get('plan');
+        const orderId = urlParams.get('order');
+        
+        if (planType) {
+            localStorage.setItem('last_payment_plan', planType);
+            localStorage.setItem('last_payment_order', orderId);
+            localStorage.setItem('last_payment_date', new Date().toISOString());
+        }
+    </script>
 </body>
 </html>
