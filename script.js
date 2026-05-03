@@ -37,7 +37,7 @@ const equipmentData = [
 ];
 
 // ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
-const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
+const WORKER_URL = '/groq_proxy.php';
 
 async function callFreeAIAPI(messages) {
     try {
