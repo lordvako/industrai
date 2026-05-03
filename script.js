@@ -188,7 +188,6 @@ function searchInMarketplace(query) {
 // ========== ГЛАВНАЯ ФУНКЦИЯ ГИБРИДНОГО ОТВЕТА ==========
 async function getHybridResponse(userMessage, chat, isTestMode = false) {
     
-    // 1. ФОРМИРУЕМ ЗАПРОС К НЕЙРОСЕТИ (свободный ответ)
     const systemPrompt = `Ты — ведущий инженер-эксперт по промышленной автоматизации (АСУТП) с 20-летним стажем.
 Ты отвечаешь на любые технические вопросы пользователей по промышленному оборудованию: частотные преобразователи, PLC, приводы, инверторы, сенсоры, контроллеры.
 Твои знания включают все бренды: Siemens, SEW, Yaskawa, Mitsubishi, Inovance, Kossi, Delta, Wieland, Schneider, Omron, Rockwell, ABB и другие.
@@ -206,14 +205,11 @@ async function getHybridResponse(userMessage, chat, isTestMode = false) {
         { role: 'user', content: userMessage }
     ];
     
-    // 2. ПОЛУЧАЕМ ОТВЕТ ОТ НЕЙРОСЕТИ (ЭТО ГЛАВНОЕ)
     let aiReply = await callFreeAIAPI(messageHistory);
     
-    // 3. ПОСЛЕ ОТВЕТА НЕЙРОСЕТИ - ИЩЕМ В ЛОКАЛЬНОЙ БАЗЕ ДАННЫХ
     console.log('🔍 Запускаю поиск в локальной базе данных...');
     const forumResult = await searchInLocalDatabase(userMessage);
     
-    // 4. ДОБАВЛЯЕМ РЕЗУЛЬТАТЫ ИЗ БАЗЫ ПОСЛЕ ОТВЕТА НЕЙРОСЕТИ
     if (forumResult) {
         aiReply += `<div class="ai-divider"></div>
 <div class="hybrid-header"><i class="fas fa-database"></i> 📚 ДОПОЛНИТЕЛЬНО: Найдено в локальной базе знаний (форумы):</div>
@@ -227,7 +223,6 @@ ${forumResult}`;
 </div>`;
     }
     
-    // 5. ДОБАВЛЯЕМ МАРКЕТПЛЕЙС (если есть совпадения)
     const marketplaceResult = searchInMarketplace(userMessage);
     if (marketplaceResult) {
         aiReply += `<div class="ai-divider"></div>${marketplaceResult}`;
@@ -738,13 +733,52 @@ function attachFile(context) {
     input.click();
 }
 
+// ========== ЗАПРОС ПОДДЕРЖКИ (ОТПРАВКА НА ПОЧТУ) ==========
 function requestSupport() {
     if (!currentUser) {
         alert('Для запроса поддержки необходимо авторизоваться');
         window.location.href = 'login.html';
         return;
     }
-    showNotification('Запрос отправлен. Инженер свяжется с вами');
+    
+    // Создаём форму для ввода сообщения
+    const message = prompt('📝 Опишите вашу проблему подробно:\n\nИнженер свяжется с вами в ближайшее время.\n\n(Email для ответа будет взят из вашего профиля)');
+    
+    if (!message) return;
+    
+    const userEmail = currentUser.email || prompt('📧 Введите ваш email для обратной связи:');
+    if (!userEmail || !userEmail.includes('@')) {
+        alert('Пожалуйста, введите корректный email');
+        return;
+    }
+    
+    const userName = currentUser.login || 'Пользователь';
+    
+    showNotification('📤 Отправка запроса...');
+    
+    fetch('send_support.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: userName,
+            email: userEmail,
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('✅ Запрос отправлен! Инженер свяжется с вами');
+        } else {
+            showNotification('❌ ' + (data.message || 'Ошибка отправки'));
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showNotification('❌ Ошибка соединения. Попробуйте позже');
+    });
 }
 
 // ========== СИСТЕМА ОПЛАТЫ ==========
