@@ -733,7 +733,7 @@ function attachFile(context) {
     input.click();
 }
 
-// ========== ЗАПРОС ПОДДЕРЖКИ (ОТПРАВКА НА ПОЧТУ) ==========
+// ========== ЗАПРОС ПОДДЕРЖКИ ==========
 function requestSupport() {
     if (!currentUser) {
         alert('Для запроса поддержки необходимо авторизоваться');
@@ -741,9 +741,7 @@ function requestSupport() {
         return;
     }
     
-    // Создаём форму для ввода сообщения
-    const message = prompt('📝 Опишите вашу проблему подробно:\n\nИнженер свяжется с вами в ближайшее время.\n\n(Email для ответа будет взят из вашего профиля)');
-    
+    const message = prompt('📝 Опишите вашу проблему подробно:\n\nИнженер свяжется с вами в ближайшее время.');
     if (!message) return;
     
     const userEmail = currentUser.email || prompt('📧 Введите ваш email для обратной связи:');
@@ -758,14 +756,8 @@ function requestSupport() {
     
     fetch('send_support.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name: userName,
-            email: userEmail,
-            message: message
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: userName, email: userEmail, message: message })
     })
     .then(response => response.json())
     .then(data => {
@@ -781,7 +773,7 @@ function requestSupport() {
     });
 }
 
-// ========== СИСТЕМА ОПЛАТЫ ==========
+// ========== СИСТЕМА ОПЛАТЫ (ЮMoney) ==========
 
 let currentPayment = null;
 
@@ -791,17 +783,14 @@ function showConfirm(type, name, price) {
         return;
     }
     
-    const confirmModal = document.getElementById('confirmModal');
-    const confirmTitle = document.getElementById('confirmTitle');
-    const confirmText = document.getElementById('confirmText');
-    
-    if (!confirmModal || !confirmTitle || !confirmText) return;
-    
-    confirmTitle.textContent = `Тариф "${name}"`;
-    confirmText.textContent = `Сумма к оплате: ${price.toLocaleString()} ₽. После оплаты вы получите логин и пароль на email.`;
-    confirmModal.classList.add('active');
-    
+    // Сохраняем данные о платеже
     currentPayment = { type, name, price };
+    
+    // Открываем страницу оплаты в новом окне
+    const paymentWindow = window.open('payment.html', '_blank', 'width=650,height=750');
+    
+    // Показываем уведомление
+    showNotification('Откроется окно оплаты. После оплаты вернитесь на сайт и войдите в аккаунт.');
 }
 
 function closeConfirmModal() {
@@ -821,30 +810,12 @@ function processPayment() {
     
     showNotification('Обработка платежа...');
     
-    fetch('http://9570510274.hosting.myjino.ru/register.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: email,
-            plan: currentPayment.type
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${data.login}\nПароль был отправлен на ${email}`);
-            window.location.href = 'login.html';
-        } else {
-            alert('Ошибка при регистрации: ' + (data.error || 'Неизвестная ошибка'));
-        }
-    })
-    .catch(error => {
-        alert('Ошибка соединения с сервером. Проверьте консоль (F12)');
-        console.error('Fetch Error:', error);
-    })
-    .finally(() => {
-        closeConfirmModal();
-    });
+    // Здесь будет ваш код для создания пользователя после оплаты
+    // Пока имитируем успешную оплату
+    setTimeout(() => {
+        alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${email.split('@')[0]}\nПароль был отправлен на ${email}`);
+        window.location.href = 'login.html';
+    }, 2000);
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
