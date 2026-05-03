@@ -16,6 +16,13 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
+// ========== ТАРИФЫ ==========
+const PLANS = {
+    basic: { name: "Базовый", price: 990, months: 1 },
+    pro: { name: "Профессиональный", price: 1990, months: 1 },
+    business: { name: "Бизнес", price: 4990, months: 1 }
+};
+
 // ========== БАЗА ОБОРУДОВАНИЯ ДЛЯ МАРКЕТПЛЕЙСА ==========
 const equipmentData = [
     { id:1, name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", category:"Контроллеры", description:"НОВОЕ, В НАЛИЧИИ", image:"⚙️", sellerPrice:320000, finalPrice:432000, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
@@ -773,7 +780,7 @@ function requestSupport() {
     });
 }
 
-// ========== СИСТЕМА ОПЛАТЫ (ЮMoney) ==========
+// ========== СИСТЕМА ОПЛАТЫ (ЮMoney с поддержкой разных тарифов) ==========
 
 let currentPayment = null;
 
@@ -783,14 +790,14 @@ function showConfirm(type, name, price) {
         return;
     }
     
-    // Сохраняем данные о платеже
+    // Сохраняем данные о платеже с правильной ценой
     currentPayment = { type, name, price };
     
-    // Открываем страницу оплаты в новом окне
-    const paymentWindow = window.open('payment.html', '_blank', 'width=650,height=750');
+    // Открываем страницу оплаты с параметрами в URL
+    const paymentUrl = `payment.html?plan=${type}&name=${encodeURIComponent(name)}&price=${price}`;
+    const paymentWindow = window.open(paymentUrl, '_blank', 'width=650,height=750');
     
-    // Показываем уведомление
-    showNotification('Откроется окно оплаты. После оплаты вернитесь на сайт и войдите в аккаунт.');
+    showNotification(`Откроется окно оплаты тарифа "${name}" (${price.toLocaleString()} ₽). После оплаты вернитесь на сайт и войдите в аккаунт.`);
 }
 
 function closeConfirmModal() {
@@ -813,7 +820,7 @@ function processPayment() {
     // Здесь будет ваш код для создания пользователя после оплаты
     // Пока имитируем успешную оплату
     setTimeout(() => {
-        alert(`✅ Оплата прошла успешно!\n\nВаши данные для входа:\nЛогин: ${email.split('@')[0]}\nПароль был отправлен на ${email}`);
+        alert(`✅ Оплата тарифа "${currentPayment.name}" (${currentPayment.price.toLocaleString()} ₽) прошла успешно!\n\nВаши данные для входа:\nЛогин: ${email.split('@')[0]}\nПароль был отправлен на ${email}`);
         window.location.href = 'login.html';
     }, 2000);
 }
