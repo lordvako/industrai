@@ -1127,6 +1127,8 @@ textarea.form-control {
 @media (max-width: 768px) {
     .chat-container {
         grid-template-columns: 1fr;
+        margin: 10px 12px 20px;
+        border-radius: 20px;
     }
 }
 
@@ -1139,6 +1141,15 @@ textarea.form-control {
     height: 70vh;
     min-height: 500px;
     overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .chat-sidebar {
+        height: auto;
+        max-height: 250px;
+        min-height: auto;
+        padding: 16px;
+    }
 }
 
 .sidebar-header {
@@ -1244,6 +1255,13 @@ textarea.form-control {
     min-height: 500px;
 }
 
+@media (max-width: 768px) {
+    .chat-main {
+        height: 65vh;
+        min-height: 450px;
+    }
+}
+
 .chat-header {
     background: #0A1929;
     color: white;
@@ -1252,6 +1270,12 @@ textarea.form-control {
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+@media (max-width: 768px) {
+    .chat-header {
+        padding: 12px 15px;
+    }
 }
 
 .chat-avatar {
@@ -1267,9 +1291,22 @@ textarea.form-control {
     flex-shrink: 0;
 }
 
+@media (max-width: 768px) {
+    .chat-avatar {
+        width: 36px;
+        height: 36px;
+    }
+}
+
 .chat-title h3 {
     font-size: 16px;
     margin-bottom: 2px;
+}
+
+@media (max-width: 768px) {
+    .chat-title h3 {
+        font-size: 14px;
+    }
 }
 
 .chat-title p {
@@ -1286,11 +1323,24 @@ textarea.form-control {
     border: 1px solid rgba(255,255,255,0.2);
 }
 
+@media (max-width: 768px) {
+    .query-counter {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+}
+
 .chat-messages {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
     background: #F8FAFE;
+}
+
+@media (max-width: 768px) {
+    .chat-messages {
+        padding: 16px;
+    }
 }
 
 .message {
@@ -1334,6 +1384,14 @@ textarea.form-control {
     font-size: 14px;
     line-height: 1.6;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+@media (max-width: 768px) {
+    .message-content {
+        max-width: 85%;
+        font-size: 13px;
+        padding: 10px 14px;
+    }
 }
 
 .message.bot .message-content {
@@ -1389,6 +1447,13 @@ textarea.form-control {
     gap: 8px;
 }
 
+@media (max-width: 768px) {
+    .ai-section-header {
+        font-size: 11px;
+        padding: 5px 12px;
+    }
+}
+
 .ai-section-header i {
     font-size: 14px;
 }
@@ -1403,6 +1468,13 @@ textarea.form-control {
     padding: 8px 12px;
     border-radius: 12px;
     border-left: 3px solid #2B6FF0;
+}
+
+@media (max-width: 768px) {
+    .ai-step {
+        gap: 8px;
+        padding: 6px 10px;
+    }
 }
 
 .step-number {
@@ -1420,6 +1492,14 @@ textarea.form-control {
     box-shadow: 0 2px 6px rgba(43,111,240,0.3);
 }
 
+@media (max-width: 768px) {
+    .step-number {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+}
+
 .step-text {
     flex: 1;
     color: #1a2a3a;
@@ -1435,6 +1515,17 @@ textarea.form-control {
     background: #ffffff;
     border-radius: 10px;
     border: 1px solid #e8edf2;
+}
+
+@media (max-width: 768px) {
+    .ai-bullet {
+        gap: 8px;
+        padding: 5px 10px;
+    }
+    
+    .ai-bullet i {
+        font-size: 12px;
+    }
 }
 
 .ai-bullet i {
@@ -1491,10 +1582,22 @@ textarea.form-control {
     border-top: 1px solid #E0E8F0;
 }
 
+@media (max-width: 768px) {
+    .chat-input-area {
+        padding: 12px;
+    }
+}
+
 .chat-input-wrapper {
     display: flex;
     gap: 10px;
     align-items: center;
+}
+
+@media (max-width: 768px) {
+    .chat-input-wrapper {
+        gap: 8px;
+    }
 }
 
 .chat-input {
@@ -1505,6 +1608,15 @@ textarea.form-control {
     font-family: 'Inter', sans-serif;
     font-size: 15px;
     transition: 0.3s;
+}
+
+@media (max-width: 768px) {
+    .chat-input {
+        padding: 12px 16px;
+        font-size: 14px;
+        background: #F5F7FA;
+        border: 1px solid #E0E8F0;
+    }
 }
 
 .chat-input:focus {
@@ -1525,6 +1637,17 @@ textarea.form-control {
     align-items: center;
     justify-content: center;
     transition: 0.3s;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .attach-btn {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        background: #F0F4F8;
+        border: 1px solid #E0E8F0;
+    }
 }
 
 .attach-btn:hover {
@@ -1547,6 +1670,18 @@ textarea.form-control {
     justify-content: center;
     flex-shrink: 0;
     transition: 0.3s;
+}
+
+@media (max-width: 768px) {
+    .chat-send {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+    
+    .chat-send i {
+        font-size: 18px;
+    }
 }
 
 .chat-send:hover {
@@ -1632,6 +1767,13 @@ textarea.form-control {
 @media (min-width: 1024px) {
     .items-grid {
         grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .items-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
     }
 }
 
@@ -1735,6 +1877,13 @@ textarea.form-control {
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
+@media (max-width: 768px) {
+    .add-form {
+        margin: 20px 16px;
+        padding: 24px 16px;
+    }
+}
+
 .form-input, .form-select, .form-textarea {
     width: 100%;
     padding: 12px 16px;
@@ -1777,6 +1926,13 @@ textarea.form-control {
     padding: 30px 20px;
     margin: 30px 0;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .seller-cabinet {
+        margin: 20px 16px;
+        padding: 20px 16px;
+    }
 }
 
 .admin-badge {
@@ -1847,6 +2003,13 @@ textarea.form-control {
     max-width: 450px;
     width: 100%;
     position: relative;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 24px 16px;
+        margin: 0 16px;
+    }
 }
 
 .modal-close {
@@ -1934,6 +2097,13 @@ textarea.form-control {
     max-width: 400px;
     width: 100%;
     position: relative;
+}
+
+@media (max-width: 768px) {
+    .confirm-content {
+        padding: 24px 20px;
+        margin: 0 16px;
+    }
 }
 
 .confirm-content h3 {
@@ -2028,192 +2198,4 @@ textarea.form-control {
     .container {
         padding: 0 15px;
     }
-    
-    .chat-container {
-        margin: 10px auto 20px;
-        border-radius: 16px;
-    }
-    
-    .chat-sidebar {
-        height: auto;
-        min-height: auto;
-        max-height: 300px;
-    }
-    
-    .chat-main {
-        height: 55vh;
-        min-height: 400px;
-    }
-    
-    .message-content {
-        max-width: 85%;
-        font-size: 13px;
-        padding: 10px 14px;
-    }
-    
-    .ai-section-header {
-        font-size: 11px;
-        padding: 5px 12px;
-    }
-    
-    .ai-step {
-        gap: 8px;
-    }
-    
-    .step-number {
-        width: 20px;
-        height: 20px;
-        font-size: 10px;
-    }
-    
-    .ai-bullet {
-        gap: 8px;
-    }
-    
-    .ai-bullet i {
-        font-size: 12px;
-    }
-    /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ (ФИКС) ===== */
-
-@media (max-width: 768px) {
-    /* Общие отступы */
-    body {
-        padding-top: 60px;
-    }
-    
-    .container {
-        padding: 0 12px;
-    }
-    
-    /* Чат на телефоне */
-    .chat-container {
-        margin: 10px auto 20px;
-        border-radius: 16px;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    /* Боковая панель */
-    .chat-sidebar {
-        height: auto;
-        max-height: 200px;
-        min-height: auto;
-        padding: 12px;
-    }
-    
-    /* Основная область чата */
-    .chat-main {
-        height: 55vh;
-        min-height: 450px;
-    }
-    
-    /* Сообщения */
-    .message-content {
-        max-width: 85%;
-        font-size: 13px;
-        padding: 10px 14px;
-    }
-    
-    /* Область ввода (ВАЖНО!) */
-    .chat-input-area {
-        padding: 12px;
-        background: white;
-        border-top: 1px solid #E0E8F0;
-    }
-    
-    .chat-input-wrapper {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        width: 100%;
-    }
-    
-    .chat-input {
-        flex: 1;
-        padding: 12px 16px;
-        font-size: 14px;
-        background: #F5F7FA;
-        border: 1px solid #E0E8F0;
-        border-radius: 30px;
-    }
-    
-    /* Кнопка отправки - гарантированно видна */
-    .chat-send {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        background: linear-gradient(135deg, #2B6FF0, #00B4A0);
-        border-radius: 50%;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .chat-send i {
-        font-size: 18px;
-    }
-    
-    /* Кнопка прикрепления файла */
-    .attach-btn {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        background: #F0F4F8;
-        border-radius: 50%;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        color: #2B6FF0;
-        border: 1px solid #E0E8F0;
-        cursor: pointer;
-    }
-    
-    /* Заголовки */
-    .chat-header {
-        padding: 12px 15px;
-    }
-    
-    .chat-avatar {
-        width: 36px;
-        height: 36px;
-    }
-    
-    .chat-title h3 {
-        font-size: 14px;
-    }
-    
-    .query-counter {
-        font-size: 10px;
-        padding: 4px 10px;
-    }
-    
-    /* Ответы AI */
-    .ai-section-header {
-        font-size: 11px;
-        padding: 5px 12px;
-    }
-    
-    .ai-step {
-        gap: 8px;
-        padding: 6px 10px;
-    }
-    
-    .step-number {
-        width: 20px;
-        height: 20px;
-        font-size: 10px;
-    }
-    
-    .ai-bullet {
-        gap: 8px;
-        padding: 5px 10px;
-    }
-    
-    .ai-bullet i {
-        font-size: 12px;
-    }
-}
 }
