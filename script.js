@@ -39,29 +39,29 @@ const equipmentData = [
 // ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
 const WORKER_URL = '/groq_proxy.php';
 
+// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
+// ВАШ Worker URL (замените на ваш реальный!)
+const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
+
 async function callFreeAIAPI(messages) {
     try {
-        console.log('📤 Отправка запроса к прокси...', messages);
+        console.log('📤 Отправка запроса к Worker...', messages);
         
-        const response = await fetch('/groq_proxy.php', {
+        const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                model: 'mixtral-8x7b-32768',
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 2000
-            })
+            body: JSON.stringify({ messages: messages })
         });
-        
-        console.log('📡 Статус ответа:', response.status);
+
+        console.log('📡 Статус ответа от Worker:', response.status);
         
         if (!response.ok) {
             const errText = await response.text();
             console.error('❌ Ошибка HTTP:', response.status, errText);
             
+            // Пытаемся распарсить ошибку
             let errorMessage = errText;
             try {
                 const errJson = JSON.parse(errText);
@@ -70,10 +70,10 @@ async function callFreeAIAPI(messages) {
             
             throw new Error(`HTTP ${response.status}: ${errorMessage}`);
         }
-        
+
         const data = await response.json();
-        console.log('✅ Получен ответ от прокси:', data);
-        
+        console.log('✅ Получен ответ от Worker:', data);
+
         if (data.error) {
             throw new Error(data.error);
         }
@@ -84,12 +84,11 @@ async function callFreeAIAPI(messages) {
             console.error('⚠️ Неожиданный формат ответа:', data);
             throw new Error('Некорректный формат ответа от API');
         }
-        
+
     } catch (error) {
         console.error('❌ AI Error:', error);
         return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
-               'Техническая информация: ' + error.message + '\n\n' +
-               'Пожалуйста, попробуйте позже или обратитесь в поддержку.';
+               'Техническая информация: ' + error.message;
     }
 }
 
