@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="copyright" content="IndustrAI - Василий Сальников, 2026. Все права защищены">
     <meta name="author" content="Василий Сальников">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232B6FF0'/><text x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>IA</text></svg>">
@@ -11,7 +11,155 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
+    
+    <style>
+        /* ===== КРИТИЧЕСКИЕ МОБИЛЬНЫЕ СТИЛИ ДЛЯ ЧАТА ===== */
+        @media (max-width: 768px) {
+            /* Контейнер чата */
+            .chat-container {
+                display: flex !important;
+                flex-direction: column !important;
+                margin: 10px 10px 20px 10px !important;
+                border-radius: 20px !important;
+                overflow: hidden !important;
+            }
+            
+            /* Боковая панель */
+            .chat-sidebar {
+                width: 100% !important;
+                height: auto !important;
+                max-height: 180px !important;
+                min-height: auto !important;
+                padding: 12px !important;
+                order: 1 !important;
+            }
+            
+            /* Основная область чата */
+            .chat-main {
+                width: 100% !important;
+                height: 55vh !important;
+                min-height: 400px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                order: 2 !important;
+            }
+            
+            /* Область сообщений */
+            .chat-messages {
+                flex: 1 !important;
+                padding: 15px !important;
+                overflow-y: auto !important;
+            }
+            
+            /* Сообщения */
+            .message-content {
+                max-width: 85% !important;
+                font-size: 13px !important;
+                padding: 10px 14px !important;
+            }
+            
+            /* ОБЛАСТЬ ВВОДА - САМОЕ ВАЖНОЕ */
+            .chat-input-area {
+                padding: 12px !important;
+                background: white !important;
+                border-top: 1px solid #E0E8F0 !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .chat-input-wrapper {
+                display: flex !important;
+                gap: 8px !important;
+                align-items: center !important;
+                width: 100% !important;
+            }
+            
+            .chat-input {
+                flex: 1 !important;
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+                background: #F5F7FA !important;
+                border: 1px solid #ddd !important;
+                border-radius: 30px !important;
+                outline: none !important;
+                -webkit-appearance: none !important;
+            }
+            
+            /* КНОПКА ПРИКРЕПЛЕНИЯ */
+            .attach-btn {
+                width: 46px !important;
+                height: 46px !important;
+                min-width: 46px !important;
+                background: #F0F4F8 !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: #2B6FF0 !important;
+                border: 1px solid #E0E8F0 !important;
+                cursor: pointer !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .attach-btn i {
+                font-size: 18px !important;
+            }
+            
+            /* КНОПКА ОТПРАВКИ */
+            .chat-send {
+                width: 46px !important;
+                height: 46px !important;
+                min-width: 46px !important;
+                background: linear-gradient(135deg, #2B6FF0, #00B4A0) !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: white !important;
+                border: none !important;
+                cursor: pointer !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .chat-send i {
+                font-size: 18px !important;
+            }
+            
+            /* Заголовок */
+            .chat-header {
+                padding: 10px 15px !important;
+            }
+            
+            .chat-avatar {
+                width: 36px !important;
+                height: 36px !important;
+            }
+            
+            .query-counter {
+                font-size: 10px !important;
+                padding: 4px 10px !important;
+            }
+        }
+        
+        /* ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ */
+        @media (max-width: 480px) {
+            .chat-main {
+                height: 50vh !important;
+                min-height: 350px !important;
+            }
+            
+            .attach-btn, .chat-send {
+                width: 42px !important;
+                height: 42px !important;
+                min-width: 42px !important;
+            }
+            
+            .chat-input {
+                padding: 10px 14px !important;
+                font-size: 13px !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Мобильное меню -->
@@ -103,6 +251,6 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=5"></script>
 </body>
 </html>
