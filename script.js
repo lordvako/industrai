@@ -16,68 +16,139 @@ if (!users['admin']) {
 let currentUser = JSON.parse(localStorage.getItem('industrai_current_user')) || null;
 let chatHistory = JSON.parse(localStorage.getItem('industrai_chat_history')) || {};
 
-// ========== ЛОКАЛЬНАЯ БАЗА ЗНАНИЙ (СПАРСЕНА С ФОРУМОВ) ==========
-// СЮДА ВЫ ДОБАВЛЯЕТЕ ВАШИ ДАННЫЕ С ФОРУМОВ
-// КЛЮЧ - ПОИСКОВЫЙ ЗАПРОС (БРЕНД, МОДЕЛЬ, ОШИБКА), ЗНАЧЕНИЕ - ТЕКСТ ОТВЕТА
+// ========== БАЗА ОБОРУДОВАНИЯ ДЛЯ МАРКЕТПЛЕЙСА ==========
+const equipmentData = [
+    { id:1, name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", category:"Контроллеры", description:"НОВОЕ, В НАЛИЧИИ", image:"⚙️", sellerPrice:320000, finalPrice:432000, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:2, name:"Модуль вывода siemens 6ES7331-1KF02-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:3, name:"Модуль ввода siemens 6ES7322-1BL00-0AA0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:4, name:"Интерфейсный модуль siemens 6ES7153-2BA10-0XB0", category:"Интерфейсные модули", description:"НОВОЕ, В НАЛИЧИИ", image:"📡", sellerPrice:75000, finalPrice:101250, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:5, name:"Модуль вх/вых SP-sdio84-P1-K-A Wieland", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:110000, finalPrice:148500, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:6, name:"Модуль вывода siemens 6ES7332-5HF00-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:7, name:"Инвертор Inovance MD380 5.5kW", category:"Инверторы", description:"Б/У, РАБОЧИЙ", image:"⚡", sellerPrice:25000, finalPrice:33750, status:"Б/У, ГАРАНТИЯ 1 МЕС", sellerName:"Василий" },
+    { id:8, name:"Частотный преобразователь Kossi K1-4050 4kW", category:"Инверторы", description:"НОВЫЙ", image:"⚡", sellerPrice:18000, finalPrice:24300, status:"НОВЫЙ, В НАЛИЧИИ", sellerName:"Василий" },
+    { id:9, name:"Mitsubishi D700 0.75kW", category:"Инверторы", description:"НОВЫЙ", image:"⚡", sellerPrice:15000, finalPrice:20250, status:"ПОД ЗАКАЗ", sellerName:"Василий" }
+];
 
-const localDatabase = {
-    // Примеры (замените на ваши реальные данные с форумов):
-    "inovance ошибка e001": "Inovance MD380: ошибка E001 — перегрузка по току инвертора. Решение с форума: проверить параметры ускорения/замедления (P0.07, P0.08).",
-    "kossi ошибка overcurrent": "KOSSI K1-4050: Overcurrent — частая проблема на форумах. Рекомендуют: заменить IGBT-модуль и проверить драйвер",
-    "mitsubishi ошибка e.oc1": "Mitsubishi D700: ошибка E.OC1 — превышение тока при разгоне. С форумов: увеличить время разгона (Pr.7), проверить механику",
-    "sew ошибка f01": "SEW MDX61B: ошибка F01 — перегрузка инвертора. Советы с форумов: измерить ток, проверить тормозной резистор",
-    "siemens ошибка f0001": "Siemens MM420: ошибка F0001 — перенапряжение. Решение: проверить тормозной резистор, увеличить время замедления",
-    "delta ошибка occ": "Delta VFD-M: OCC — превышение тока. С форумов: проверить настройки V/F, изолировать двигатель",
-    "wieland ошибка e.oc": "Wieland SP-COP2: E.OC — перегрузка. Совет: проверить кабели, измерить сопротивление изоляции"
-};
+// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
+const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
-// Функция поиска по локальной базе данных (с форумов)
-function searchInLocalDatabase(query) {
-    if (!query || !query.trim()) return null;
-    
-    const lowerQuery = query.toLowerCase();
-    let foundResults = [];
-    
-    // Поиск по ключевым словам
-    for (const [key, value] of Object.entries(localDatabase)) {
-        if (lowerQuery.includes(key.toLowerCase())) {
-            foundResults.push({ keyword: key, content: value });
+async function callFreeAIAPI(messages) {
+    try {
+        console.log('📤 Отправка запроса к Worker...', messages);
+        
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ messages: messages })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error('❌ Ошибка HTTP:', response.status, errText);
+            throw new Error(`HTTP ${response.status}: ${errText}`);
         }
-    }
-    
-    // Если не нашли по точному ключу, ищем по отдельным словам
-    if (foundResults.length === 0) {
-        const words = lowerQuery.split(/\s+/).filter(w => w.length > 3);
-        for (const word of words) {
-            for (const [key, value] of Object.entries(localDatabase)) {
-                if (key.toLowerCase().includes(word)) {
-                    foundResults.push({ keyword: key, content: value });
-                }
-            }
+
+        const data = await response.json();
+        console.log('✅ Получен ответ от Worker:', data);
+
+        if (data.error) {
+            throw new Error(data.error);
         }
-        // Убираем дубликаты
-        foundResults = foundResults.filter((v, i, a) => a.findIndex(t => t.keyword === v.keyword) === i);
+        
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            return formatAIResponse(data.choices[0].message.content);
+        } else {
+            throw new Error('Некорректный формат ответа от API');
+        }
+
+    } catch (error) {
+        console.error('❌ AI Error:', error);
+        return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
+               'Техническая информация: ' + error.message;
     }
-    
-    if (foundResults.length === 0) return null;
-    
-    let resultHtml = '<div class="db-search-results forum-results">';
-    resultHtml += '<div class="db-header"><i class="fas fa-users"></i> 📚 Найдено на форумах (локальная база):</div>';
-    
-    foundResults.forEach(result => {
-        resultHtml += `
-            <div class="forum-item">
-                <div class="forum-question"><i class="fas fa-question-circle"></i> ${escapeHtml(result.keyword)}</div>
-                <div class="forum-answer"><i class="fas fa-comment-dots"></i> ${escapeHtml(result.content)}</div>
-            </div>
-        `;
-    });
-    resultHtml += '</div>';
-    
-    return resultHtml;
 }
 
-// Функция для поиска по оборудованию (биржа/магазин)
+// Форматирование ответа нейросети
+function formatAIResponse(text) {
+    if (!text) return '⚠️ Нет ответа от нейросети';
+    
+    let formatted = text;
+    
+    formatted = formatted.replace(/##\s*(.+)/g, '<div class="ai-section-header"><i class="fas fa-info-circle"></i> $1</div>');
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/^-\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
+    formatted = formatted.replace(/^•\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-cog"></i><span>$1</span></div>');
+    formatted = formatted.replace(/^\d+\.\s+(.+)$/gm, '<div class="ai-step"><span class="step-number">→</span><span class="step-text">$1</span></div>');
+    formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+    formatted = formatted.replace(/Важно:/gi, '⚠️ <strong>Важно:</strong>');
+    formatted = formatted.replace(/Совет:/gi, '💡 <strong>Совет:</strong>');
+    formatted = formatted.replace(/\n\n/g, '<div class="ai-divider"></div>');
+    formatted = formatted.replace(/\n/g, '<br>');
+    formatted = formatted.replace(/<\/div><br>/g, '</div>');
+    formatted = formatted.replace(/<br><div class="ai-divider">/g, '<div class="ai-divider">');
+    
+    return `<div class="ai-response expert-response">${formatted}</div>`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ========== ПОИСК В БАЗЕ ДАННЫХ НА JINO.RU ==========
+async function searchInLocalDatabase(query) {
+    if (!query || !query.trim()) return null;
+    
+    try {
+        console.log('🔍 Поиск в базе данных Jino.ru:', query);
+        
+        const response = await fetch(`search_forum.php?q=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+            console.warn('Ошибка ответа от сервера:', response.status);
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Ошибка от сервера:', data.error);
+            return null;
+        }
+        
+        if (!data || data.length === 0) {
+            console.log('Ничего не найдено в базе');
+            return null;
+        }
+        
+        console.log(`Найдено ${data.length} результатов в базе`);
+        
+        let resultHtml = '';
+        for (const item of data) {
+            const problemShort = item.problem && item.problem.length > 150 ? item.problem.substring(0, 150) + '...' : (item.problem || 'Проблема');
+            
+            resultHtml += `
+                <div class="forum-item">
+                    <div class="forum-question"><i class="fas fa-question-circle"></i> ${escapeHtml(problemShort)}</div>
+                    <div class="forum-answer"><i class="fas fa-comment-dots"></i> ${escapeHtml(item.solution)}</div>
+                    ${item.manufacturer ? `<div class="forum-meta"><i class="fas fa-tag"></i> Производитель: ${escapeHtml(item.manufacturer)}</div>` : ''}
+                    ${item.error_code ? `<div class="forum-meta"><i class="fas fa-code"></i> Код ошибки: ${escapeHtml(item.error_code)}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        return resultHtml;
+        
+    } catch (error) {
+        console.error('❌ Ошибка при поиске в локальной БД:', error);
+        return null;
+    }
+}
+
+// ========== ПОИСК ПО МАРКЕТПЛЕЙСУ ==========
 function searchInMarketplace(query) {
     if (!query || !query.trim()) return null;
     
@@ -93,8 +164,8 @@ function searchInMarketplace(query) {
     
     if (foundItems.length === 0) return null;
     
-    let resultHtml = '<div class="db-search-results marketplace-results">';
-    resultHtml += '<div class="db-header"><i class="fas fa-store"></i> 🛒 Найдено в каталоге оборудования (в продаже):</div>';
+    let resultHtml = '<div class="marketplace-results">';
+    resultHtml += '<div class="db-header"><i class="fas fa-store"></i> 🛒 Найдено в каталоге оборудования:</div>';
     
     foundItems.forEach(item => {
         resultHtml += `
@@ -114,118 +185,10 @@ function searchInMarketplace(query) {
     return resultHtml;
 }
 
-// ========== БАЗА ОБОРУДОВАНИЯ ДЛЯ МАРКЕТПЛЕЙСА ==========
-const equipmentData = [
-    { id:1, name:"Контроллер wieland SP-COP2-EN-A DC 24V -R1.190.121", category:"Контроллеры", description:"НОВОЕ, В НАЛИЧИИ", image:"⚙️", sellerPrice:320000, finalPrice:432000, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:2, name:"Модуль вывода siemens 6ES7331-1KF02-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:3, name:"Модуль ввода siemens 6ES7322-1BL00-0AA0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:4, name:"Интерфейсный модуль siemens 6ES7153-2BA10-0XB0", category:"Интерфейсные модули", description:"НОВОЕ, В НАЛИЧИИ", image:"📡", sellerPrice:75000, finalPrice:101250, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:5, name:"Модуль вх/вых SP-sdio84-P1-K-A Wieland", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:110000, finalPrice:148500, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:6, name:"Модуль вывода siemens 6ES7332-5HF00-0AB0", category:"Модули", description:"НОВОЕ, В НАЛИЧИИ", image:"🔌", sellerPrice:56000, finalPrice:75600, status:"НОВОЕ, В НАЛИЧИИ", sellerName:"Василий" },
-    // Добавьте инверторы Inovance, Kossi, Mitsubishi сюда же
-    { id:7, name:"Инвертор Inovance MD380 5.5kW", category:"Инверторы", description:"Б/У, РАБОЧИЙ", image:"⚡", sellerPrice:25000, finalPrice:33750, status:"Б/У, ГАРАНТИЯ 1 МЕС", sellerName:"Василий" },
-    { id:8, name:"Частотный преобразователь Kossi K1-4050 4kW", category:"Инверторы", description:"НОВЫЙ", image:"⚡", sellerPrice:18000, finalPrice:24300, status:"НОВЫЙ, В НАЛИЧИИ", sellerName:"Василий" },
-    { id:9, name:"Mitsubishi D700 0.75kW", category:"Инверторы", description:"НОВЫЙ", image:"⚡", sellerPrice:15000, finalPrice:20250, status:"ПОД ЗАКАЗ", sellerName:"Василий" }
-];
-
-// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER (СВОБОДНЫЙ ОТВЕТ) ==========
-const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
-
-async function callFreeAIAPI(messages) {
-    try {
-        console.log('📤 Отправка запроса к Worker...', messages);
-        
-        const response = await fetch(WORKER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ messages: messages })
-        });
-
-        console.log('📡 Статус ответа:', response.status);
-        
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error('❌ Ошибка HTTP:', response.status, errText);
-            throw new Error(`HTTP ${response.status}: ${errText}`);
-        }
-
-        const data = await response.json();
-        console.log('✅ Получен ответ от Worker:', data);
-
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-            return formatAIResponse(data.choices[0].message.content);
-        } else {
-            console.error('⚠️ Неожиданный формат ответа:', data);
-            throw new Error('Некорректный формат ответа от API');
-        }
-
-    } catch (error) {
-        console.error('❌ AI Error:', error);
-        return '⚠️ **Ошибка соединения с нейросетью**\n\n' + 
-               'Техническая информация: ' + error.message;
-    }
-}
-
-// Функция для красивого форматирования ответа нейросети (СВОБОДНЫЙ СТИЛЬ)
-function formatAIResponse(text) {
-    if (!text) return '⚠️ Нет ответа от нейросети';
-    
-    let formatted = text;
-    
-    // Красивые заголовки (если нейросеть их использует)
-    formatted = formatted.replace(/##\s*(.+)/g, '<div class="ai-section-header"><i class="fas fa-info-circle"></i> $1</div>');
-    
-    // Жирный текст
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Маркированные списки
-    formatted = formatted.replace(/^-\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-check-circle"></i><span>$1</span></div>');
-    formatted = formatted.replace(/^•\s+(.+)$/gm, '<div class="ai-bullet"><i class="fas fa-cog"></i><span>$1</span></div>');
-    formatted = formatted.replace(/^\d+\.\s+(.+)$/gm, '<div class="ai-step"><span class="step-number">→</span><span class="step-text">$1</span></div>');
-    
-    // Код и команды
-    formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-    
-    // Важные метки
-    formatted = formatted.replace(/Важно:/gi, '⚠️ <strong>Важно:</strong>');
-    formatted = formatted.replace(/Примечание:/gi, '📌 <strong>Примечание:</strong>');
-    formatted = formatted.replace(/Внимание:/gi, '🔔 <strong>Внимание:</strong>');
-    formatted = formatted.replace(/Совет:/gi, '💡 <strong>Совет:</strong>');
-    formatted = formatted.replace(/Рекомендация:/gi, '💡 <strong>Рекомендация:</strong>');
-    
-    // Разделители абзацев
-    formatted = formatted.replace(/\n\n/g, '<div class="ai-divider"></div>');
-    formatted = formatted.replace(/\n/g, '<br>');
-    
-    // Очистка лишних тегов
-    formatted = formatted.replace(/<\/div><br>/g, '</div>');
-    formatted = formatted.replace(/<br><div class="ai-divider">/g, '<div class="ai-divider">');
-    
-    return `<div class="ai-response free-response">${formatted}</div>`;
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ========== ГИБРИДНЫЙ ОТВЕТ (СВОБОДНАЯ НЕЙРОСЕТЬ + ПОИСК ПО ЛОКАЛЬНОЙ БАЗЕ) ==========
+// ========== ГЛАВНАЯ ФУНКЦИЯ ГИБРИДНОГО ОТВЕТА ==========
 async function getHybridResponse(userMessage, chat, isTestMode = false) {
     
-    // 1. Ищем в локальной базе данных (спарсено с форумов)
-    const forumResult = searchInLocalDatabase(userMessage);
-    
-    // 2. Ищем в маркетплейсе (оборудование в продаже)
-    const marketplaceResult = searchInMarketplace(userMessage);
-    
-    // 3. Формируем запрос к нейросети (СВОБОДНЫЙ, БЕЗ ОГРАНИЧЕНИЙ)
+    // 1. ФОРМИРУЕМ ЗАПРОС К НЕЙРОСЕТИ (свободный ответ)
     const systemPrompt = `Ты — ведущий инженер-эксперт по промышленной автоматизации (АСУТП) с 20-летним стажем.
 Ты отвечаешь на любые технические вопросы пользователей по промышленному оборудованию: частотные преобразователи, PLC, приводы, инверторы, сенсоры, контроллеры.
 Твои знания включают все бренды: Siemens, SEW, Yaskawa, Mitsubishi, Inovance, Kossi, Delta, Wieland, Schneider, Omron, Rockwell, ABB и другие.
@@ -234,33 +197,38 @@ async function getHybridResponse(userMessage, chat, isTestMode = false) {
 1. Отвечай максимально подробно, профессионально и полезно.
 2. Используй структуру: сначала короткая диагностика, потом причины, потом пошаговые решения.
 3. Если не знаешь точного ответа — честно скажи и дай общие рекомендации.
-4. Используй жирный текст для важного, маркированные списки для наглядности.
-5. Будь дружелюбным и понятным для инженеров любого уровня.
+4. Будь дружелюбным и понятным для инженеров любого уровня.
 
-ВАЖНО: Ты можешь использовать свои знания, полученные при обучении. Ты НЕ ограничен никакой локальной базой. Отвечай свободно, как технический эксперт.`;
+ВАЖНО: Ты можешь использовать свои знания, полученные при обучении. Отвечай свободно, как технический эксперт.`;
     
     const messageHistory = [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
     ];
     
-    // 4. Получаем СВОБОДНЫЙ ответ от нейросети
+    // 2. ПОЛУЧАЕМ ОТВЕТ ОТ НЕЙРОСЕТИ (ЭТО ГЛАВНОЕ)
     let aiReply = await callFreeAIAPI(messageHistory);
     
-    // 5. Добавляем результаты из локальной базы форумов (если есть)
+    // 3. ПОСЛЕ ОТВЕТА НЕЙРОСЕТИ - ИЩЕМ В ЛОКАЛЬНОЙ БАЗЕ ДАННЫХ
+    console.log('🔍 Запускаю поиск в локальной базе данных...');
+    const forumResult = await searchInLocalDatabase(userMessage);
+    
+    // 4. ДОБАВЛЯЕМ РЕЗУЛЬТАТЫ ИЗ БАЗЫ ПОСЛЕ ОТВЕТА НЕЙРОСЕТИ
     if (forumResult) {
-        aiReply += `<div class="ai-divider"></div>${forumResult}`;
-    } else {
-        // Если ничего не найдено в локальной базе — сообщаем об этом
         aiReply += `<div class="ai-divider"></div>
-        <div class="no-results-message">
-            <i class="fas fa-database"></i> 
-            <strong>Из локальной базы данных совпадений не найдено</strong><br>
-            <span class="no-results-hint">Но вы можете задать уточняющий вопрос, или я отвечу на основе своих знаний.</span>
-        </div>`;
+<div class="hybrid-header"><i class="fas fa-database"></i> 📚 ДОПОЛНИТЕЛЬНО: Найдено в локальной базе знаний (форумы):</div>
+${forumResult}`;
+    } else {
+        aiReply += `<div class="ai-divider"></div>
+<div class="no-results-message">
+    <i class="fas fa-database"></i> 
+    <strong>📭 В локальной базе данных совпадений не найдено</strong><br>
+    <span class="no-results-hint">Этот ответ сформирован только на основе знаний нейросети.</span>
+</div>`;
     }
     
-    // 6. Добавляем результаты из маркетплейса (если есть)
+    // 5. ДОБАВЛЯЕМ МАРКЕТПЛЕЙС (если есть совпадения)
+    const marketplaceResult = searchInMarketplace(userMessage);
     if (marketplaceResult) {
         aiReply += `<div class="ai-divider"></div>${marketplaceResult}`;
     }
@@ -281,7 +249,7 @@ function loadUserChatHistory() {
             title: 'Новый диалог',
             messages: [{
                 sender: 'bot',
-                text: '🔍 Я — технический эксперт по промышленной автоматизации. Задавайте любые вопросы! А я также проверю нашу базу форумов и каталог оборудования.',
+                text: '🤖 Я — технический эксперт по промышленной автоматизации. Задавайте любые вопросы! А после моего ответа я проверю нашу локальную базу знаний с форумов и каталог оборудования.',
                 timestamp: new Date().toISOString()
             }],
             createdAt: new Date().toISOString()
@@ -320,7 +288,7 @@ function createNewProfileChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 Я — технический эксперт по промышленной автоматизации. Задавайте любые вопросы!',
+            text: '🤖 Задайте любой технический вопрос — я отвечу как эксперт, а потом проверю локальную базу знаний!',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -391,7 +359,6 @@ async function sendProfileMessage() {
     });
     loadProfileChat(currentChatId);
     
-    // ГИБРИДНЫЙ ОТВЕТ (свободная нейросеть + локальная база)
     const reply = await getHybridResponse(msg, chat, false);
     
     chat.messages.pop();
@@ -433,7 +400,7 @@ function createNewTestChat() {
         title: 'Новый диалог',
         messages: [{
             sender: 'bot',
-            text: '🔍 Бесплатный тест-драйв. Задайте любой технический вопрос! Я отвечу как эксперт и проверю локальную базу.',
+            text: '🔍 Бесплатный тест-драйв. Я отвечу как эксперт, а потом проверю локальную базу знаний!',
             timestamp: new Date().toISOString()
         }],
         createdAt: new Date().toISOString()
@@ -495,7 +462,7 @@ async function sendTestMessage() {
     
     testQueriesLeft--;
     const counter = document.getElementById('testQueryCounter');
-    if (counter) counter.innerText = testQueriesLeft + ' запрос';
+    if (counter) counter.innerText = testQueriesLeft + ' запрос' + (testQueriesLeft !== 1 ? 'а' : '');
     
     const chat = testChatHistory.find(c => c.id === testCurrentChatId);
     if (!chat) return;
@@ -509,7 +476,6 @@ async function sendTestMessage() {
     chat.messages.push({ sender: 'bot', text: '<div class="thinking"><i class="fas fa-spinner fa-pulse"></i> Анализирую...</div>', timestamp: new Date().toISOString() });
     loadTestChat(testCurrentChatId);
     
-    // ГИБРИДНЫЙ ОТВЕТ ДЛЯ ТЕСТА
     const reply = await getHybridResponse(msg, chat, true);
     
     chat.messages.pop();
@@ -586,7 +552,7 @@ function toggleMobileMenu() {
     document.getElementById('mobileMenu')?.classList.toggle('active');
 }
 
-// ========== БИРЖА ==========
+// ========== БИРЖА (МАРКЕТПЛЕЙС) ==========
 
 function loadMarketplaceData() {
     const grid = document.getElementById('itemsGrid');
