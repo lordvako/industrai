@@ -37,10 +37,7 @@ const equipmentData = [
 ];
 
 // ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
-const WORKER_URL = '/groq_proxy.php';
-
-// ========== GROQ API ЧЕРЕЗ CLOUDFLARE WORKER ==========
-// ВАШ Worker URL (замените на ваш реальный!)
+// ВАЖНО: ТОЛЬКО ОДИН URL! Удалите /groq_proxy.php
 const WORKER_URL = 'https://industrai-api.neprostoj-zen.workers.dev/';
 
 async function callFreeAIAPI(messages) {
@@ -61,7 +58,6 @@ async function callFreeAIAPI(messages) {
             const errText = await response.text();
             console.error('❌ Ошибка HTTP:', response.status, errText);
             
-            // Пытаемся распарсить ошибку
             let errorMessage = errText;
             try {
                 const errJson = JSON.parse(errText);
@@ -805,12 +801,10 @@ function showConfirm(type, name, price) {
         return;
     }
     
-    // Сохраняем данные о платеже с правильной ценой
     currentPayment = { type, name, price };
     
-    // Открываем страницу оплаты с параметрами в URL
     const paymentUrl = `payment.html?plan=${type}&name=${encodeURIComponent(name)}&price=${price}`;
-    const paymentWindow = window.open(paymentUrl, '_blank', 'width=650,height=750');
+    window.open(paymentUrl, '_blank', 'width=650,height=750');
     
     showNotification(`Откроется окно оплаты тарифа "${name}" (${price.toLocaleString()} ₽). После оплаты вернитесь на сайт и войдите в аккаунт.`);
 }
@@ -832,8 +826,6 @@ function processPayment() {
     
     showNotification('Обработка платежа...');
     
-    // Здесь будет ваш код для создания пользователя после оплаты
-    // Пока имитируем успешную оплату
     setTimeout(() => {
         alert(`✅ Оплата тарифа "${currentPayment.name}" (${currentPayment.price.toLocaleString()} ₽) прошла успешно!\n\nВаши данные для входа:\nЛогин: ${email.split('@')[0]}\nПароль был отправлен на ${email}`);
         window.location.href = 'login.html';
