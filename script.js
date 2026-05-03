@@ -117,53 +117,136 @@ function escapeHtml(text) {
 }
 
 // ========== ПОИСК В БАЗЕ ДАННЫХ НА JINO.RU ==========
+// ========== ПОИСК В БАЗЕ ДАННЫХ ==========
 async function searchInLocalDatabase(query) {
-    if (!query || !query.trim()) return null;
+    if (!query || !query.trim() || query.length < 2) return null;
     
     try {
-        console.log('🔍 Поиск в базе данных Jino.ru:', query);
+        console.log('🔍 Поиск в базе данных:', query);
         
         const response = await fetch(`search_forum.php?q=${encodeURIComponent(query)}`);
         
         if (!response.ok) {
-            console.warn('Ошибка ответа от сервера:', response.status);
+            console.warn('❌ Ошибка ответа от сервера:', response.status);
             return null;
         }
         
         const data = await response.json();
         
         if (data.error) {
-            console.error('Ошибка от сервера:', data.error);
-            return null;
+            console.error('❌ Ошибка от PHP:', data.error);
+            return `<div class="db-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>⚠️ Ошибка подключения к базе знаний</strong><br>
+                <span class="db-error-hint">${escapeHtml(data.error)}</span>
+            </div>`;
         }
         
         if (!data || data.length === 0) {
-            console.log('Ничего не найдено в базе');
+            console.log('📭 Ничего не найдено в базе');
             return null;
         }
         
-        console.log(`Найдено ${data.length} результатов в базе`);
+        console.log(`✅ Найдено ${data.length} результатов`);
         
-        let resultHtml = '';
+        let resultHtml = '<div class="db-results">';
+        resultHtml += '<div class="db-header"><i class="fas fa-database"></i> 📚 НАЙДЕНО В БАЗЕ ЗНАНИЙ (форумы, документация):</div>';
+        
         for (const item of data) {
-            const problemShort = item.problem && item.problem.length > 150 ? item.problem.substring(0, 150) + '...' : (item.problem || 'Проблема');
+            const problemShort = item.problem && item.problem.length > 150 
+                ? item.problem.substring(0, 150) + '...' 
+                : (item.problem || '❓ Проблема не указана');
             
             resultHtml += `
                 <div class="forum-item">
-                    <div class="forum-question"><i class="fas fa-question-circle"></i> ${escapeHtml(problemShort)}</div>
-                    <div class="forum-answer"><i class="fas fa-comment-dots"></i> ${escapeHtml(item.solution)}</div>
-                    ${item.manufacturer ? `<div class="forum-meta"><i class="fas fa-tag"></i> Производитель: ${escapeHtml(item.manufacturer)}</div>` : ''}
-                    ${item.error_code ? `<div class="forum-meta"><i class="fas fa-code"></i> Код ошибки: ${escapeHtml(item.error_code)}</div>` : ''}
-                </div>
+                    <div class="forum-question">
+                        <i class="fas fa-question-circle"></i> 
+                        <strong>Проблема/вопрос:</strong><br>
+                        ${escapeHtml(problemShort)}
+                    </div>
+                    <div class="forum-answer">
+                        <i class="fas fa-comment-dots"></i> 
+                        <strong>Решение/ответ:</strong><br>
+                        ${escapeHtml(item.solution)}
+                    </div>
             `;
+            
+            if (item.manufacturer && item.manufacturer !== '') {
+                resultHtml += `<div class="forum-meta"><i class="fas fa-tag"></i> Производитель: ${escapeHtml(item.manufacturer)}</div>`;
+            }
+            if (item.device_model && item.device_model !== '') {
+                resultHtml += `<div class="forum-meta"><i class="fas fa-microchip"></i> Модель: ${escapeHtml(item.device_model)}</div>`;
+            }
+            if (item.error_code && item.error_code !== '') {
+                resultHtml += `<div class="forum-meta"><i class="fas fa-code"></i> Код ошибки: ${escapeHtml(item.error_code)}</div>`;
+            }
+            
+            resultHtml += `</div>`;
         }
+        
+        resultHtml += '<div class="db-footer"><i class="fas fa-info-circle"></i> *Найдено в локальной базе знаний</div>';
+        resultHtml += '</div>';
         
         return resultHtml;
         
     } catch (error) {
-        console.error('❌ Ошибка при поиске в локальной БД:', error);
-        return null;
+        console.error('❌ Ошибка при поиске:', error);
+        return `<div class="db-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>⚠️ Ошибка соединения с базой знаний</strong><br>
+            <span class="db-error-hint">${escapeHtml(error.message)}</span>
+        </div>`;
     }
+}
+
+// ========== ГЛАВНАЯ ФУНКЦИЯ ОТВЕТА ==========
+async function getHybridResponse(userMessage, chat, isTestMode = false) {
+    
+    console.log('🔍 Поиск в локальной базе данных...');
+    const forumResult = await searchInLocalDatabase(userMessage);
+    
+    // Формируем ответ нейросети
+    const systemPrompt = `Ты — ведущий инженер-эксперт по промышленной автоматизации (АСУТП) с 20-летним стажем.
+Ты отвечаешь на любые технические вопросы пользователей по промышленному оборудованию.
+Твои знания включают все бренды: Siemens, SEW, Yaskawa, Mitsubishi, Inovance, Kossi, Delta, Wieland, Schneider, Omron, Rockwell, ABB и другие.
+
+ПРАВИЛА ОТВЕТА:
+1. Отвечай максимально подробно, профессионально и полезно.
+2. Используй структуру: сначала короткая диагностика, потом причины, потом пошаговые решения.
+3. Если в локальной базе данных найдены решения — обязательно ссылайся на них.
+4. Будь дружелюбным и понятным.`;
+    
+    const messageHistory = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+    ];
+    
+    let aiReply = await callFreeAIAPI(messageHistory);
+    
+    // Добавляем результаты из локальной базы
+    if (forumResult && forumResult.includes('forum-item')) {
+        aiReply += `<div class="ai-divider"></div>${forumResult}`;
+    } else if (forumResult && forumResult.includes('Ошибка')) {
+        aiReply += `<div class="ai-divider"></div>${forumResult}`;
+    } else {
+        aiReply += `<div class="ai-divider"></div>
+<div class="no-results-message">
+    <i class="fas fa-database"></i> 
+    <strong>📭 В локальной базе данных совпадений не найдено</strong><br>
+    <span class="no-results-hint">Этот ответ сформирован только на основе знаний нейросети.<br>
+    📝 База знаний постоянно пополняется. Если у вас есть решение — поделитесь им через форму обратной связи!</span>
+</div>`;
+    }
+    
+    return aiReply;
+}
+
+// Вспомогательная функция для экранирования HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ========== ПОИСК ПО МАРКЕТПЛЕЙСУ ==========
