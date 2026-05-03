@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата подписки IndustrAI</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f8fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .payment-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a2a3a;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #5A6B7A;
+            margin-bottom: 32px;
+        }
+        .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #00B4A0;
+            margin: 20px 0;
+        }
+        .price small {
+            font-size: 16px;
+            color: #5A6B7A;
+        }
+        .plan-details {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .plan-details li {
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+        .payment-methods {
+            display: flex;
+            gap: 16px;
+            margin: 24px 0;
+            justify-content: center;
+        }
+        .method {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .method.selected {
+            border-color: #00B4A0;
+            background: #f0fff8;
+        }
+        .method img {
+            width: 40px;
+            height: 40px;
+        }
+        .pay-button {
+            background: #00B4A0;
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+        .pay-button:hover {
+            background: #009688;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #5A6B7A;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-card">
+        <h1>💎 IndustrAI Pro</h1>
+        <div class="subtitle">Полный доступ к нейросети и базе знаний</div>
+        
+        <div class="price">
+            ₽1 990 <small>/ месяц</small>
+        </div>
+        
+        <div class="plan-details">
+            <ul style="list-style: none; padding: 0;">
+                <li>✅ Неограниченные запросы к нейросети</li>
+                <li>✅ Доступ к базе знаний (форумы АСУТП)</li>
+                <li>✅ Приоритетная поддержка инженеров</li>
+                <li>✅ Отмена в любой момент</li>
+            </ul>
+        </div>
+        
+        <div class="payment-methods">
+            <div class="method selected" data-type="PC" onclick="selectMethod('PC')">
+                <span>💳 ЮMoney</span>
+            </div>
+            <div class="method" data-type="AC" onclick="selectMethod('AC')">
+                <span>💳 Банковская карта</span>
+            </div>
+        </div>
+        
+        <form id="paymentForm" method="POST" action="https://yoomoney.ru/quickpay/confirm" target="_blank">
+            <input type="hidden" name="receiver" value="410011234567890"> <!-- ЗАМЕНИТЕ НА ВАШ КОШЕЛЕК! -->
+            <input type="hidden" name="quickpay-form" value="button">
+            <input type="hidden" name="sum" value="1990">
+            <input type="hidden" name="paymentType" id="paymentType" value="PC">
+            <input type="hidden" name="label" id="orderId">
+            <input type="hidden" name="successURL" value="https://ваш-сайт.ru/success.html">
+            
+            <button type="submit" class="pay-button">Оплатить ₽1 990</button>
+        </form>
+        
+        <div class="back-link">
+            <a href="javascript:history.back()">← Вернуться назад</a>
+        </div>
+    </div>
+    
+    <script>
+        // Генерируем уникальный ID заказа
+        document.getElementById('orderId').value = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+        
+        function selectMethod(type) {
+            document.querySelectorAll('.method').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.method[data-type="${type}"]`).classList.add('selected');
+            document.getElementById('paymentType').value = type;
+        }
+    </script>
+</body>
+</html>
